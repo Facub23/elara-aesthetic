@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f5f2;
+  --foreground: #111111;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* PREMIUM BACKGROUND */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(255,255,255,0.9),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(0,0,0,0.03),
+      transparent 30%
+    ),
+    linear-gradient(
+      to bottom,
+      #faf8f5,
+      #f7f5f2
+    );
+
+  pointer-events: none;
+}
+
+/* GLOW EFFECT */
+
+body::after {
+  content: "";
+  position: fixed;
+  top: -200px;
+  right: -150px;
+
+  width: 500px;
+  height: 500px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.7);
+
+  filter: blur(120px);
+
+  z-index: -1;
+
+  pointer-events: none;
+}
+
+/* SELECTION */
+
+::selection {
+  background: black;
+  color: white;
+}
+
+/* SCROLLBAR */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
+}
+
+/* IMAGES */
+
+img {
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* BUTTONS */
+
+button {
+  cursor: pointer;
+}
+
+/* SMOOTH */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
