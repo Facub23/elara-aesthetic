@@ -2,15 +2,15 @@
   "crons": [
     {
       "path": "/api/send-booking-reminders",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/auto-complete-bookings",
-      "schedule": "*/30 * * * *"
+      "schedule": "15 8 * * *"
     },
     {
       "path": "/api/expire-pending-bookings",
-      "schedule": "*/5 * * * *"
+      "schedule": "30 8 * * *"
     }
   ]
 }

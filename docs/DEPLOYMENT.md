@@ -41,9 +41,15 @@ El archivo `vercel.json` registra estos jobs:
 
 | Endpoint | Frecuencia | Objetivo |
 | --- | --- | --- |
-| `/api/expire-pending-bookings` | Cada 5 minutos | Libera reservas no confirmadas. |
-| `/api/send-booking-reminders` | Cada 15 minutos | Envia recordatorios 24h y 2h. |
-| `/api/auto-complete-bookings` | Cada 30 minutos | Marca citas pasadas como completadas y pide review. |
+| `/api/send-booking-reminders` | Diario en Vercel Hobby | Envia recordatorios 24h y 2h. |
+| `/api/auto-complete-bookings` | Diario en Vercel Hobby | Marca citas pasadas como completadas y pide review. |
+| `/api/expire-pending-bookings` | Diario en Vercel Hobby | Libera reservas no confirmadas. |
+
+Vercel Hobby no permite crons varias veces al dia. Para produccion real, usar Vercel Pro o un cron externo con estas frecuencias recomendadas:
+
+- `/api/expire-pending-bookings`: cada 5 minutos.
+- `/api/send-booking-reminders`: cada 15 minutos.
+- `/api/auto-complete-bookings`: cada 30 minutos.
 
 En Vercel, al configurar `CRON_SECRET`, las invocaciones programadas reciben automaticamente `Authorization: Bearer <CRON_SECRET>`.
 
