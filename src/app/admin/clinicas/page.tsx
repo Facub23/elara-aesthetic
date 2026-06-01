@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import DeleteClinicButton from "@/components/DeleteClinicButton";
 import EditClinicButton from "@/components/EditClinicButton";
 import AddClinicForm from "@/components/AddClinicForm";
+import AdminClinicWorkspace from "@/components/AdminClinicWorkspace";
 import AdminShell from "@/components/AdminShell";
 import AdminPublicationChecklist from "@/components/AdminPublicationChecklist";
 import { hasAnyAdminPermission } from "@/lib/admin-access";
@@ -142,6 +143,21 @@ export default async function AdminClinicasPage() {
       status={adminUser.status}
     >
       <div className="mx-auto max-w-7xl">
+        {!isSuperAdmin && clinics?.[0] ? (
+          <AdminClinicWorkspace
+            clinic={clinics[0]}
+            specialists={specialistsByClinic.get(String(clinics[0].id)) || []}
+            treatments={treatmentNamesByClinic.get(String(clinics[0].id)) || []}
+            checklistItems={getClinicChecklist(
+              clinics[0],
+              specialistCountByClinic.get(String(clinics[0].id)) || 0,
+              treatmentNamesByClinic.get(String(clinics[0].id))?.length || 0
+            )}
+          />
+        ) : null}
+
+        {isSuperAdmin ? (
+          <>
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
@@ -326,6 +342,17 @@ export default async function AdminClinicasPage() {
             })
           )}
         </div>
+          </>
+        ) : !clinics?.[0] ? (
+          <div className="rounded-[32px] bg-white/70 p-10 text-center">
+            <h1 className="text-3xl font-semibold">
+              No tienes una clinica asignada
+            </h1>
+            <p className="mt-3 text-neutral-500">
+              Pide a un superadmin que asigne tu usuario a una clinica.
+            </p>
+          </div>
+        ) : null}
       </div>
     </AdminShell>
   );

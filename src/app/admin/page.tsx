@@ -130,6 +130,18 @@ export default async function PremiumAdminDashboard() {
   const assignedClinic = adminUser.clinic_id
     ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
     : null;
+  const dashboardEyebrow = isSuperAdmin
+    ? "Panel de control"
+    : "Panel de tu clinica";
+  const dashboardTitle = isSuperAdmin
+    ? "Bienvenido de nuevo."
+    : assignedClinic?.name || "Tu espacio operativo";
+  const dashboardDescription = isSuperAdmin
+    ? "Gestiona reservas, pacientes, clinicas y actividad interna desde un panel limpio, seguro y en tiempo real."
+    : "Revisa reservas, agenda, pacientes y rendimiento de tu clinica desde un espacio enfocado.";
+  const operationsLabel = isSuperAdmin
+    ? "Operativa de hoy en Espana"
+    : "Operativa de hoy";
   const scopeBookings = (items: OperationalBooking[]) =>
     !isSuperAdmin && assignedClinic?.name
       ? items.filter((booking) => booking.clinic_name === assignedClinic.name)
@@ -152,16 +164,15 @@ export default async function PremiumAdminDashboard() {
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-            Panel de control
+            {dashboardEyebrow}
           </p>
 
           <h1 className="mt-4 text-5xl font-semibold tracking-tight">
-            Bienvenido de nuevo.
+            {dashboardTitle}
           </h1>
 
           <p className="mt-4 max-w-2xl text-neutral-500">
-            Gestiona reservas, pacientes, clinicas y actividad interna desde un
-            panel limpio, seguro y en tiempo real.
+            {dashboardDescription}
           </p>
         </div>
 
@@ -181,7 +192,7 @@ export default async function PremiumAdminDashboard() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Operativa de hoy en Espana
+              {operationsLabel}
             </p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight">
               Agenda y tareas pendientes
@@ -344,11 +355,13 @@ export default async function PremiumAdminDashboard() {
           </p>
 
           <h2 className="mt-6 text-3xl font-semibold tracking-tight">
-            Sedes EncuentraTuClinica
+            {isSuperAdmin ? "Sedes EncuentraTuClinica" : "Mi clinica"}
           </h2>
 
           <p className="mt-4 text-neutral-500">
-            Revisa fichas, especialistas y tratamientos vinculados.
+            {isSuperAdmin
+              ? "Revisa fichas, especialistas y tratamientos vinculados."
+              : "Consulta la ficha publica, especialistas, tratamientos y estado de publicacion."}
           </p>
         </Link>
 
@@ -410,13 +423,43 @@ export default async function PremiumAdminDashboard() {
         </>
       )}
 
-      <div className="mt-10 grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
-        <AdminLiveNotifications initialNotifications={adminNotifications || []} />
+      {isSuperAdmin ? (
+        <>
+          <div className="mt-10 grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+            <AdminLiveNotifications initialNotifications={adminNotifications || []} />
 
-        <AdminActivityFeed initialLogs={activityLogs || []} />
-      </div>
+            <AdminActivityFeed initialLogs={activityLogs || []} />
+          </div>
 
-      <AdminDeliveryLog deliveries={notificationDeliveries || []} />
+          <AdminDeliveryLog deliveries={notificationDeliveries || []} />
+        </>
+      ) : (
+        <section className="mt-10 rounded-[36px] bg-white/70 p-8 shadow-[0_20px_70px_rgba(0,0,0,0.04)]">
+          <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+            Accesos rapidos
+          </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <Link
+              href="/admin/clinicas"
+              className="rounded-2xl bg-[#F7F5F2] p-5 transition hover:bg-black hover:text-white"
+            >
+              Mi clinica
+            </Link>
+            <Link
+              href="/admin/calendar"
+              className="rounded-2xl bg-[#F7F5F2] p-5 transition hover:bg-black hover:text-white"
+            >
+              Gestionar agenda
+            </Link>
+            <Link
+              href="/admin/pacientes"
+              className="rounded-2xl bg-[#F7F5F2] p-5 transition hover:bg-black hover:text-white"
+            >
+              Ver pacientes
+            </Link>
+          </div>
+        </section>
+      )}
     </AdminShell>
   );
 }

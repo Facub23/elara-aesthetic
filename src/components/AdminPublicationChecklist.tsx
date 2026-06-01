@@ -1,5 +1,3 @@
-"use client";
-
 type ChecklistItem = {
   label: string;
   done: boolean;
