@@ -11,8 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  async function handleLogin(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submitLogin() {
     setLoading(true);
     setErrorMessage("");
 
@@ -28,6 +27,11 @@ export default function LoginPage() {
     }
 
     window.location.href = "/admin";
+  }
+
+  async function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitLogin();
   }
 
   return (
@@ -121,7 +125,8 @@ export default function LoginPage() {
               )}
 
               <button
-                type="submit"
+                type="button"
+                onClick={submitLogin}
                 disabled={loading}
                 className="h-14 w-full rounded-2xl bg-black text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
