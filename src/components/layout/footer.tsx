@@ -3,155 +3,97 @@
 import Link from "next/link";
 
 export function Footer() {
-
   return (
-
-    <footer className="relative overflow-hidden border-t border-black/5 bg-white">
-
-      <div className="mx-auto max-w-7xl px-6 py-24">
-
-        <div className="grid gap-16 lg:grid-cols-4">
-
-          {/* BRAND */}
-
+    <footer
+      id="contacto"
+      className="relative overflow-hidden border-t border-black/5 bg-white"
+    >
+      <div className="mx-auto max-w-7xl px-6 py-20">
+        <div className="grid gap-12 lg:grid-cols-4">
           <div className="lg:col-span-2">
-
             <div className="text-4xl font-semibold tracking-tight">
-              ELARA
+              EncuentraTuClinica
             </div>
 
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-600">
-              Luxury platform specialized in premium aesthetic clinics,
-              facial harmonization and advanced aesthetic medicine.
+              Marketplace especializado en clinicas verificadas, tratamientos
+              de medicina estetica y especialistas premium.
             </p>
 
             <div className="mt-10 flex items-center gap-4">
-
-              <a
-                href="#"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-black/5 bg-[#f5f5f5] transition hover:scale-105"
-              >
-                IG
-              </a>
-
-              <a
-                href="#"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-black/5 bg-[#f5f5f5] transition hover:scale-105"
-              >
-                TW
-              </a>
-
-              <a
-                href="#"
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-black/5 bg-[#f5f5f5] transition hover:scale-105"
-              >
-                IN
-              </a>
-
+              {["IG", "TW", "IN"].map((label) => (
+                <a
+                  key={label}
+                  href="#contacto"
+                  aria-label={label}
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-black/5 bg-[#f5f5f5] transition hover:scale-105"
+                >
+                  {label}
+                </a>
+              ))}
             </div>
-
           </div>
 
-          {/* LINKS */}
-
           <div>
-
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400">
-              Navigation
+              Navegacion
             </div>
 
             <div className="mt-8 flex flex-col gap-5">
-
-              <Link
-                href="/"
-                className="text-neutral-600 transition hover:text-black"
-              >
-                Home
-              </Link>
-
-              <Link
-                href="/clinics"
-                className="text-neutral-600 transition hover:text-black"
-              >
-                Clínicas
-              </Link>
-
-              <Link
-                href="/clinics"
-                className="text-neutral-600 transition hover:text-black"
-              >
-                Especialistas
-              </Link>
-
-              <Link
-                href="/clinics"
-                className="text-neutral-600 transition hover:text-black"
-              >
-                Reservar
-              </Link>
-
+              {[
+                ["Inicio", "/"],
+                ["Clinicas", "/clinics"],
+                ["Tratamientos", "/tratamientos"],
+                ["Especialistas", "/especialistas"],
+                ["Mi cuenta", "/mi-cuenta"],
+              ].map(([label, href]) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="text-neutral-600 transition hover:text-black"
+                >
+                  {label}
+                </Link>
+              ))}
             </div>
-
           </div>
 
-          {/* CONTACT */}
-
           <div>
-
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400">
-              Contact
+              Contacto
             </div>
 
             <div className="mt-8 flex flex-col gap-5 text-neutral-600">
+              <a
+                href="mailto:hello@encuentratuclinica.es"
+                className="transition hover:text-black"
+              >
+                hello@encuentratuclinica.es
+              </a>
 
-              <div>
-                hello@elara-aesthetic.com
-              </div>
-
-              <div>
+              <a href="tel:+34600111222" className="transition hover:text-black">
                 +34 600 111 222
-              </div>
+              </a>
 
-              <div>
-                Madrid, Spain
-              </div>
-
+              <div>Madrid, Espana</div>
             </div>
-
           </div>
-
         </div>
 
-        {/* BOTTOM */}
-
-        <div className="mt-20 flex flex-col items-center justify-between gap-6 border-t border-black/5 pt-8 text-sm text-neutral-500 md:flex-row">
-
-          <div>
-            © 2026 ELARA Aesthetic. All rights reserved.
-          </div>
+        <div className="mt-16 flex flex-col items-center justify-between gap-6 border-t border-black/5 pt-8 text-sm text-neutral-500 md:flex-row">
+          <div>Copyright 2026 EncuentraTuClinica. All rights reserved.</div>
 
           <div className="flex items-center gap-6">
-
-            <Link
-              href="/"
-              className="transition hover:text-black"
-            >
-              Privacy
+            <Link href="/" className="transition hover:text-black">
+              Privacidad
             </Link>
 
-            <Link
-              href="/"
-              className="transition hover:text-black"
-            >
-              Terms
+            <Link href="/" className="transition hover:text-black">
+              Terminos
             </Link>
-
           </div>
-
         </div>
-
       </div>
-
     </footer>
   );
 }

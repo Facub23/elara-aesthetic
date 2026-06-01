@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
 
 import "./globals.css";
 
-import { Footer } from "@/components/layout/footer";
-import { PageTransition } from "@/components/providers/page-transition";
+import { PublicChrome } from "@/components/layout/public-chrome";
+import { getSiteUrl } from "@/lib/site-url";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,79 +16,85 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
 
   title: {
-    default: "ELARA Aesthetic",
-    template: "%s | ELARA Aesthetic",
+    default: "EncuentraTuClinica | Clinicas y especialistas premium en medicina estetica",
+    template: "%s | EncuentraTuClinica",
   },
 
   description:
-    "Luxury platform specialized in premium aesthetic clinics, facial harmonization, rejuvenation and advanced aesthetic medicine.",
+    "EncuentraTuClinica es una plataforma premium para descubrir clinicas, especialistas y tratamientos de medicina estetica avanzada en Espana.",
 
   keywords: [
-    "Aesthetic Clinics",
-    "Luxury Clinics",
-    "Facial Harmonization",
-    "Aesthetic Medicine",
-    "Botox",
-    "Premium Beauty",
-    "ELARA",
+    "EncuentraTuClinica",
+    "medicina estetica",
+    "clinicas esteticas",
+    "clinicas premium",
+    "especialistas estetica",
+    "botox",
+    "acido hialuronico",
+    "armonizacion facial",
+    "rinomodelacion",
+    "bioestimuladores",
+    "tratamientos esteticos",
+    "medicina estetica Espana",
   ],
 
-  authors: [
-    {
-      name: "ELARA",
-    },
-  ],
+  authors: [{ name: "EncuentraTuClinica" }],
+  creator: "EncuentraTuClinica",
+  publisher: "EncuentraTuClinica",
 
-  creator: "ELARA",
-  publisher: "ELARA",
+  applicationName: "EncuentraTuClinica",
+  category: "Health",
 
-  metadataBase: new URL("https://elara-aesthetic.com"),
+  alternates: {
+    canonical: "/",
+  },
 
   openGraph: {
-
-    title: "ELARA Aesthetic",
-
+    type: "website",
+    locale: "es_ES",
+    url: siteUrl,
+    siteName: "EncuentraTuClinica",
+    title: "EncuentraTuClinica | Medicina estetica premium",
     description:
-      "Discover premium aesthetic clinics and luxury specialists in advanced aesthetic medicine.",
-
-    url: "https://elara-aesthetic.com",
-
-    siteName: "ELARA Aesthetic",
-
+      "Descubre clinicas, especialistas y tratamientos premium de medicina estetica avanzada.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "ELARA Aesthetic",
+        alt: "EncuentraTuClinica Medicina Estetica Premium",
       },
     ],
-
-    locale: "en_US",
-    type: "website",
-
   },
 
   twitter: {
-
     card: "summary_large_image",
-
-    title: "ELARA Aesthetic",
-
+    title: "EncuentraTuClinica | Medicina estetica premium",
     description:
-      "Luxury aesthetic clinics platform.",
-
+      "Descubre clinicas, especialistas y tratamientos premium de medicina estetica avanzada.",
     images: ["/og-image.jpg"],
+  },
 
+  robots: {
+    index: true,
+    follow: true,
   },
 
   icons: {
     icon: "/favicon.ico",
   },
+};
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#F6F3EE",
 };
 
 export default function RootLayout({
@@ -97,44 +102,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
-
     <html
-      lang="en"
+      lang="es"
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-
       <body className="min-h-full bg-white text-black">
+        <div className="flex min-h-screen flex-col">
+          <div className="flex-1">{children}</div>
 
-        <PageTransition>
-
-          <div className="flex min-h-screen flex-col">
-
-            <div className="flex-1">
-
-              {children}
-
-            </div>
-
-            <Footer />
-
-          </div>
-
-        </PageTransition>
-
-        {/* FLOATING WHATSAPP */}
-
-        <Link
-          href="https://wa.me/34600111222"
-          target="_blank"
-          className="fixed bottom-6 right-6 z-[999] flex h-16 w-16 items-center justify-center rounded-full bg-black text-2xl text-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-110"
-        >
-          ✆
-        </Link>
+          <PublicChrome />
+        </div>
 
       </body>
-
     </html>
   );
 }

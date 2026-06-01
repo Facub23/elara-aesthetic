@@ -42,7 +42,7 @@ const [reservation, setReservation] =
             </div>
 
             <h2 className="mt-6 max-w-3xl text-5xl font-semibold leading-tight tracking-tight text-white md:text-7xl">
-              Elara Clinic Madrid
+              EncuentraTuClinica Clinic Madrid
             </h2>
 
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/80">
@@ -59,7 +59,7 @@ const [reservation, setReservation] =
               </button>
 
               <Link
-                href="/clinics/elara-clinic-madrid"
+                href="/clinics/encuentra-tu-clinica-madrid"
                 className="rounded-full border border-white/20 bg-white/10 px-8 py-4 font-medium text-white backdrop-blur-md transition hover:bg-white hover:text-black"
               >
                 Ver clínica
@@ -93,7 +93,8 @@ const [reservation, setReservation] =
     <BookingModal
   open={open}
   onClose={() => setOpen(false)}
-  clinicName="Elara Clinic Madrid"
+  clinicName="EncuentraTuClinica Clinic Madrid"
+  bookingSource="featured_clinic"
 />
 
     </>

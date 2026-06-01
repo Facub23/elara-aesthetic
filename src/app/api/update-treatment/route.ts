@@ -1,0 +1,139 @@
+import { NextResponse } from "next/server";
+
+import { createActivityLog } from "@/lib/activity";
+import { getAdminRequestContext } from "@/lib/admin-auth";
+import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
+async function saveTreatmentDuration(
+  name: string,
+  durationMinutes: number,
+  previousName?: string
+) {
+  const namesToCheck = [previousName, name].filter(Boolean) as string[];
+
+  for (const treatmentName of namesToCheck) {
+    const { data: existingDuration } = await supabase
+      .from("treatment_durations")
+      .select("id")
+      .ilike("treatment_name", treatmentName)
+      .maybeSingle();
+
+    if (existingDuration?.id) {
+      await supabase
+        .from("treatment_durations")
+        .update({
+          treatment_name: name,
+          duration_minutes: durationMinutes,
+        })
+        .eq("id", existingDuration.id);
+      return;
+    }
+  }
+
+  await supabase.from("treatment_durations").insert({
+    treatment_name: name,
+    duration_minutes: durationMinutes,
+  });
+}
+
+export async function POST(req: Request) {
+  const admin = await getAdminRequestContext();
+
+  if (admin?.role !== "super_admin") {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  }
+
+  try {
+    const body = await req.json();
+
+    const { id, name, previous_name, description, image, duration_minutes } = body;
+
+    if (!id || !name || !description || !image) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Faltan datos",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const durationMinutes = Math.max(Number(duration_minutes) || 60, 5);
+    const slug = slugify(name);
+    const { data: existingTreatment } = await supabase
+      .from("treatments")
+      .select("id")
+      .eq("slug", slug)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (existingTreatment) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Ya existe un tratamiento con ese nombre",
+        },
+        {
+          status: 409,
+        }
+      );
+    }
+
+    const { error } = await supabase
+      .from("treatments")
+      .update({
+        name,
+        slug,
+        description,
+        image,
+      })
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          error,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    await saveTreatmentDuration(name, durationMinutes, previous_name);
+
+    await createActivityLog({
+      title: "Tratamiento actualizado",
+      description: `${name} - ${durationMinutes} min`,
+      actor: admin,
+      entityType: "treatment",
+      entityId: id,
+    });
+
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (err) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: err,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}

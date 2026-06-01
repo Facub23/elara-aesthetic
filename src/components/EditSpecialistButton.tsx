@@ -1,0 +1,386 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
+
+import AdminEntityEditorShell from "@/components/AdminEntityEditorShell";
+import { showAdminToast } from "@/components/AdminToast";
+import ImageUpload from "@/components/ImageUpload";
+import {
+  getTreatmentName,
+  getTreatmentRawPrice,
+} from "@/lib/treatment-utils";
+
+const specialistEditorSteps = [
+  { id: "profile", label: "Perfil" },
+  { id: "clinic", label: "Clinica" },
+  { id: "treatments", label: "Tratamientos" },
+  { id: "metrics", label: "Metricas" },
+];
+
+function hasText(value?: string) {
+  return Boolean(value && value.trim().length > 0);
+}
+
+function normalize(value?: string | null) {
+  return value?.trim().toLowerCase() || "";
+}
+
+function getTreatmentPriceValue(
+  treatment: string | { price?: string | number | null }
+) {
+  return getTreatmentRawPrice(treatment);
+}
+
+export default function EditSpecialistButton({
+  specialist,
+  clinics,
+  treatments,
+}: {
+  specialist: any;
+  clinics: any[];
+  treatments: any[];
+}) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [activeStep, setActiveStep] = useState("profile");
+  const [form, setForm] = useState({
+    name: specialist.name || "",
+    specialty: specialist.specialty || "",
+    clinic_name: specialist.clinic_name || "",
+    image: specialist.image || "",
+    slug: specialist.slug || "",
+    bio: specialist.bio || "",
+    rating: specialist.rating || "",
+    reviews_count: specialist.reviews_count || "",
+    treatments: specialist.treatments || [],
+  });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  function closeEditor() {
+    setOpen(false);
+    setActiveStep("profile");
+  }
+
+  function toggleTreatment(treatmentName: string) {
+    const exists = form.treatments.some(
+      (item: any) => normalize(getTreatmentName(item)) === normalize(treatmentName)
+    );
+
+    setForm({
+      ...form,
+      treatments: exists
+        ? form.treatments.filter(
+            (item: any) =>
+              normalize(getTreatmentName(item)) !== normalize(treatmentName)
+          )
+        : [...form.treatments, { name: treatmentName, price: "" }],
+    });
+  }
+
+  function updateTreatmentPrice(treatmentName: string, price: string) {
+    setForm({
+      ...form,
+      treatments: form.treatments.map((item: any) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? { name: treatmentName, price }
+          : item
+      ),
+    });
+  }
+
+  async function saveSpecialist() {
+    if (
+      !hasText(form.name) ||
+      !hasText(form.specialty) ||
+      !hasText(form.clinic_name) ||
+      !hasText(form.image) ||
+      !hasText(form.bio) ||
+      form.treatments.length === 0
+    ) {
+      showAdminToast(
+        "Completa perfil, clinica, imagen, bio y al menos un tratamiento",
+        "error"
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    const res = await fetch("/api/update-specialist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: specialist.id,
+        ...form,
+      }),
+    });
+
+    setLoading(false);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showAdminToast(data.error || "Error guardando especialista", "error");
+      return;
+    }
+
+    showAdminToast("Especialista actualizado", "success");
+    closeEditor();
+    router.refresh();
+  }
+
+  const editor = (
+    <>
+      {open && (
+        <AdminEntityEditorShell
+          title="Editar especialista"
+          steps={specialistEditorSteps}
+          activeStep={activeStep}
+          onStepChange={setActiveStep}
+          onCancel={closeEditor}
+          primaryAction={{
+            label: "Guardar cambios",
+            loadingLabel: "Guardando...",
+            loading,
+            onClick: saveSpecialist,
+          }}
+        >
+          <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
+              {activeStep === "profile" && (
+                <>
+                  <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+                    Perfil publico
+                  </p>
+                  <h3 className="mt-3 text-3xl font-semibold">
+                    Datos del especialista
+                  </h3>
+
+                  <div className="mt-10 grid gap-5">
+                    <input
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="Nombre"
+                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                    <input
+                      value={form.specialty}
+                      onChange={(e) =>
+                        setForm({ ...form, specialty: e.target.value })
+                      }
+                      placeholder="Especialidad"
+                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                    <input
+                      value={form.slug}
+                      onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                      placeholder="Slug"
+                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                    <ImageUpload
+                      value={form.image}
+                      onChange={(url) => setForm({ ...form, image: url })}
+                    />
+                    <textarea
+                      rows={8}
+                      value={form.bio}
+                      onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                      placeholder="Biografia"
+                      className="w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] p-6 outline-none"
+                    />
+                  </div>
+                </>
+              )}
+
+              {activeStep === "clinic" && (
+                <>
+                  <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+                    Clinica
+                  </p>
+                  <h3 className="mt-3 text-3xl font-semibold">
+                    Clinica asociada
+                  </h3>
+                  <select
+                    value={form.clinic_name}
+                    onChange={(e) =>
+                      setForm({ ...form, clinic_name: e.target.value })
+                    }
+                    className="mt-10 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                  >
+                    {clinics.map((clinic) => (
+                      <option key={clinic.id} value={clinic.name}>
+                        {clinic.name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+
+              {activeStep === "treatments" && (
+                <>
+                  <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+                    Marketplace
+                  </p>
+                  <h3 className="mt-3 text-3xl font-semibold">
+                    Tratamientos asignados
+                  </h3>
+                  <p className="mt-4 text-sm leading-6 text-neutral-600">
+                    Estos tratamientos determinan en que fichas publicas aparece
+                    el especialista y que puede reservar el paciente.
+                  </p>
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    {treatments.map((treatment) => {
+                      const active = form.treatments.some(
+                        (item: any) =>
+                          normalize(getTreatmentName(item)) ===
+                          normalize(treatment.name)
+                      );
+
+                      return (
+                        <button
+                          key={treatment.id}
+                          type="button"
+                          onClick={() => toggleTreatment(treatment.name)}
+                          className={`rounded-full px-5 py-3 text-sm transition-all duration-300 ${
+                            active ? "bg-black text-white" : "bg-[#F3EFE9]"
+                          }`}
+                        >
+                          {treatment.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {form.treatments.length > 0 && (
+                    <div className="mt-8 grid gap-4">
+                      {form.treatments.map((treatment: any) => {
+                        const treatmentName = getTreatmentName(treatment);
+
+                        return (
+                          <div
+                            key={treatmentName}
+                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_180px]"
+                          >
+                            <div>
+                              <div className="font-medium">{treatmentName}</div>
+                              <div className="mt-1 text-xs text-neutral-500">
+                                Precio desde para marketplace.
+                              </div>
+                            </div>
+
+                            <input
+                              value={getTreatmentPriceValue(treatment)}
+                              onChange={(e) =>
+                                updateTreatmentPrice(
+                                  treatmentName,
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Ej: 290"
+                              className="h-12 rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {activeStep === "metrics" && (
+                <>
+                  <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+                    Metricas
+                  </p>
+                  <h3 className="mt-3 text-3xl font-semibold">
+                    Rating y reviews
+                  </h3>
+                  <div className="mt-10 grid gap-5">
+                    <input
+                      value={form.rating}
+                      onChange={(e) => setForm({ ...form, rating: e.target.value })}
+                      placeholder="Rating"
+                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                    <input
+                      value={form.reviews_count}
+                      onChange={(e) =>
+                        setForm({ ...form, reviews_count: e.target.value })
+                      }
+                      placeholder="Reviews"
+                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="space-y-8">
+              <div className="overflow-hidden rounded-[40px] border border-black/5 bg-white/70 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
+                <div className="relative h-[360px] overflow-hidden">
+                  <img
+                    src={form.image || "https://placehold.co/1200x900?text=EncuentraTuClinica"}
+                    alt={form.name}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                    <div className="text-sm uppercase tracking-[0.25em] text-white/70">
+                      {form.specialty}
+                    </div>
+                    <div className="mt-3 text-4xl font-semibold">
+                      {form.name}
+                    </div>
+                    <div className="mt-3 text-white/80">
+                      {form.clinic_name}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
+                <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+                  Tratamientos
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {form.treatments.map((treatment: any) => (
+                    <span
+                      key={getTreatmentName(treatment)}
+                      className="rounded-full bg-[#F3EFE9] px-3 py-2 text-xs"
+                    >
+                      {getTreatmentName(treatment)}
+                      {getTreatmentPriceValue(treatment)
+                        ? ` - desde ${getTreatmentPriceValue(treatment)} EUR`
+                        : ""}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </AdminEntityEditorShell>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      <button
+        onClick={() => setOpen(true)}
+        className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm transition-all duration-300 hover:bg-black hover:text-white"
+      >
+        Editar
+      </button>
+
+      {mounted ? createPortal(editor, document.body) : null}
+    </>
+  );
+}
