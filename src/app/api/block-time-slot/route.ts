@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { createActivityLog } from "@/lib/activity";
 import { getAdminRequestContext } from "@/lib/admin-auth";
+import { hasAdminPermission } from "@/lib/admin-access";
+import { isSpecialistInAdminScope } from "@/lib/admin-scope";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
@@ -9,6 +11,10 @@ export async function POST(req: Request) {
 
   if (!admin) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasAdminPermission(admin, "calendar")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
@@ -57,6 +63,17 @@ export async function POST(req: Request) {
         },
         {
           status: 500,
+        }
+      );
+    }
+
+    if (!(await isSpecialistInAdminScope(admin, specialist_name))) {
+      return NextResponse.json(
+        {
+          error: "Especialista no encontrado",
+        },
+        {
+          status: 404,
         }
       );
     }

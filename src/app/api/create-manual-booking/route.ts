@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
 import { createActivityLog } from "@/lib/activity";
+import { hasAdminPermission } from "@/lib/admin-access";
+import { getAssignedClinicName } from "@/lib/admin-scope";
 import {
   getTreatmentDuration,
   validateBookingSlot,
@@ -36,7 +38,7 @@ export async function POST(req: Request) {
     const { data: adminUser } = user
       ? await supabase
           .from("admin_users")
-          .select("id,role")
+          .select("id,role,clinic_id,access_role,permissions,status")
           .eq("user_id", user.id)
           .maybeSingle()
       : { data: null };
@@ -45,6 +47,18 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+
+    if (!hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "bookings")) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
       );
     }
 
@@ -59,6 +73,21 @@ export async function POST(req: Request) {
       booking_time,
       treatment,
     } = body;
+
+    const assignedClinicName = await getAssignedClinicName({
+      role: adminUser.role,
+      clinicId: adminUser.clinic_id,
+    });
+
+    if (assignedClinicName && assignedClinicName !== clinic_name) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "No puedes crear reservas para otra clinica",
+        },
+        { status: 403 }
+      );
+    }
 
     if (
       !clinic_name ||

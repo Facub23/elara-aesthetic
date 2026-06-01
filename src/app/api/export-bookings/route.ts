@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { hasAdminPermission } from "@/lib/admin-access";
+import { getAssignedClinicName } from "@/lib/admin-scope";
 
 function escapeCsvValue(value: unknown) {
   const text = String(value ?? "");
@@ -51,13 +53,40 @@ export async function GET() {
       );
     }
 
-    const { data: bookings } =
-      await supabase
-        .from("bookings")
-        .select("*")
-        .order("created_at", {
-          ascending: false,
-        });
+    if (!hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "bookings")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    const assignedClinicName = await getAssignedClinicName({
+      role: adminUser.role,
+      clinicId: adminUser.clinic_id,
+    });
+
+    let bookingsQuery = supabase
+      .from("bookings")
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
+
+    if (assignedClinicName) {
+      bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinicName);
+    }
+
+    const { data: bookings } = await bookingsQuery;
 
     const headers = [
       "Paciente",

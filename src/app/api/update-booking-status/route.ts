@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { createActivityLog } from "@/lib/activity";
+import { hasAdminPermission } from "@/lib/admin-access";
+import { isBookingInAdminScope } from "@/lib/admin-scope";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingUpdated } from "@/lib/booking-notifications";
 import { getCanonicalAdminBookingStatus } from "@/lib/booking-status";
@@ -45,6 +47,23 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "bookings")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden",
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
     const body = await req.json();
     const id = Number(body.id);
     const status = getCanonicalAdminBookingStatus(body.status);
@@ -57,6 +76,30 @@ export async function POST(req: Request) {
         },
         {
           status: 400,
+        }
+      );
+    }
+
+    const { data: currentBooking } = await supabase
+      .from("bookings")
+      .select("id,clinic_name")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (
+      !currentBooking ||
+      !(await isBookingInAdminScope({
+        role: adminUser.role,
+        clinicId: adminUser.clinic_id,
+      }, currentBooking))
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Reserva no encontrada",
+        },
+        {
+          status: 404,
         }
       );
     }
