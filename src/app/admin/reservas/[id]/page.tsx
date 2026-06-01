@@ -123,6 +123,18 @@ export default async function AdminBookingDetailPage({
   if (!booking) notFound();
 
   if (!adminUser.role || adminUser.role !== "super_admin") {
+    const { data: specialist } = adminUser.specialist_id
+      ? await supabase
+          .from("specialists")
+          .select("name")
+          .eq("id", adminUser.specialist_id)
+          .maybeSingle()
+      : { data: null };
+
+    if (specialist?.name && booking.specialist_name !== specialist.name) {
+      notFound();
+    }
+
     const { data: clinic } = adminUser.clinic_id
       ? await supabase
           .from("clinics")
@@ -131,7 +143,7 @@ export default async function AdminBookingDetailPage({
           .maybeSingle()
       : { data: null };
 
-    if (clinic?.name && booking.clinic_name !== clinic.name) {
+    if (!specialist?.name && clinic?.name && booking.clinic_name !== clinic.name) {
       notFound();
     }
   }

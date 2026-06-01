@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
     const { data: currentBooking } = await supabase
       .from("bookings")
-      .select("id,clinic_name")
+      .select("id,clinic_name,specialist_name")
       .eq("id", id)
       .maybeSingle();
 
@@ -91,6 +91,8 @@ export async function POST(req: Request) {
       !(await isBookingInAdminScope({
         role: adminUser.role,
         clinicId: adminUser.clinic_id,
+        specialistId: adminUser.specialist_id,
+        accessRole: adminUser.access_role,
       }, currentBooking))
     ) {
       return NextResponse.json(

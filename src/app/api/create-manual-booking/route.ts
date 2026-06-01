@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     const { data: adminUser } = user
       ? await supabase
           .from("admin_users")
-          .select("id,role,clinic_id,access_role,permissions,status")
+          .select("id,role,clinic_id,specialist_id,access_role,permissions,status")
           .eq("user_id", user.id)
           .maybeSingle()
       : { data: null };
@@ -87,6 +87,26 @@ export async function POST(req: Request) {
         },
         { status: 403 }
       );
+    }
+
+    if (adminUser.access_role === "specialist") {
+      const { data: assignedSpecialist } = adminUser.specialist_id
+        ? await supabase
+            .from("specialists")
+            .select("name")
+            .eq("id", adminUser.specialist_id)
+            .maybeSingle()
+        : { data: null };
+
+      if (!assignedSpecialist?.name || assignedSpecialist.name !== specialist_name) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "No puedes crear reservas para otro especialista",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     if (

@@ -13,17 +13,27 @@ type AdminUser = {
   role: string;
   access_role?: string | null;
   clinic_id?: number | null;
+  specialist_id?: string | null;
   permissions?: string[] | null;
   status?: string | null;
   created_at: string;
 };
 
+type SpecialistOption = {
+  id: number;
+  name: string;
+  clinic_id?: number | null;
+  clinic_name?: string | null;
+};
+
 export default function AdminsRealtimeList({
   initialAdmins,
   currentAdminId,
+  specialists,
 }: {
   initialAdmins: AdminUser[];
   currentAdminId: string;
+  specialists: SpecialistOption[];
 }) {
   const [admins, setAdmins] = useState<AdminUser[]>(initialAdmins);
 
@@ -121,6 +131,12 @@ export default function AdminsRealtimeList({
                   Clinica #{admin.clinic_id}
                 </span>
               ) : null}
+              {admin.specialist_id ? (
+                <span className="rounded-full bg-white px-3 py-1 text-neutral-600">
+                  Especialista #
+                  {admin.specialist_id}
+                </span>
+              ) : null}
               {(admin.permissions || []).slice(0, 4).map((permission) => (
                 <span
                   key={permission}
@@ -138,6 +154,8 @@ export default function AdminsRealtimeList({
             currentAccessRole={admin.access_role || "clinic_manager"}
             currentPermissions={admin.permissions || []}
             currentClinicId={admin.clinic_id || null}
+            currentSpecialistId={admin.specialist_id || null}
+            specialists={specialists}
             isCurrentUser={String(admin.id) === currentAdminId}
           />
         </div>

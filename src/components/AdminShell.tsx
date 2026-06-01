@@ -115,7 +115,15 @@ export default function AdminShell({
       visible: isSuperAdmin,
     },
       ].filter((item) => item.visible)
-    : [
+    : accessRole === "specialist"
+      ? [
+          {
+            name: "Mi agenda",
+            href: "/admin/calendar",
+            visible: true,
+          },
+        ]
+      : [
         {
           name: "Mi clinica",
           href: "/admin/clinicas",

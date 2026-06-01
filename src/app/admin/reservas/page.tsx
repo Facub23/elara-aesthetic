@@ -118,6 +118,12 @@ export default async function AdminReservasPage({
       ascending: true,
     });
 
+  const assignedSpecialist = adminUser.specialist_id
+    ? (specialists || []).find(
+        (specialist) => String(specialist.id) === String(adminUser.specialist_id)
+      )
+    : null;
+
   const { data: treatments } = await supabase
     .from("treatments")
     .select("*")
@@ -125,9 +131,21 @@ export default async function AdminReservasPage({
       ascending: true,
     });
 
+  const visibleSpecialists = assignedSpecialist
+    ? [assignedSpecialist]
+    : !isSuperAdmin && assignedClinic?.name
+      ? (specialists || []).filter(
+          (specialist) =>
+            specialist.clinic_name === assignedClinic.name ||
+            Number(specialist.clinic_id || 0) === Number(assignedClinic.id)
+        )
+      : specialists || [];
+
   let query = supabase.from("bookings").select("*");
 
-  if (!isSuperAdmin && assignedClinic?.name) {
+  if (assignedSpecialist?.name) {
+    query = query.eq("specialist_name", assignedSpecialist.name);
+  } else if (!isSuperAdmin && assignedClinic?.name) {
     query = query.eq("clinic_name", assignedClinic.name);
   }
 
@@ -260,7 +278,7 @@ export default async function AdminReservasPage({
             </Link>
             <CreateManualBookingButton
               clinics={visibleClinics}
-              specialists={specialists || []}
+              specialists={visibleSpecialists}
               treatments={treatments || []}
             />
           </div>
@@ -339,7 +357,7 @@ export default async function AdminReservasPage({
             currentSpecialist={selectedSpecialist}
             currentDate={selectedDate}
             clinics={visibleClinics}
-            specialists={specialists || []}
+            specialists={visibleSpecialists}
           />
         </div>
 

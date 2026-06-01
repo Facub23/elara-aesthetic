@@ -116,6 +116,14 @@ export default async function AdminPacientesPage({
     ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
     : null;
 
+  const { data: assignedSpecialist } = adminUser.specialist_id
+    ? await supabase
+        .from("specialists")
+        .select("name")
+        .eq("id", adminUser.specialist_id)
+        .maybeSingle()
+    : { data: null };
+
   let bookingsQuery = supabase
     .from("bookings")
     .select("*")
@@ -123,7 +131,9 @@ export default async function AdminPacientesPage({
       ascending: false,
     });
 
-  if (!isSuperAdmin && assignedClinic?.name) {
+  if (assignedSpecialist?.name) {
+    bookingsQuery = bookingsQuery.eq("specialist_name", assignedSpecialist.name);
+  } else if (!isSuperAdmin && assignedClinic?.name) {
     bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
   }
 

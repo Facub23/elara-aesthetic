@@ -16,6 +16,7 @@ type Clinic = {
 type Specialist = {
   id: string | number;
   name: string;
+  clinic_id?: string | number | null;
   clinic_name?: string | null;
 };
 
@@ -320,13 +321,18 @@ export default function AdminAdvancedCalendarPage({
   permissions,
   status,
   clinicId,
+  specialistId,
+  specialistName,
 }: {
   isSuperAdmin: boolean;
   accessRole?: string | null;
   permissions?: string[] | null;
   status?: string | null;
   clinicId?: number | null;
+  specialistId?: string | number | null;
+  specialistName?: string | null;
 }) {
+  const isSpecialistAccess = accessRole === "specialist";
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [specialists, setSpecialists] =
     useState<Specialist[]>([]);
@@ -567,13 +573,38 @@ export default function AdminAdvancedCalendarPage({
           .select("*")
           .order("name");
 
+      const visibleClinics =
+        !isSuperAdmin && clinicId
+          ? ((clinicsData || []) as Clinic[]).filter(
+              (clinic) => Number(clinic.id) === Number(clinicId)
+            )
+          : ((clinicsData || []) as Clinic[]);
+
       if (clinicsData) {
-        setClinics(clinicsData as Clinic[]);
+        setClinics(visibleClinics);
       }
 
       if (specialistsData) {
+        const scopedSpecialists = ((specialistsData || []) as Specialist[])
+          .filter((specialist) => {
+            if (isSpecialistAccess && specialistId) {
+              return String(specialist.id) === String(specialistId);
+            }
+
+            if (!isSuperAdmin && clinicId) {
+              return visibleClinics.some(
+                (clinic) =>
+                  String(specialist.clinic_name || "") === clinic.name ||
+                  Number((specialist as Specialist & { clinic_id?: number | string }).clinic_id || 0) ===
+                    Number(clinicId)
+              );
+            }
+
+            return true;
+          });
+
         setSpecialists(
-          specialistsData as Specialist[]
+          scopedSpecialists
         );
       }
 
@@ -585,18 +616,28 @@ export default function AdminAdvancedCalendarPage({
     }
 
     loadData();
-  }, []);
+  }, [clinicId, isSpecialistAccess, isSuperAdmin, specialistId]);
 
   useEffect(() => {
+    if (!isSpecialistAccess || !specialistName) return;
+
+    setSelectedSpecialist(specialistName);
+  }, [isSpecialistAccess, specialistName]);
+
+  useEffect(() => {
+    if (isSpecialistAccess) return;
+
     const params = new URLSearchParams(
       window.location.search
     );
     setSpecialistFromUrl(
       params.get("specialist") || ""
     );
-  }, []);
+  }, [isSpecialistAccess]);
 
   useEffect(() => {
+    if (isSpecialistAccess) return;
+
     if (
       !specialistFromUrl ||
       specialists.length === 0 ||
@@ -619,6 +660,7 @@ export default function AdminAdvancedCalendarPage({
     specialistFromUrl,
     specialists,
     selectedSpecialist,
+    isSpecialistAccess,
   ]);
 
   useEffect(() => {
@@ -736,6 +778,12 @@ export default function AdminAdvancedCalendarPage({
       ),
     [selectedSpecialist, specialists]
   );
+
+  useEffect(() => {
+    if (!isSpecialistAccess || !selectedSpecialistProfile?.clinic_name) return;
+
+    setSelectedClinic(selectedSpecialistProfile.clinic_name);
+  }, [isSpecialistAccess, selectedSpecialistProfile?.clinic_name]);
 
   const activeAvailability = useMemo(
     () => availability.filter(isAvailabilityActive),
@@ -1868,7 +1916,9 @@ export default function AdminAdvancedCalendarPage({
       <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
         <select
           value={selectedClinic}
+          disabled={isSpecialistAccess}
           onChange={(e) => {
+            if (isSpecialistAccess) return;
             setSelectedClinic(
               e.target.value
             );
@@ -1885,7 +1935,7 @@ export default function AdminAdvancedCalendarPage({
               query ? `/admin/calendar?${query}` : "/admin/calendar"
             );
           }}
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none disabled:bg-neutral-100 disabled:text-neutral-500"
         >
           <option value="">
             Seleccionar clínica
@@ -1903,12 +1953,13 @@ export default function AdminAdvancedCalendarPage({
 
         <select
           value={selectedSpecialist}
+          disabled={isSpecialistAccess}
           onChange={(e) =>
             handleSelectSpecialist(
               e.target.value
             )
           }
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none disabled:bg-neutral-100 disabled:text-neutral-500"
         >
           <option value="">
             Seleccionar especialista

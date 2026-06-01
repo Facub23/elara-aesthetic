@@ -33,7 +33,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const { adminId, role, accessRole, permissions, clinicId } = await req.json();
+    const { adminId, role, accessRole, permissions, clinicId, specialistId } =
+      await req.json();
 
     if (!["staff", "super_admin"].includes(role)) {
       return NextResponse.json(
@@ -53,6 +54,44 @@ export async function POST(req: Request) {
         { success: false, error: "Rango de acceso no valido" },
         { status: 400 }
       );
+    }
+
+    const normalizedSpecialistId =
+      role === "super_admin" || normalizedAccessRole !== "specialist"
+        ? null
+        : String(specialistId || "").trim() || null;
+
+    if (role !== "super_admin" && normalizedAccessRole === "specialist" && !normalizedSpecialistId) {
+      return NextResponse.json(
+        { success: false, error: "Selecciona el especialista asociado" },
+        { status: 400 }
+      );
+    }
+
+    if (normalizedSpecialistId) {
+      const { data: specialist } = await supabase
+        .from("specialists")
+        .select("id,clinic_id")
+        .eq("id", normalizedSpecialistId)
+        .maybeSingle();
+
+      if (!specialist) {
+        return NextResponse.json(
+          { success: false, error: "Especialista no encontrado" },
+          { status: 400 }
+        );
+      }
+
+      if (
+        clinicId &&
+        specialist.clinic_id &&
+        Number(specialist.clinic_id) !== Number(clinicId)
+      ) {
+        return NextResponse.json(
+          { success: false, error: "El especialista no pertenece a la clinica asignada" },
+          { status: 400 }
+        );
+      }
     }
 
     const { data: targetAdmin } = await supabase
@@ -96,6 +135,7 @@ export async function POST(req: Request) {
         access_role: normalizedAccessRole,
         permissions: role === "super_admin" ? [] : filterAdminPermissions(permissions),
         clinic_id: Number(clinicId || 0) || null,
+        specialist_id: normalizedSpecialistId,
       })
       .eq("id", adminId)
       .select()

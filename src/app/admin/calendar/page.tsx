@@ -34,6 +34,15 @@ export default async function AdminCalendarPage() {
     redirect("/admin");
   }
 
+  const { data: assignedSpecialist } =
+    adminUser.access_role === "specialist" && adminUser.specialist_id
+      ? await supabase
+          .from("specialists")
+          .select("id,name")
+          .eq("id", adminUser.specialist_id)
+          .maybeSingle()
+      : { data: null };
+
   return (
     <AdminAdvancedCalendarPage
       isSuperAdmin={adminUser.role === "super_admin"}
@@ -41,6 +50,8 @@ export default async function AdminCalendarPage() {
       permissions={adminUser.permissions}
       status={adminUser.status}
       clinicId={adminUser.clinic_id}
+      specialistId={adminUser.specialist_id}
+      specialistName={assignedSpecialist?.name || null}
     />
   );
 }

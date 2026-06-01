@@ -48,6 +48,17 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!(await isSpecialistInAdminScope(admin, specialist_name))) {
+      return NextResponse.json(
+        {
+          error: "Especialista no encontrado",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
     const { error } = await supabase.from("blocked_time_slots").insert({
       specialist_name,
       blocked_date,
@@ -63,17 +74,6 @@ export async function POST(req: Request) {
         },
         {
           status: 500,
-        }
-      );
-    }
-
-    if (!(await isSpecialistInAdminScope(admin, specialist_name))) {
-      return NextResponse.json(
-        {
-          error: "Especialista no encontrado",
-        },
-        {
-          status: 404,
         }
       );
     }

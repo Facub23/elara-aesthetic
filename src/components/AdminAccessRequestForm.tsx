@@ -13,9 +13,17 @@ type ClinicOption = {
   city?: string | null;
 };
 
+type SpecialistOption = {
+  id: string | number;
+  name: string;
+  clinic_id?: number | null;
+  clinic_name?: string | null;
+};
+
 export default function AdminAccessRequestForm() {
   const [open, setOpen] = useState(false);
   const [clinics, setClinics] = useState<ClinicOption[]>([]);
+  const [specialists, setSpecialists] = useState<SpecialistOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
@@ -27,6 +35,7 @@ export default function AdminAccessRequestForm() {
     clinicId: "",
     clinicName: "",
     accessRole: "clinic_manager",
+    specialistId: "",
     message: "",
   });
   const [permissions, setPermissions] = useState<string[]>([
@@ -39,16 +48,42 @@ export default function AdminAccessRequestForm() {
 
     fetch("/api/public-marketplace-data")
       .then((response) => response.json())
-      .then((data) => setClinics(data.clinics || []))
-      .catch(() => setClinics([]));
+      .then((data) => {
+        setClinics(data.clinics || []);
+        setSpecialists(data.specialists || []);
+      })
+      .catch(() => {
+        setClinics([]);
+        setSpecialists([]);
+      });
   }, [open]);
 
   function updateField(name: string, value: string) {
     setForm((current) => ({
       ...current,
       [name]: value,
+      ...(name === "clinicId" ? { specialistId: "" } : {}),
+      ...(name === "accessRole" && value !== "specialist"
+        ? { specialistId: "" }
+        : {}),
     }));
   }
+
+  const selectedClinic = clinics.find(
+    (clinic) => String(clinic.id) === form.clinicId
+  );
+  const availableSpecialists = specialists.filter((specialist) => {
+    if (!form.clinicId && !form.clinicName) return true;
+
+    const sameClinicId =
+      form.clinicId &&
+      specialist.clinic_id &&
+      String(specialist.clinic_id) === form.clinicId;
+    const sameClinicName =
+      selectedClinic?.name && specialist.clinic_name === selectedClinic.name;
+
+    return Boolean(sameClinicId || sameClinicName);
+  });
 
   function togglePermission(value: string) {
     setPermissions((current) =>
@@ -190,6 +225,25 @@ export default function AdminAccessRequestForm() {
               </option>
             ))}
           </select>
+
+          {form.accessRole === "specialist" ? (
+            <select
+              required
+              value={form.specialistId}
+              onChange={(event) =>
+                updateField("specialistId", event.target.value)
+              }
+              className="w-full rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            >
+              <option value="">Selecciona tu perfil de especialista</option>
+              {availableSpecialists.map((specialist) => (
+                <option key={specialist.id} value={specialist.id}>
+                  {specialist.name}
+                  {specialist.clinic_name ? ` - ${specialist.clinic_name}` : ""}
+                </option>
+              ))}
+            </select>
+          ) : null}
 
           <div className="grid gap-2 sm:grid-cols-2">
             {ADMIN_PERMISSION_OPTIONS.map((permission) => (

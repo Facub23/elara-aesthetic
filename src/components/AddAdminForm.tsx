@@ -14,6 +14,13 @@ type ClinicOption = {
   city?: string | null;
 };
 
+type SpecialistOption = {
+  id: string | number;
+  name: string;
+  clinic_id?: number | null;
+  clinic_name?: string | null;
+};
+
 export default function AddAdminForm() {
   const [email, setEmail] =
     useState("");
@@ -30,11 +37,17 @@ export default function AddAdminForm() {
   const [clinicId, setClinicId] =
     useState("");
 
+  const [specialistId, setSpecialistId] =
+    useState("");
+
   const [permissions, setPermissions] =
     useState<string[]>(["bookings", "calendar"]);
 
   const [clinics, setClinics] =
     useState<ClinicOption[]>([]);
+
+  const [specialists, setSpecialists] =
+    useState<SpecialistOption[]>([]);
 
   const [loading, setLoading] =
     useState(false);
@@ -42,9 +55,25 @@ export default function AddAdminForm() {
   useEffect(() => {
     fetch("/api/public-marketplace-data")
       .then((response) => response.json())
-      .then((data) => setClinics(data.clinics || []))
-      .catch(() => setClinics([]));
+      .then((data) => {
+        setClinics(data.clinics || []);
+        setSpecialists(data.specialists || []);
+      })
+      .catch(() => {
+        setClinics([]);
+        setSpecialists([]);
+      });
   }, []);
+
+  const selectedClinic = clinics.find((clinic) => String(clinic.id) === clinicId);
+  const availableSpecialists = specialists.filter((specialist) => {
+    if (!clinicId) return true;
+
+    return (
+      String(specialist.clinic_id || "") === clinicId ||
+      (selectedClinic?.name && specialist.clinic_name === selectedClinic.name)
+    );
+  });
 
   function togglePermission(value: string) {
     setPermissions((current) =>
@@ -92,6 +121,7 @@ export default function AddAdminForm() {
           role,
           accessRole,
           clinicId,
+          specialistId,
           permissions,
         }),
       }
@@ -141,6 +171,7 @@ export default function AddAdminForm() {
     setRole("staff");
     setAccessRole("clinic_manager");
     setClinicId("");
+    setSpecialistId("");
     setPermissions(["bookings", "calendar"]);
   }
 
@@ -211,7 +242,10 @@ export default function AddAdminForm() {
               <select
                 value={clinicId}
                 onChange={(e) =>
-                  setClinicId(e.target.value)
+                  {
+                    setClinicId(e.target.value);
+                    setSpecialistId("");
+                  }
                 }
                 className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
               >
@@ -230,7 +264,12 @@ export default function AddAdminForm() {
               <select
                 value={accessRole}
                 onChange={(e) =>
-                  setAccessRole(e.target.value)
+                  {
+                    setAccessRole(e.target.value);
+                    if (e.target.value !== "specialist") {
+                      setSpecialistId("");
+                    }
+                  }
                 }
                 className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
               >
@@ -240,6 +279,22 @@ export default function AddAdminForm() {
                   </option>
                 ))}
               </select>
+
+              {accessRole === "specialist" ? (
+                <select
+                  value={specialistId}
+                  onChange={(e) => setSpecialistId(e.target.value)}
+                  className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
+                >
+                  <option value="">Especialista asociado</option>
+                  {availableSpecialists.map((specialist) => (
+                    <option key={specialist.id} value={specialist.id}>
+                      {specialist.name}
+                      {specialist.clinic_name ? ` - ${specialist.clinic_name}` : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
 
               <div className="grid gap-2 sm:grid-cols-2">
                 {ADMIN_PERMISSION_OPTIONS.map((permission) => (

@@ -103,6 +103,13 @@ export default async function PatientDetailPage({
   const assignedClinic = adminUser.clinic_id
     ? clinicCatalog?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
     : null;
+  const { data: assignedSpecialist } = adminUser.specialist_id
+    ? await supabase
+        .from("specialists")
+        .select("name")
+        .eq("id", adminUser.specialist_id)
+        .maybeSingle()
+    : { data: null };
 
   let bookingsQuery = supabase
     .from("bookings")
@@ -112,11 +119,17 @@ export default async function PatientDetailPage({
       ascending: false,
     });
 
-  if (!isSuperAdmin && assignedClinic?.name) {
+  if (assignedSpecialist?.name) {
+    bookingsQuery = bookingsQuery.eq("specialist_name", assignedSpecialist.name);
+  } else if (!isSuperAdmin && assignedClinic?.name) {
     bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
   }
 
   const { data: bookings } = await bookingsQuery;
+
+  if (!isSuperAdmin && (!bookings || bookings.length === 0)) {
+    redirect("/admin/pacientes");
+  }
 
   const { data: notes } = await supabase
     .from("patient_notes")

@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const { data: adminUser } = user
       ? await supabase
           .from("admin_users")
-          .select("id,role,clinic_id,access_role,permissions,status")
+          .select("id,role,clinic_id,specialist_id,access_role,permissions,status")
           .eq("user_id", user.id)
           .maybeSingle()
       : { data: null };
@@ -120,6 +120,8 @@ export async function POST(req: Request) {
     if (!(await isBookingInAdminScope({
       role: adminUser.role,
       clinicId: adminUser.clinic_id,
+      specialistId: adminUser.specialist_id,
+      accessRole: adminUser.access_role,
     }, currentBooking))) {
       return NextResponse.json({ error: "Reserva no encontrada" }, { status: 404 });
     }

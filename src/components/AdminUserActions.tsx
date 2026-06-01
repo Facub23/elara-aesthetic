@@ -14,6 +14,8 @@ export default function AdminUserActions({
   currentAccessRole,
   currentPermissions,
   currentClinicId,
+  currentSpecialistId,
+  specialists,
   isCurrentUser,
 }: {
   adminId: string;
@@ -21,6 +23,13 @@ export default function AdminUserActions({
   currentAccessRole: string;
   currentPermissions: string[];
   currentClinicId: number | null;
+  currentSpecialistId: string | null;
+  specialists: {
+    id: string | number;
+    name: string;
+    clinic_id?: number | null;
+    clinic_name?: string | null;
+  }[];
   isCurrentUser: boolean;
 }) {
   const [role, setRole] =
@@ -31,6 +40,9 @@ export default function AdminUserActions({
 
   const [permissions, setPermissions] =
     useState(currentPermissions);
+
+  const [specialistId, setSpecialistId] =
+    useState(currentSpecialistId ? String(currentSpecialistId) : "");
 
   const [loading, setLoading] =
     useState(false);
@@ -49,14 +61,17 @@ export default function AdminUserActions({
   async function updateAccess(
     nextRole = role,
     nextAccessRole = accessRole,
-    nextPermissions = permissions
+    nextPermissions = permissions,
+    nextSpecialistId = specialistId
   ) {
     const previousRole = role;
     const previousAccessRole = accessRole;
     const previousPermissions = permissions;
+    const previousSpecialistId = specialistId;
     setRole(nextRole);
     setAccessRole(nextAccessRole);
     setPermissions(nextPermissions);
+    setSpecialistId(nextSpecialistId);
 
     setLoading(true);
 
@@ -76,6 +91,7 @@ export default function AdminUserActions({
           accessRole: nextAccessRole,
           permissions: nextPermissions,
           clinicId: currentClinicId,
+          specialistId: nextSpecialistId,
         }),
       }
     );
@@ -87,6 +103,7 @@ export default function AdminUserActions({
       setRole(previousRole);
       setAccessRole(previousAccessRole);
       setPermissions(previousPermissions);
+      setSpecialistId(previousSpecialistId);
 
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
@@ -200,7 +217,12 @@ export default function AdminUserActions({
             value={accessRole}
             disabled={loading}
             onChange={(e) =>
-              updateAccess(role, e.target.value)
+              updateAccess(
+                role,
+                e.target.value,
+                permissions,
+                e.target.value === "specialist" ? specialistId : ""
+              )
             }
             className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm"
           >
@@ -209,6 +231,31 @@ export default function AdminUserActions({
                 {item.label}
               </option>
             ))}
+          </select>
+        ) : null}
+
+        {role !== "super_admin" && accessRole === "specialist" ? (
+          <select
+            value={specialistId}
+            disabled={loading}
+            onChange={(e) =>
+              updateAccess(role, accessRole, permissions, e.target.value)
+            }
+            className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm"
+          >
+            <option value="">Especialista asociado</option>
+            {specialists
+              .filter((specialist) => {
+                if (!currentClinicId) return true;
+
+                return Number(specialist.clinic_id || 0) === Number(currentClinicId);
+              })
+              .map((specialist) => (
+                <option key={specialist.id} value={specialist.id}>
+                  {specialist.name}
+                  {specialist.clinic_name ? ` - ${specialist.clinic_name}` : ""}
+                </option>
+              ))}
           </select>
         ) : null}
 

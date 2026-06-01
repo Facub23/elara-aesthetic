@@ -33,7 +33,7 @@ export default async function AdminUsersPage() {
     redirect("/admin");
   }
 
-  const [{ data: admins }, { data: accessRequests }, { data: clinics }] =
+  const [{ data: admins }, { data: accessRequests }, { data: clinics }, { data: specialists }] =
     await Promise.all([
       supabase
         .from("admin_users")
@@ -51,6 +51,12 @@ export default async function AdminUsersPage() {
       supabase
         .from("clinics")
         .select("id,name,city")
+        .order("name", {
+          ascending: true,
+        }),
+      supabase
+        .from("specialists")
+        .select("id,name,clinic_id,clinic_name")
         .order("name", {
           ascending: true,
         }),
@@ -97,6 +103,7 @@ export default async function AdminUsersPage() {
             <AdminAccessRequestsManager
               initialRequests={accessRequests || []}
               clinics={clinics || []}
+              specialists={specialists || []}
             />
           </div>
         </div>
@@ -110,6 +117,7 @@ export default async function AdminUsersPage() {
             <AdminsRealtimeList
               initialAdmins={admins || []}
               currentAdminId={String(adminUser.id)}
+              specialists={specialists || []}
             />
           </div>
         </div>

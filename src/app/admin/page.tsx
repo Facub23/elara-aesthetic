@@ -62,6 +62,10 @@ export default async function PremiumAdminDashboard() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+    redirect("/admin/calendar");
+  }
+
   if (!isSuperAdmin) {
     redirect("/admin/clinicas");
   }

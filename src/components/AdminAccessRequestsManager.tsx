@@ -17,6 +17,7 @@ type AccessRequest = {
   company?: string | null;
   requested_clinic_id?: number | null;
   requested_clinic_name?: string | null;
+  requested_specialist_id?: string | null;
   requested_access_role: string;
   requested_permissions?: string[] | null;
   message?: string | null;
@@ -30,12 +31,21 @@ type ClinicOption = {
   city?: string | null;
 };
 
+type SpecialistOption = {
+  id: string | number;
+  name: string;
+  clinic_id?: number | null;
+  clinic_name?: string | null;
+};
+
 export default function AdminAccessRequestsManager({
   initialRequests,
   clinics,
+  specialists,
 }: {
   initialRequests: AccessRequest[];
   clinics: ClinicOption[];
+  specialists: SpecialistOption[];
 }) {
   const [requests, setRequests] = useState(initialRequests);
 
@@ -58,6 +68,7 @@ export default function AdminAccessRequestsManager({
           key={request.id}
           request={request}
           clinics={clinics}
+          specialists={specialists}
           onResolved={() => removeRequest(request.id)}
         />
       ))}
@@ -68,10 +79,12 @@ export default function AdminAccessRequestsManager({
 function AccessRequestCard({
   request,
   clinics,
+  specialists,
   onResolved,
 }: {
   request: AccessRequest;
   clinics: ClinicOption[];
+  specialists: SpecialistOption[];
   onResolved: () => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -80,6 +93,9 @@ function AccessRequestCard({
   const [accessRole, setAccessRole] = useState(request.requested_access_role);
   const [clinicId, setClinicId] = useState(
     request.requested_clinic_id ? String(request.requested_clinic_id) : ""
+  );
+  const [specialistId, setSpecialistId] = useState(
+    request.requested_specialist_id ? String(request.requested_specialist_id) : ""
   );
   const [permissions, setPermissions] = useState<string[]>(
     request.requested_permissions || []
@@ -93,12 +109,34 @@ function AccessRequestCard({
     );
   }
 
+  const selectedClinic = clinics.find((clinic) => String(clinic.id) === clinicId);
+  const availableSpecialists = specialists.filter((specialist) => {
+    if (!clinicId) return true;
+
+    return (
+      String(specialist.clinic_id || "") === clinicId ||
+      (selectedClinic?.name && specialist.clinic_name === selectedClinic.name)
+    );
+  });
+
   async function review(action: "approved" | "rejected") {
     if (action === "approved" && password.length < 8) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
             message: "Define una contrasena temporal de al menos 8 caracteres",
+            type: "error",
+          },
+        })
+      );
+      return;
+    }
+
+    if (action === "approved" && accessRole === "specialist" && !specialistId) {
+      window.dispatchEvent(
+        new CustomEvent("admin-toast", {
+          detail: {
+            message: "Selecciona el especialista asociado",
             type: "error",
           },
         })
@@ -120,6 +158,7 @@ function AccessRequestCard({
         systemRole,
         accessRole,
         clinicId,
+        specialistId,
         permissions,
       }),
     });
@@ -200,7 +239,10 @@ function AccessRequestCard({
       <div className="mt-6 grid gap-3 lg:grid-cols-[1fr_1fr]">
         <select
           value={clinicId}
-          onChange={(event) => setClinicId(event.target.value)}
+          onChange={(event) => {
+            setClinicId(event.target.value);
+            setSpecialistId("");
+          }}
           className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
         >
           <option value="">Sin clinica asignada</option>
@@ -214,7 +256,12 @@ function AccessRequestCard({
 
         <select
           value={accessRole}
-          onChange={(event) => setAccessRole(event.target.value)}
+          onChange={(event) => {
+            setAccessRole(event.target.value);
+            if (event.target.value !== "specialist") {
+              setSpecialistId("");
+            }
+          }}
           className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
         >
           {ADMIN_ACCESS_ROLES.map((role) => (
@@ -240,6 +287,22 @@ function AccessRequestCard({
           onChange={(event) => setPassword(event.target.value)}
           className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
         />
+
+        {accessRole === "specialist" ? (
+          <select
+            value={specialistId}
+            onChange={(event) => setSpecialistId(event.target.value)}
+            className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
+          >
+            <option value="">Especialista asociado</option>
+            {availableSpecialists.map((specialist) => (
+              <option key={specialist.id} value={specialist.id}>
+                {specialist.name}
+                {specialist.clinic_name ? ` - ${specialist.clinic_name}` : ""}
+              </option>
+            ))}
+          </select>
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">

@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const accessRole = cleanText(body.accessRole, 80);
     const permissions = filterAdminPermissions(body.permissions);
     const clinicId = Number(body.clinicId || 0) || null;
+    const specialistId = String(body.specialistId || "").trim() || null;
 
     if (!name || !email || !email.includes("@")) {
       return NextResponse.json(
@@ -36,6 +37,42 @@ export async function POST(req: Request) {
         { success: false, error: "Selecciona un tipo de acceso valido." },
         { status: 400 }
       );
+    }
+
+    if (accessRole === "specialist" && !specialistId) {
+      return NextResponse.json(
+        { success: false, error: "Selecciona el especialista asociado." },
+        { status: 400 }
+      );
+    }
+
+    if (specialistId) {
+      const { data: specialist } = await supabase
+        .from("specialists")
+        .select("id,clinic_id,clinic_name")
+        .eq("id", specialistId)
+        .maybeSingle();
+
+      if (!specialist) {
+        return NextResponse.json(
+          { success: false, error: "Especialista no encontrado." },
+          { status: 400 }
+        );
+      }
+
+      if (
+        clinicId &&
+        specialist.clinic_id &&
+        Number(specialist.clinic_id) !== Number(clinicId)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "El especialista no pertenece a la clinica seleccionada.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const { data: existingPending } = await supabase
@@ -64,6 +101,7 @@ export async function POST(req: Request) {
         company: company || null,
         requested_clinic_id: clinicId,
         requested_clinic_name: clinicName || null,
+        requested_specialist_id: specialistId,
         requested_access_role: accessRole,
         requested_permissions: permissions,
         message: message || null,

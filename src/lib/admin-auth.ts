@@ -19,7 +19,7 @@ export async function getAdminRequestContext() {
 
   const { data: adminUser } = await supabaseAdmin
     .from("admin_users")
-    .select("id,role,clinic_id,access_role,permissions,status")
+    .select("id,role,clinic_id,specialist_id,access_role,permissions,status")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -29,6 +29,7 @@ export async function getAdminRequestContext() {
     id: adminUser.id,
     role: adminUser.role,
     clinicId: adminUser.clinic_id as number | null,
+    specialistId: adminUser.specialist_id as string | null,
     accessRole: adminUser.access_role as string | null,
     permissions: (adminUser.permissions || []) as string[],
     status: adminUser.status as string | null,
