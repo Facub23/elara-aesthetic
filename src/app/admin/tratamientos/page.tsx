@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import AdminTreatmentsManager from "@/components/AdminTreatmentsManager";
+import { hasAdminPermission } from "@/lib/admin-access";
 
 export default async function AdminTreatmentsPage() {
   const supabaseAuth = await createClient();
@@ -29,7 +30,12 @@ export default async function AdminTreatmentsPage() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin) {
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "content")) {
     redirect("/admin");
   }
 
@@ -48,7 +54,12 @@ export default async function AdminTreatmentsPage() {
     ]);
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Tratamientos

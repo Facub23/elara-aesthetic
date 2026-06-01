@@ -161,7 +161,12 @@ export default async function AdminConfigPage() {
   ];
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-5xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Configuracion

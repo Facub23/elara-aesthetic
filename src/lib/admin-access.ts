@@ -42,6 +42,14 @@ export const ADMIN_PERMISSION_OPTIONS = [
 ] as const;
 
 export type AdminAccessRole = (typeof ADMIN_ACCESS_ROLES)[number]["value"];
+export type AdminPermission = (typeof ADMIN_PERMISSION_OPTIONS)[number]["value"];
+
+export type AdminAccessContext = {
+  role?: string | null;
+  accessRole?: string | null;
+  permissions?: string[] | null;
+  status?: string | null;
+};
 
 export function isAdminAccessRole(value: string): value is AdminAccessRole {
   return ADMIN_ACCESS_ROLES.some((role) => role.value === value);
@@ -71,4 +79,52 @@ export function getPermissionLabel(value: string) {
     ADMIN_PERMISSION_OPTIONS.find((permission) => permission.value === value)
       ?.label || value
   );
+}
+
+const IMPLIED_ROLE_PERMISSIONS: Record<string, AdminPermission[]> = {
+  clinic_owner: [
+    "bookings",
+    "calendar",
+    "patients",
+    "content",
+    "reviews",
+    "finance",
+    "analytics",
+  ],
+  clinic_manager: [
+    "bookings",
+    "calendar",
+    "patients",
+    "content",
+    "reviews",
+    "analytics",
+  ],
+  reception: ["bookings", "calendar", "patients"],
+  specialist: ["bookings", "calendar", "patients"],
+  content_editor: ["content", "reviews", "analytics"],
+  finance: ["finance", "analytics"],
+};
+
+export function hasAdminPermission(
+  admin: AdminAccessContext | null | undefined,
+  permission: AdminPermission
+) {
+  if (!admin || admin.status === "suspended") return false;
+  if (admin.role === "super_admin") return true;
+
+  const directPermissions = admin.permissions || [];
+
+  if (directPermissions.includes(permission)) return true;
+
+  const impliedPermissions =
+    IMPLIED_ROLE_PERMISSIONS[admin.accessRole || ""] || [];
+
+  return impliedPermissions.includes(permission);
+}
+
+export function hasAnyAdminPermission(
+  admin: AdminAccessContext | null | undefined,
+  permissions: AdminPermission[]
+) {
+  return permissions.some((permission) => hasAdminPermission(admin, permission));
 }

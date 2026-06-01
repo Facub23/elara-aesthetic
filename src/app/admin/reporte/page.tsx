@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import PrintReportButton from "@/components/PrintReportButton";
+import { hasAnyAdminPermission } from "@/lib/admin-access";
 import {
   getBookingStatusKey,
   isPendingBookingStatus,
@@ -33,6 +34,17 @@ export default async function AdminReportePage() {
     redirect("/login");
   }
 
+  const isSuperAdmin = adminUser.role === "super_admin";
+
+  if (!hasAnyAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, ["analytics", "finance"])) {
+    redirect("/admin");
+  }
+
   const { data: bookings } =
     await supabase
       .from("bookings")
@@ -56,10 +68,13 @@ export default async function AdminReportePage() {
 
   const cancelledBookings =
     bookings?.filter((b) => getBookingStatusKey(b.status) === "cancelled").length || 0;
-  const isSuperAdmin = adminUser.role === "super_admin";
-
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <section className="mx-auto max-w-5xl rounded-[36px] bg-white p-6 text-black shadow-[0_20px_80px_rgba(0,0,0,0.04)] sm:p-10 print:max-w-none print:rounded-none print:p-8 print:shadow-none">
 
       <div>

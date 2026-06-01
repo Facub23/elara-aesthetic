@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { sendReviewRequest } from "@/lib/review-notifications";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -92,6 +93,15 @@ async function checkAdmin() {
     .single();
 
   if (!adminUser) redirect("/login");
+
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "reviews")) {
+    redirect("/admin");
+  }
 
   return { supabaseAuth, adminUser };
 }
@@ -323,7 +333,12 @@ export default async function AdminReviewsPage({
   ];
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Opiniones

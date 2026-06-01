@@ -8,6 +8,7 @@ import EditClinicButton from "@/components/EditClinicButton";
 import AddClinicForm from "@/components/AddClinicForm";
 import AdminShell from "@/components/AdminShell";
 import AdminPublicationChecklist from "@/components/AdminPublicationChecklist";
+import { hasAnyAdminPermission } from "@/lib/admin-access";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
 function hasText(value?: string | null) {
@@ -83,12 +84,27 @@ export default async function AdminClinicasPage() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  const { data: clinics } = await supabase
+  if (!hasAnyAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, ["content", "bookings", "calendar"])) {
+    redirect("/admin");
+  }
+
+  let clinicsQuery = supabase
     .from("clinics")
     .select("*")
     .order("created_at", {
       ascending: false,
     });
+
+  if (!isSuperAdmin && adminUser.clinic_id) {
+    clinicsQuery = clinicsQuery.eq("id", adminUser.clinic_id);
+  }
+
+  const { data: clinics } = await clinicsQuery;
 
   const { data: specialists } = await supabase
     .from("specialists")
@@ -119,7 +135,12 @@ export default async function AdminClinicasPage() {
   });
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>

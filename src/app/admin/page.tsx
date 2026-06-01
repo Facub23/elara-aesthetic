@@ -127,14 +127,26 @@ export default async function PremiumAdminDashboard() {
       .limit(6),
   ]);
 
-  const todaysAgenda = (todayBookings || []) as OperationalBooking[];
-  const pendingQueue = (pendingBookings || []) as OperationalBooking[];
+  const assignedClinic = adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+  const scopeBookings = (items: OperationalBooking[]) =>
+    !isSuperAdmin && assignedClinic?.name
+      ? items.filter((booking) => booking.clinic_name === assignedClinic.name)
+      : items;
+  const todaysAgenda = scopeBookings((todayBookings || []) as OperationalBooking[]);
+  const pendingQueue = scopeBookings((pendingBookings || []) as OperationalBooking[]);
   const failedEmails = (notificationDeliveries || []).filter(
     (delivery) => delivery.status === "failed"
   ).length;
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <AdminToastNotifications />
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">

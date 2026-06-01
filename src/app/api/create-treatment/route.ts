@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { createActivityLog } from "@/lib/activity";
 import { getAdminRequestContext } from "@/lib/admin-auth";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 function slugify(text: string) {
@@ -40,7 +41,7 @@ async function saveTreatmentDuration(name: string, durationMinutes: number) {
 export async function POST(req: Request) {
   const admin = await getAdminRequestContext();
 
-  if (admin?.role !== "super_admin") {
+  if (!hasAdminPermission(admin, "content")) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 

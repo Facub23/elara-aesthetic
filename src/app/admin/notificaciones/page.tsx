@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import AdminShell from "@/components/AdminShell";
 import MarkAdminNotificationReadButton from "@/components/MarkAdminNotificationReadButton";
 import ResendNotificationButton from "@/components/ResendNotificationButton";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -119,6 +120,19 @@ export default async function AdminNotificationsPage({
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+
+  if (
+    !isSuperAdmin &&
+    !hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "bookings")
+  ) {
+    redirect("/admin");
+  }
+
   const params = await searchParams;
   const selectedChannel = params.channel || "";
   const selectedStatus = params.status || "";
@@ -207,7 +221,12 @@ export default async function AdminNotificationsPage({
   ];
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

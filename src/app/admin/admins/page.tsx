@@ -57,7 +57,12 @@ export default async function AdminUsersPage() {
     ]);
 
   return (
-    <AdminShell isSuperAdmin={true}>
+    <AdminShell
+      isSuperAdmin={true}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-6xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Equipo

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import AddPatientNote from "@/components/AddPatientNote";
 import AdminShell from "@/components/AdminShell";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusClass, getBookingStatusKey } from "@/lib/booking-status";
 
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -85,17 +86,37 @@ export default async function PatientDetailPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "patients")) {
+    redirect("/admin");
+  }
+
   const { name } = await params;
 
   const patientName = decodeURIComponent(name);
 
-  const { data: bookings } = await supabase
+  const { data: clinicCatalog } = await supabase.from("clinics").select("id,name");
+  const assignedClinic = adminUser.clinic_id
+    ? clinicCatalog?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+
+  let bookingsQuery = supabase
     .from("bookings")
     .select("*")
     .eq("full_name", patientName)
     .order("created_at", {
       ascending: false,
     });
+
+  if (!isSuperAdmin && assignedClinic?.name) {
+    bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
+  }
+
+  const { data: bookings } = await bookingsQuery;
 
   const { data: notes } = await supabase
     .from("patient_notes")
@@ -148,7 +169,12 @@ export default async function PatientDetailPage({
   );
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <Link
           href="/admin/pacientes"

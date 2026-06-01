@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import AdminAdvancedCalendarPage from "@/components/AdminAdvancedCalendarPage";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,7 +17,7 @@ export default async function AdminCalendarPage() {
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("role")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -24,9 +25,22 @@ export default async function AdminCalendarPage() {
     redirect("/login");
   }
 
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "calendar")) {
+    redirect("/admin");
+  }
+
   return (
     <AdminAdvancedCalendarPage
       isSuperAdmin={adminUser.role === "super_admin"}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+      clinicId={adminUser.clinic_id}
     />
   );
 }

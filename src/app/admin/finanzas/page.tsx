@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -61,7 +62,7 @@ export default async function AdminFinanzasPage() {
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("role")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -69,15 +70,33 @@ export default async function AdminFinanzasPage() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin) redirect("/admin");
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "finance")) {
+    redirect("/admin");
+  }
 
-  const { data: bookings } = await supabase
+  const { data: clinics } = await supabase.from("clinics").select("id,name");
+  const assignedClinic = adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+
+  let bookingsQuery = supabase
     .from("bookings")
     .select(
       "id,full_name,clinic_name,treatment,booking_date,booking_time,status,booking_context"
     )
     .order("booking_date", { ascending: false })
     .limit(300);
+
+  if (!isSuperAdmin && assignedClinic?.name) {
+    bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
+  }
+
+  const { data: bookings } = await bookingsQuery;
 
   const financeBookings = (bookings || []) as FinanceBooking[];
   const pricedBookings = financeBookings
@@ -148,7 +167,12 @@ export default async function AdminFinanzasPage() {
   ] as const;
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>

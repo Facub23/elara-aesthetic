@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getAdminRequestContext } from "@/lib/admin-auth";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 import { createActivityLog } from "@/lib/activity";
@@ -10,7 +11,7 @@ export async function POST(
 ) {
   const admin = await getAdminRequestContext();
 
-  if (admin?.role !== "super_admin") {
+  if (!hasAdminPermission(admin, "content")) {
     return NextResponse.json(
       { success: false, error: "Forbidden" },
       { status: 403 }

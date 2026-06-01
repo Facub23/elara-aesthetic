@@ -12,6 +12,7 @@ import TopSpecialists from "@/components/TopSpecialists";
 import DailyBookingsChart from "@/components/DailyBookingsChart";
 import RecentBookings from "@/components/RecentBookings";
 import MarketplaceConversionAnalytics from "@/components/MarketplaceConversionAnalytics";
+import { hasAdminPermission } from "@/lib/admin-access";
 import {
   getBookingStatusKey,
   isPendingBookingStatus,
@@ -40,12 +41,35 @@ export default async function AdminAnalyticsPage() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  const { data: bookings } = await supabase
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "analytics")) {
+    redirect("/admin");
+  }
+
+  const { data: clinics } = await supabase
+    .from("clinics")
+    .select("id,name");
+
+  const assignedClinic = adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+
+  let bookingsQuery = supabase
     .from("bookings")
     .select("*")
     .order("created_at", {
       ascending: false,
     });
+
+  if (!isSuperAdmin && assignedClinic?.name) {
+    bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
+  }
+
+  const { data: bookings } = await bookingsQuery;
 
   const totalBookings = bookings?.length || 0;
 
@@ -96,7 +120,12 @@ export default async function AdminAnalyticsPage() {
   ];
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Métricas

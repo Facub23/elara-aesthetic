@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusClass } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -97,11 +98,20 @@ export default async function AdminBookingDetailPage({
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("role")
+    .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!adminUser) redirect("/login");
+
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "bookings")) {
+    redirect("/admin");
+  }
 
   const { id } = await params;
   const { data: booking } = await supabase
@@ -111,6 +121,20 @@ export default async function AdminBookingDetailPage({
     .maybeSingle();
 
   if (!booking) notFound();
+
+  if (!adminUser.role || adminUser.role !== "super_admin") {
+    const { data: clinic } = adminUser.clinic_id
+      ? await supabase
+          .from("clinics")
+          .select("name")
+          .eq("id", adminUser.clinic_id)
+          .maybeSingle()
+      : { data: null };
+
+    if (clinic?.name && booking.clinic_name !== clinic.name) {
+      notFound();
+    }
+  }
 
   const [{ data: events }, { data: deliveries }] = await Promise.all([
     supabase
@@ -134,7 +158,12 @@ export default async function AdminBookingDetailPage({
   const status = booking.status || "Pendiente";
 
   return (
-    <AdminShell isSuperAdmin={adminUser.role === "super_admin"}>
+    <AdminShell
+      isSuperAdmin={adminUser.role === "super_admin"}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

@@ -11,6 +11,7 @@ import {
   isIncidentBookingStatus,
   isPendingBookingStatus,
 } from "@/lib/booking-status";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -79,6 +80,16 @@ export default async function AdminReservasPage({
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "bookings")) {
+    redirect("/admin");
+  }
+
   const params = await searchParams;
 
   const selectedStatus = params.status || "";
@@ -93,6 +104,12 @@ export default async function AdminReservasPage({
     .order("name", {
       ascending: true,
     });
+
+  const assignedClinic = adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+  const visibleClinics =
+    !isSuperAdmin && assignedClinic ? [assignedClinic] : clinics || [];
 
   const { data: specialists } = await supabase
     .from("specialists")
@@ -109,6 +126,10 @@ export default async function AdminReservasPage({
     });
 
   let query = supabase.from("bookings").select("*");
+
+  if (!isSuperAdmin && assignedClinic?.name) {
+    query = query.eq("clinic_name", assignedClinic.name);
+  }
 
   if (selectedStatus && selectedStatus !== "Todas") {
     query = query.in("status", getBookingStatusFilterValues(selectedStatus));
@@ -206,7 +227,12 @@ export default async function AdminReservasPage({
   ).length;
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
@@ -233,7 +259,7 @@ export default async function AdminReservasPage({
               Ir a agenda
             </Link>
             <CreateManualBookingButton
-              clinics={clinics || []}
+              clinics={visibleClinics}
               specialists={specialists || []}
               treatments={treatments || []}
             />
@@ -312,7 +338,7 @@ export default async function AdminReservasPage({
             currentClinic={selectedClinic}
             currentSpecialist={selectedSpecialist}
             currentDate={selectedDate}
-            clinics={clinics || []}
+            clinics={visibleClinics}
             specialists={specialists || []}
           />
         </div>

@@ -32,6 +32,10 @@ export default async function AdminEmailsPage() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!isSuperAdmin) {
+    redirect("/admin");
+  }
+
   const { data: savedTemplates } = await supabase
     .from("email_templates")
     .select("key,name,description,subject,title,body,cta_label,active,sort_order")
@@ -42,7 +46,12 @@ export default async function AdminEmailsPage() {
   const templates = mergeEmailTemplates(savedTemplates);
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Plantillas

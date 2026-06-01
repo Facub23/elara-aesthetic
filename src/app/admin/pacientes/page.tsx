@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import PatientSearch from "@/components/PatientSearch";
+import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusClass, getBookingStatusKey } from "@/lib/booking-status";
 
 type PatientData = {
@@ -92,19 +93,41 @@ export default async function AdminPacientesPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!hasAdminPermission({
+    role: adminUser.role,
+    accessRole: adminUser.access_role,
+    permissions: adminUser.permissions,
+    status: adminUser.status,
+  }, "patients")) {
+    redirect("/admin");
+  }
+
   const params =
     await searchParams;
 
   const search =
     params.search || "";
 
-  const { data: bookings } =
-    await supabase
-      .from("bookings")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
+  const { data: clinics } = await supabase
+    .from("clinics")
+    .select("id,name");
+
+  const assignedClinic = adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+
+  let bookingsQuery = supabase
+    .from("bookings")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
+
+  if (!isSuperAdmin && assignedClinic?.name) {
+    bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
+  }
+
+  const { data: bookings } = await bookingsQuery;
 
   const patientsMap: Record<
     string,
@@ -219,7 +242,12 @@ export default async function AdminPacientesPage({
     );
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={adminUser.access_role}
+      permissions={adminUser.permissions}
+      status={adminUser.status}
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

@@ -316,8 +316,16 @@ function getAvailabilityWeekday(item: Availability) {
 
 export default function AdminAdvancedCalendarPage({
   isSuperAdmin,
+  accessRole,
+  permissions,
+  status,
+  clinicId,
 }: {
   isSuperAdmin: boolean;
+  accessRole?: string | null;
+  permissions?: string[] | null;
+  status?: string | null;
+  clinicId?: number | null;
 }) {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [specialists, setSpecialists] =
@@ -1804,7 +1812,12 @@ export default function AdminAdvancedCalendarPage({
   }
 
   return (
-    <AdminShell isSuperAdmin={isSuperAdmin}>
+    <AdminShell
+      isSuperAdmin={isSuperAdmin}
+      accessRole={accessRole}
+      permissions={permissions}
+      status={status}
+    >
       <div>
         <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
           Agenda avanzada
