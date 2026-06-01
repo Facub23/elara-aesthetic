@@ -11,6 +11,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
+  if (!admin) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
 
   const {
@@ -26,6 +30,10 @@ export async function POST(req: Request) {
     experience,
     whatsapp,
   } = body;
+
+  if (admin?.role !== "super_admin" && admin?.clinicId && Number(id) !== Number(admin.clinicId)) {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  }
 
   const { error } = await supabase
     .from("clinics")

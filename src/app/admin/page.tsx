@@ -61,6 +61,11 @@ export default async function PremiumAdminDashboard() {
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+
+  if (!isSuperAdmin) {
+    redirect("/admin/clinicas");
+  }
+
   const today = getMadridDate();
 
   const [

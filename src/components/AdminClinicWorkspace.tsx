@@ -40,25 +40,43 @@ export default function AdminClinicWorkspace({
             />
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Link
               href={`/clinics/${clinic.slug}`}
               target="_blank"
-              className="rounded-full bg-black px-5 py-3 text-sm text-white"
+              className="rounded-2xl bg-black px-5 py-4 text-center text-sm text-white"
             >
               Ver ficha publica
             </Link>
             <Link
               href="/admin/reservas"
-              className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm transition hover:border-black"
+              className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-center text-sm transition hover:border-black"
             >
               Reservas
             </Link>
             <Link
               href="/admin/calendar"
-              className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm transition hover:border-black"
+              className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-center text-sm transition hover:border-black"
             >
               Agenda
+            </Link>
+            <Link
+              href="/admin/pacientes"
+              className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-center text-sm transition hover:border-black"
+            >
+              Pacientes
+            </Link>
+            <Link
+              href="/admin/analytics"
+              className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-center text-sm transition hover:border-black"
+            >
+              Metricas
+            </Link>
+            <Link
+              href="/admin/especialistas"
+              className="rounded-2xl border border-black/10 bg-white px-5 py-4 text-center text-sm transition hover:border-black"
+            >
+              Especialistas
             </Link>
           </div>
         </div>

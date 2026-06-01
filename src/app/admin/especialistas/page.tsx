@@ -78,6 +78,39 @@ export default async function AdminSpecialistsPage({
       .select("id,specialist_name,blocked_date,start_time,end_time"),
   ]);
 
+  const assignedClinic = !isSuperAdmin && adminUser.clinic_id
+    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
+    : null;
+  const visibleSpecialists = assignedClinic?.name
+    ? (specialists || []).filter(
+        (specialist) => specialist.clinic_name === assignedClinic.name
+      )
+    : specialists || [];
+  const visibleSpecialistNames = new Set(
+    visibleSpecialists.map((specialist) => specialist.name)
+  );
+  const visibleClinics = assignedClinic ? [assignedClinic] : clinics || [];
+  const visibleAvailability = assignedClinic
+    ? (availability || []).filter((item) =>
+        visibleSpecialistNames.has(item.specialist_name)
+      )
+    : availability || [];
+  const visibleVacations = assignedClinic
+    ? (vacations || []).filter((item) =>
+        visibleSpecialistNames.has(item.specialist_name)
+      )
+    : vacations || [];
+  const visibleBlockedDates = assignedClinic
+    ? (blockedDates || []).filter((item) =>
+        visibleSpecialistNames.has(item.specialist_name)
+      )
+    : blockedDates || [];
+  const visibleBlockedTimeSlots = assignedClinic
+    ? (blockedTimeSlots || []).filter((item) =>
+        visibleSpecialistNames.has(item.specialist_name)
+      )
+    : blockedTimeSlots || [];
+
   return (
     <AdminShell
       isSuperAdmin={isSuperAdmin}
@@ -100,14 +133,14 @@ export default async function AdminSpecialistsPage({
         </p>
 
         <AdminSpecialistsManager
-          initialSpecialists={specialists || []}
-          clinics={clinics || []}
+          initialSpecialists={visibleSpecialists}
+          clinics={visibleClinics}
           treatments={treatments || []}
-          availability={availability || []}
-          vacations={vacations || []}
-          blockedDates={blockedDates || []}
-          blockedTimeSlots={blockedTimeSlots || []}
-          initialClinicName={params.clinic || ""}
+          availability={visibleAvailability}
+          vacations={visibleVacations}
+          blockedDates={visibleBlockedDates}
+          blockedTimeSlots={visibleBlockedTimeSlots}
+          initialClinicName={assignedClinic?.name || params.clinic || ""}
           openCreateOnLoad={params.new === "1"}
         />
       </div>

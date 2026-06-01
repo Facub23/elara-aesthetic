@@ -37,12 +37,13 @@ export default function AdminShell({
     hasAdminPermission(adminAccess, permission);
   const canAny = (items: AdminPermission[]) =>
     hasAnyAdminPermission(adminAccess, items);
-  const navItems = [
-    {
-      name: "Dashboard",
-      href: "/admin",
-      visible: true,
-    },
+  const navItems = isSuperAdmin
+    ? [
+        {
+          name: "Dashboard",
+          href: "/admin",
+          visible: true,
+        },
     {
       name: "Equipo",
       href: "/admin/admins",
@@ -113,7 +114,14 @@ export default function AdminShell({
       href: "/admin/configuracion",
       visible: isSuperAdmin,
     },
-  ].filter((item) => item.visible);
+      ].filter((item) => item.visible)
+    : [
+        {
+          name: "Mi clinica",
+          href: "/admin/clinicas",
+          visible: true,
+        },
+      ];
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";

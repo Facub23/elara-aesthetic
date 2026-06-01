@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createActivityLog } from "@/lib/activity";
 import { getAdminRequestContext } from "@/lib/admin-auth";
 import { hasAdminPermission } from "@/lib/admin-access";
+import { getAssignedClinicName } from "@/lib/admin-scope";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
@@ -52,6 +53,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
+  if (!admin) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
 
@@ -83,6 +88,18 @@ export async function POST(req: Request) {
             "Completa nombre, clinica, imagen, bio y al menos un tratamiento",
         },
         { status: 400 }
+      );
+    }
+
+    const assignedClinicName = await getAssignedClinicName({
+      role: admin.role,
+      clinicId: admin.clinicId,
+    });
+
+    if (assignedClinicName && assignedClinicName !== clinic_name) {
+      return NextResponse.json(
+        { success: false, error: "No puedes crear especialistas para otra clinica" },
+        { status: 403 }
       );
     }
 
