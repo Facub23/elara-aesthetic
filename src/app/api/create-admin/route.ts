@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 
 import { createActivityLog } from "@/lib/activity";
+import { filterAdminPermissions, isAdminAccessRole } from "@/lib/admin-access";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
@@ -56,6 +57,9 @@ export async function POST(req: Request) {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
     const role = String(body.role || "");
+    const accessRole = String(body.accessRole || "clinic_manager");
+    const permissions = filterAdminPermissions(body.permissions);
+    const clinicId = Number(body.clinicId || 0) || null;
 
     if (
       !email ||
@@ -66,6 +70,18 @@ export async function POST(req: Request) {
         {
           success: false,
           error: "Email, password y rol valido son obligatorios",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (role !== "super_admin" && !isAdminAccessRole(accessRole)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Rango de acceso no valido",
         },
         {
           status: 400,
@@ -121,6 +137,13 @@ export async function POST(req: Request) {
         role,
         user_id:
           createdUser.user.id,
+        clinic_id: clinicId,
+        access_role:
+          role === "super_admin"
+            ? "super_admin"
+            : accessRole,
+        permissions,
+        status: "active",
       });
 
     if (insertError) {

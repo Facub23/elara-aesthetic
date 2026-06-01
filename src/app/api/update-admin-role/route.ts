@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createActivityLog } from "@/lib/activity";
+import { filterAdminPermissions, isAdminAccessRole } from "@/lib/admin-access";
 
 export async function POST(req: Request) {
   try {
@@ -32,11 +33,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const { adminId, role } = await req.json();
+    const { adminId, role, accessRole, permissions, clinicId } = await req.json();
 
     if (!["staff", "super_admin"].includes(role)) {
       return NextResponse.json(
         { success: false, error: "Rol no valido" },
+        { status: 400 }
+      );
+    }
+
+    const normalizedAccessRole =
+      role === "super_admin" ? "super_admin" : String(accessRole || "clinic_manager");
+
+    if (
+      role !== "super_admin" &&
+      !isAdminAccessRole(normalizedAccessRole)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Rango de acceso no valido" },
         { status: 400 }
       );
     }
@@ -77,7 +91,12 @@ export async function POST(req: Request) {
 
     const { data: updatedAdmin, error } = await supabase
       .from("admin_users")
-      .update({ role })
+      .update({
+        role,
+        access_role: normalizedAccessRole,
+        permissions: role === "super_admin" ? [] : filterAdminPermissions(permissions),
+        clinic_id: Number(clinicId || 0) || null,
+      })
       .eq("id", adminId)
       .select()
       .single();

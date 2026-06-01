@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 
 import { supabaseBrowser } from "@/lib/supabase/client";
 import AdminUserActions from "@/components/AdminUserActions";
+import { getAccessRoleLabel, getPermissionLabel } from "@/lib/admin-access";
 
 type AdminUser = {
   id: string;
   user_id: string;
   email: string;
   role: string;
+  access_role?: string | null;
+  clinic_id?: number | null;
+  permissions?: string[] | null;
+  status?: string | null;
   created_at: string;
 };
 
@@ -104,11 +109,35 @@ export default function AdminsRealtimeList({
             <div className="mt-2 text-sm text-neutral-500">
               User ID: {admin.user_id}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-white px-3 py-1 text-neutral-600">
+                Sistema: {admin.role === "super_admin" ? "Superadmin" : "Staff"}
+              </span>
+              <span className="rounded-full bg-white px-3 py-1 text-neutral-600">
+                Rango: {getAccessRoleLabel(admin.access_role)}
+              </span>
+              {admin.clinic_id ? (
+                <span className="rounded-full bg-white px-3 py-1 text-neutral-600">
+                  Clinica #{admin.clinic_id}
+                </span>
+              ) : null}
+              {(admin.permissions || []).slice(0, 4).map((permission) => (
+                <span
+                  key={permission}
+                  className="rounded-full bg-white px-3 py-1 text-neutral-600"
+                >
+                  {getPermissionLabel(permission)}
+                </span>
+              ))}
+            </div>
           </div>
 
           <AdminUserActions
             adminId={admin.id}
             currentRole={admin.role}
+            currentAccessRole={admin.access_role || "clinic_manager"}
+            currentPermissions={admin.permissions || []}
+            currentClinicId={admin.clinic_id || null}
             isCurrentUser={String(admin.id) === currentAdminId}
           />
         </div>

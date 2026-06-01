@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 
+import AdminAccessRequestForm from "@/components/AdminAccessRequestForm";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -127,6 +128,8 @@ export default function LoginPage() {
                 {loading ? "Entrando..." : "Entrar"}
               </button>
             </form>
+
+            <AdminAccessRequestForm />
           </div>
         </section>
       </div>

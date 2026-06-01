@@ -1,8 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AdminLoadingOverlay from "@/components/AdminLoadingOverlay";
+import {
+  ADMIN_ACCESS_ROLES,
+  ADMIN_PERMISSION_OPTIONS,
+} from "@/lib/admin-access";
+
+type ClinicOption = {
+  id: number;
+  name: string;
+  city?: string | null;
+};
 
 export default function AddAdminForm() {
   const [email, setEmail] =
@@ -14,8 +24,35 @@ export default function AddAdminForm() {
   const [role, setRole] =
     useState("staff");
 
+  const [accessRole, setAccessRole] =
+    useState("clinic_manager");
+
+  const [clinicId, setClinicId] =
+    useState("");
+
+  const [permissions, setPermissions] =
+    useState<string[]>(["bookings", "calendar"]);
+
+  const [clinics, setClinics] =
+    useState<ClinicOption[]>([]);
+
   const [loading, setLoading] =
     useState(false);
+
+  useEffect(() => {
+    fetch("/api/public-marketplace-data")
+      .then((response) => response.json())
+      .then((data) => setClinics(data.clinics || []))
+      .catch(() => setClinics([]));
+  }, []);
+
+  function togglePermission(value: string) {
+    setPermissions((current) =>
+      current.includes(value)
+        ? current.filter((permission) => permission !== value)
+        : [...current, value]
+    );
+  }
 
   async function handleSubmit() {
 
@@ -53,6 +90,9 @@ export default function AddAdminForm() {
           email,
           password,
           role,
+          accessRole,
+          clinicId,
+          permissions,
         }),
       }
     );
@@ -99,6 +139,9 @@ export default function AddAdminForm() {
     setEmail("");
     setPassword("");
     setRole("staff");
+    setAccessRole("clinic_manager");
+    setClinicId("");
+    setPermissions(["bookings", "calendar"]);
   }
 
   return (
@@ -154,7 +197,7 @@ export default function AddAdminForm() {
           >
 
             <option value="staff">
-              Equipo operativo
+              Usuario operativo
             </option>
 
             <option value="super_admin">
@@ -162,6 +205,59 @@ export default function AddAdminForm() {
             </option>
 
           </select>
+
+          {role !== "super_admin" ? (
+            <>
+              <select
+                value={clinicId}
+                onChange={(e) =>
+                  setClinicId(e.target.value)
+                }
+                className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
+              >
+                <option value="">
+                  Sin clinica asignada
+                </option>
+
+                {clinics.map((clinic) => (
+                  <option key={clinic.id} value={clinic.id}>
+                    {clinic.name}
+                    {clinic.city ? ` - ${clinic.city}` : ""}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={accessRole}
+                onChange={(e) =>
+                  setAccessRole(e.target.value)
+                }
+                className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
+              >
+                {ADMIN_ACCESS_ROLES.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+
+              <div className="grid gap-2 sm:grid-cols-2">
+                {ADMIN_PERMISSION_OPTIONS.map((permission) => (
+                  <label
+                    key={permission.value}
+                    className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={permissions.includes(permission.value)}
+                      onChange={() => togglePermission(permission.value)}
+                    />
+                    {permission.label}
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : null}
 
           <button
             onClick={handleSubmit}

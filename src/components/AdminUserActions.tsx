@@ -3,18 +3,34 @@
 import { useState } from "react";
 
 import AdminConfirmModal from "@/components/AdminConfirmModal";
+import {
+  ADMIN_ACCESS_ROLES,
+  ADMIN_PERMISSION_OPTIONS,
+} from "@/lib/admin-access";
 
 export default function AdminUserActions({
   adminId,
   currentRole,
+  currentAccessRole,
+  currentPermissions,
+  currentClinicId,
   isCurrentUser,
 }: {
   adminId: string;
   currentRole: string;
+  currentAccessRole: string;
+  currentPermissions: string[];
+  currentClinicId: number | null;
   isCurrentUser: boolean;
 }) {
   const [role, setRole] =
     useState(currentRole);
+
+  const [accessRole, setAccessRole] =
+    useState(currentAccessRole);
+
+  const [permissions, setPermissions] =
+    useState(currentPermissions);
 
   const [loading, setLoading] =
     useState(false);
@@ -22,11 +38,25 @@ export default function AdminUserActions({
   const [deleteOpen, setDeleteOpen] =
     useState(false);
 
-  async function updateRole(
-    value: string
+  function togglePermission(value: string) {
+    setPermissions((current) =>
+      current.includes(value)
+        ? current.filter((permission) => permission !== value)
+        : [...current, value]
+    );
+  }
+
+  async function updateAccess(
+    nextRole = role,
+    nextAccessRole = accessRole,
+    nextPermissions = permissions
   ) {
     const previousRole = role;
-    setRole(value);
+    const previousAccessRole = accessRole;
+    const previousPermissions = permissions;
+    setRole(nextRole);
+    setAccessRole(nextAccessRole);
+    setPermissions(nextPermissions);
 
     setLoading(true);
 
@@ -42,7 +72,10 @@ export default function AdminUserActions({
 
         body: JSON.stringify({
           adminId,
-          role: value,
+          role: nextRole,
+          accessRole: nextAccessRole,
+          permissions: nextPermissions,
+          clinicId: currentClinicId,
         }),
       }
     );
@@ -52,11 +85,13 @@ export default function AdminUserActions({
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       setRole(previousRole);
+      setAccessRole(previousAccessRole);
+      setPermissions(previousPermissions);
 
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
-            message: data.error || "No se pudo actualizar el rol",
+            message: data.error || "No se pudo actualizar el acceso",
             type: "error",
           },
         })
@@ -68,7 +103,7 @@ export default function AdminUserActions({
     window.dispatchEvent(
       new CustomEvent("admin-toast", {
         detail: {
-          message: "Rol actualizado",
+          message: "Acceso actualizado",
           type: "success",
         },
       })
@@ -145,15 +180,13 @@ export default function AdminUserActions({
           value={role}
           disabled={loading || isCurrentUser}
           onChange={(e) =>
-            updateRole(
-              e.target.value
-            )
+            updateAccess(e.target.value)
           }
           className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm"
         >
 
           <option value="staff">
-            Equipo operativo
+            Usuario operativo
           </option>
 
           <option value="super_admin">
@@ -161,6 +194,23 @@ export default function AdminUserActions({
           </option>
 
         </select>
+
+        {role !== "super_admin" ? (
+          <select
+            value={accessRole}
+            disabled={loading}
+            onChange={(e) =>
+              updateAccess(role, e.target.value)
+            }
+            className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm"
+          >
+            {ADMIN_ACCESS_ROLES.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        ) : null}
 
         <button
           onClick={resetPassword}
@@ -187,6 +237,33 @@ export default function AdminUserActions({
         ) : null}
 
       </div>
+
+      {role !== "super_admin" ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {ADMIN_PERMISSION_OPTIONS.map((permission) => (
+            <button
+              key={permission.value}
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                const nextPermissions = permissions.includes(permission.value)
+                  ? permissions.filter((value) => value !== permission.value)
+                  : [...permissions, permission.value];
+
+                togglePermission(permission.value);
+                updateAccess(role, accessRole, nextPermissions);
+              }}
+              className={`rounded-full border px-4 py-2 text-xs transition disabled:opacity-50 ${
+                permissions.includes(permission.value)
+                  ? "border-black bg-black text-white"
+                  : "border-black/10 bg-white text-neutral-600"
+              }`}
+            >
+              {permission.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <AdminConfirmModal
         open={deleteOpen}
