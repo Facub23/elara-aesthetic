@@ -11,6 +11,7 @@ import {
 } from "@/lib/booking-status";
 
 import BookingTimeline from "@/components/BookingTimeline";
+import GoogleCalendarSyncButton from "@/components/GoogleCalendarSyncButton";
 import { showAdminToast } from "@/components/AdminToast";
 
 type Booking = {
@@ -668,6 +669,22 @@ export default function AdminLiveBookings({
                       >
                         Ver ficha
                       </Link>
+
+                      <GoogleCalendarSyncButton
+                        bookingId={booking.id}
+                        onSynced={(updatedBooking) => {
+                          setBookings((prev) =>
+                            prev.map((item) =>
+                              String(item.id) === String(booking.id)
+                                ? {
+                                    ...item,
+                                    ...updatedBooking,
+                                  }
+                                : item
+                            )
+                          );
+                        }}
+                      />
 
                       {!isCompleted && (
                         <>

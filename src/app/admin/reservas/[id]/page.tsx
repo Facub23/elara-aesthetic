@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
+import GoogleCalendarSyncButton from "@/components/GoogleCalendarSyncButton";
 import { hasAdminPermission } from "@/lib/admin-access";
 import { getBookingStatusClass } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -45,6 +46,7 @@ const eventLabels: Record<string, string> = {
   reminder_sent: "Recordatorio enviado",
   review_requested: "Opinion solicitada",
   imported: "Reserva registrada",
+  google_calendar_sync: "Google Calendar",
 };
 
 function formatDateTime(value?: string | null) {
@@ -382,6 +384,10 @@ export default async function AdminBookingDetailPage({
                   {booking.google_calendar_last_error}
                 </p>
               ) : null}
+              <GoogleCalendarSyncButton
+                bookingId={booking.id}
+                className="mt-5 rounded-full bg-black px-5 py-3 text-sm text-white disabled:opacity-50"
+              />
             </section>
 
             <section className="rounded-[32px] bg-white/75 p-6">

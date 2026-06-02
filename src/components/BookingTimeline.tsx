@@ -30,6 +30,7 @@ const labels: Record<string, string> = {
   reminder_sent: "Recordatorio enviado",
   review_requested: "Opinion solicitada",
   imported: "Reserva registrada",
+  google_calendar_sync: "Google Calendar",
 };
 
 function actorLabel(actor: BookingEvent["actor_type"]) {
