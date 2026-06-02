@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { recordBookingEvent } from "@/lib/booking-events";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
@@ -75,6 +76,17 @@ export async function POST(req: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    await recordBookingEvent({
+      bookingId,
+      eventType: "review_submitted",
+      actorType: "patient",
+      resultingStatus: booking.status,
+      description: "El paciente envio una opinion verificada.",
+      metadata: {
+        rating,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch {

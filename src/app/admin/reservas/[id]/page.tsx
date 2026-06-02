@@ -49,6 +49,7 @@ const eventLabels: Record<string, string> = {
   status_changed: "Estado actualizado",
   reminder_sent: "Recordatorio enviado",
   review_requested: "Opinion solicitada",
+  review_submitted: "Opinion recibida",
   imported: "Reserva registrada",
   google_calendar_sync: "Google Calendar",
 };
