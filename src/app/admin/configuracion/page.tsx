@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import AdminDeploymentReadiness from "@/components/AdminDeploymentReadiness";
+import AdminManualQaChecklist from "@/components/AdminManualQaChecklist";
 import SystemSettingsForm from "@/components/SystemSettingsForm";
 
 export default async function AdminConfigPage() {
@@ -330,6 +331,8 @@ export default async function AdminConfigPage() {
             ))}
           </div>
         </section>
+
+        <AdminManualQaChecklist />
 
         <AdminDeploymentReadiness checks={deploymentChecks} />
       </div>
