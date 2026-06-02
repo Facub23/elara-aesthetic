@@ -14,6 +14,8 @@ const GOOGLE_CALENDAR_SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
   "https://www.googleapis.com/auth/userinfo.email",
 ];
+const REQUIRED_GOOGLE_CALENDAR_SCOPE =
+  "https://www.googleapis.com/auth/calendar.events";
 
 type BookingForCalendar = {
   id: string | number;
@@ -44,6 +46,16 @@ export function hasGoogleCalendarConfig() {
   return Boolean(
     process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
   );
+}
+
+function hasRequiredCalendarScope(scopes?: string[] | string | null) {
+  const items = Array.isArray(scopes)
+    ? scopes
+    : typeof scopes === "string"
+      ? scopes.split(" ")
+      : [];
+
+  return items.includes(REQUIRED_GOOGLE_CALENDAR_SCOPE);
 }
 
 function getRedirectUri() {
@@ -171,6 +183,13 @@ export async function completeGoogleCalendarConnection({
   }
 
   const tokens = await exchangeCodeForTokens(code);
+
+  if (!hasRequiredCalendarScope(tokens.scope || GOOGLE_CALENDAR_SCOPES)) {
+    throw new Error(
+      "Google no concedio permisos de calendario. Reintenta aceptando el acceso a eventos."
+    );
+  }
+
   const googleEmail = await getGoogleEmail(tokens.access_token || "");
 
   const { error } = await supabase
@@ -209,11 +228,16 @@ export async function getGoogleCalendarConnectionBySpecialistId(
 
   const { data } = await supabase
     .from("specialist_google_calendar_connections")
-    .select("specialist_id,specialist_name,google_email,status,connected_at,updated_at")
+    .select("specialist_id,specialist_name,google_email,status,scopes,connected_at,updated_at")
     .eq("specialist_id", specialistId)
     .maybeSingle();
 
-  return data || null;
+  if (!data) return null;
+
+  return {
+    ...data,
+    requires_reconnect: !hasRequiredCalendarScope(data.scopes),
+  };
 }
 
 async function getActiveConnectionForSpecialistName(specialistName?: string | null) {
@@ -349,6 +373,17 @@ export async function syncBookingToGoogleCalendar(booking: BookingForCalendar) {
   );
 
   if (!connection) return { skipped: true };
+
+  if (!hasRequiredCalendarScope(connection.scopes)) {
+    await updateBookingGoogleStatus(booking.id, {
+      eventId: booking.google_calendar_event_id || null,
+      status: "error",
+      error:
+        "La agenda debe reconectarse para conceder permisos de Google Calendar.",
+    });
+
+    return { error: new Error("Google Calendar requiere reconexion") };
+  }
 
   try {
     const accessToken = await getValidAccessToken(connection);

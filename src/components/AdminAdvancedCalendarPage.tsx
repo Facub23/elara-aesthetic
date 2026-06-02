@@ -109,6 +109,7 @@ type GoogleCalendarConnection = {
   specialist_name: string;
   google_email?: string | null;
   status?: string | null;
+  requires_reconnect?: boolean | null;
 };
 
 type GoogleCalendarStatus = {
@@ -2127,12 +2128,16 @@ export default function AdminAdvancedCalendarPage({
                   Google Calendar
                 </p>
                 <h3 className="mt-2 text-xl font-semibold">
-                  {googleCalendarStatus?.connection?.status === "connected"
+                  {googleCalendarStatus?.connection?.requires_reconnect
+                    ? "Permisos incompletos"
+                    : googleCalendarStatus?.connection?.status === "connected"
                     ? "Agenda conectada"
                     : "Agenda no conectada"}
                 </h3>
                 <p className="mt-2 text-sm text-neutral-500">
-                  {googleCalendarStatus?.connection?.google_email
+                  {googleCalendarStatus?.connection?.requires_reconnect
+                    ? "Reconecta la agenda y acepta el permiso para crear y actualizar eventos."
+                    : googleCalendarStatus?.connection?.google_email
                     ? googleCalendarStatus.connection.google_email
                     : googleCalendarStatus?.configured === false
                       ? "Faltan credenciales de Google en el entorno."
@@ -2141,6 +2146,25 @@ export default function AdminAdvancedCalendarPage({
               </div>
 
               <div className="flex flex-wrap gap-3">
+                {googleCalendarStatus?.connection?.requires_reconnect && (
+                  <Link
+                    href={
+                      selectedSpecialistProfile?.id
+                        ? `/api/google-calendar/connect?specialistId=${encodeURIComponent(
+                            String(selectedSpecialistProfile.id)
+                          )}`
+                        : "#"
+                    }
+                    className={`rounded-full px-5 py-3 text-sm ${
+                      googleCalendarStatus?.configured === false ||
+                      !selectedSpecialistProfile?.id
+                        ? "pointer-events-none bg-neutral-300 text-neutral-500"
+                        : "bg-black text-white"
+                    }`}
+                  >
+                    Reconectar Google
+                  </Link>
+                )}
                 {googleCalendarStatus?.connection?.status === "connected" ? (
                   <button
                     type="button"
