@@ -118,6 +118,20 @@ function getWeekday(date: string) {
   return new Date(`${date}T00:00:00`).getDay();
 }
 
+function getTodayDate() {
+  return new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Madrid",
+  }).format(new Date());
+}
+
+function isDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isTime(value: string) {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
 function timeToMinutes(time: string) {
   const [hours, minutes] = time.split(":").map(Number);
   return hours * 60 + minutes;
@@ -549,6 +563,15 @@ export async function validateBookingSlot({
   durationMinutes,
 }: SlotValidationInput) {
   const date = normalizeBookingDate(bookingDate);
+
+  if (!isDate(date) || !isTime(bookingTime)) {
+    return "Fecha u hora no validas";
+  }
+
+  if (date < getTodayDate()) {
+    return "Selecciona una fecha futura";
+  }
+
   const blockedReason = await getDayBlockReason(
     specialistName,
     date
@@ -563,6 +586,24 @@ export async function validateBookingSlot({
 
   if (workingRanges.length === 0) {
     return "El especialista no tiene horario activo ese dia";
+  }
+
+  const slotInterval = Math.max(
+    5,
+    Math.min(
+      ...workingRanges.map(
+        (range) => range.slotIntervalMinutes || 30
+      )
+    )
+  );
+  const validSlots = new Set(
+    workingRanges.flatMap((range) =>
+      generateSlots(range.start, range.end, slotInterval)
+    )
+  );
+
+  if (!validSlots.has(bookingTime)) {
+    return "El horario seleccionado no pertenece a la agenda disponible";
   }
 
   const slotStart = timeToMinutes(bookingTime);

@@ -30,6 +30,14 @@ function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
+function isDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function isTime(value: string) {
+  return /^\d{2}:\d{2}$/.test(value);
+}
+
 function hashSubmissionValue(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -113,6 +121,13 @@ export async function POST(req: Request) {
         {
           status: 400,
         }
+      );
+    }
+
+    if (!isDate(booking_date) || !isTime(booking_time)) {
+      return NextResponse.json(
+        { success: false, error: "Fecha u hora no validas" },
+        { status: 400 }
       );
     }
 
