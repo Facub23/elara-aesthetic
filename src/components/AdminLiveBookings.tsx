@@ -7,6 +7,7 @@ import { supabaseBrowser } from "@/lib/supabase/client";
 import {
   getBookingStatusClass,
   getBookingStatusKey,
+  getBookingStatusLabel,
   isPendingBookingStatus,
 } from "@/lib/booking-status";
 
@@ -221,14 +222,6 @@ export default function AdminLiveBookings({
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   async function updateBookingStatus(bookingId: string, status: string) {
-    if (status === "Completada") {
-      showAdminToast(
-        "El estado Completada se actualiza automaticamente.",
-        "error"
-      );
-      return;
-    }
-
     setUpdatingId(bookingId);
 
     const res = await fetch("/api/update-booking-status", {
@@ -257,7 +250,7 @@ export default function AdminLiveBookings({
           ? {
               ...booking,
               ...(data.data || {}),
-              status,
+              status: data.data?.status || status,
             }
           : booking
       )
@@ -537,7 +530,13 @@ export default function AdminLiveBookings({
         ) : (
           bookings.map((booking) => {
             const currentStatus = booking.status || "Pendiente";
-            const isCompleted = getBookingStatusKey(currentStatus) === "completed";
+            const currentStatusLabel =
+              getBookingStatusKey(currentStatus) === "completed"
+                ? "Asistio"
+                : getBookingStatusLabel(currentStatus);
+            const statusKey = getBookingStatusKey(currentStatus);
+            const isCompleted = statusKey === "completed";
+            const isNoShow = statusKey === "no_show";
             const isUpdating = updatingId === booking.id;
             const priority = getPriorityLabel(
               currentStatus,
@@ -573,7 +572,7 @@ export default function AdminLiveBookings({
                             currentStatus
                           )}`}
                         >
-                          {currentStatus}
+                          {currentStatusLabel}
                         </div>
 
                         {priority && (
@@ -700,6 +699,18 @@ export default function AdminLiveBookings({
                             </button>
                           )}
 
+                          {!isCompleted && (
+                            <button
+                              onClick={() =>
+                                updateBookingStatus(booking.id, "Asistio")
+                              }
+                              disabled={isUpdating}
+                              className="rounded-full bg-black px-5 py-2.5 text-sm text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Asistio
+                            </button>
+                          )}
+
                           {currentStatus !== "Cancelada" && (
                             <button
                               onClick={() =>
@@ -712,15 +723,15 @@ export default function AdminLiveBookings({
                             </button>
                           )}
 
-                          {currentStatus !== "No asistió" && (
+                          {!isNoShow && (
                             <button
                               onClick={() =>
-                                updateBookingStatus(booking.id, "No asistió")
+                                updateBookingStatus(booking.id, "No asistio")
                               }
                               disabled={isUpdating}
                               className="rounded-full bg-neutral-900 px-5 py-2.5 text-sm text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                              No asistió
+                              No asistio
                             </button>
                           )}
                         </>

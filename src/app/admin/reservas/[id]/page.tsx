@@ -4,7 +4,11 @@ import { notFound, redirect } from "next/navigation";
 import AdminShell from "@/components/AdminShell";
 import GoogleCalendarSyncButton from "@/components/GoogleCalendarSyncButton";
 import { hasAdminPermission } from "@/lib/admin-access";
-import { getBookingStatusClass } from "@/lib/booking-status";
+import {
+  getBookingStatusClass,
+  getBookingStatusKey,
+  getBookingStatusLabel,
+} from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -186,6 +190,10 @@ export default async function AdminBookingDetailPage({
     availability_checked?: boolean | null;
   };
   const status = booking.status || "Pendiente";
+  const statusLabel =
+    getBookingStatusKey(status) === "completed"
+      ? "Asistio"
+      : getBookingStatusLabel(status);
 
   return (
     <AdminShell
@@ -218,7 +226,7 @@ export default async function AdminBookingDetailPage({
                   status
                 )}`}
               >
-                {status}
+                {statusLabel}
               </span>
             </div>
 
@@ -259,7 +267,7 @@ export default async function AdminBookingDetailPage({
                       ? `${booking.duration_minutes} min`
                       : "No registrada",
                   ],
-                  ["Estado", status],
+                  ["Estado", statusLabel],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-2xl bg-[#F7F5F2] p-4">
                     <p className="text-xs uppercase tracking-[0.18em] text-neutral-400">

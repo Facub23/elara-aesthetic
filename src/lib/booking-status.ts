@@ -13,6 +13,7 @@ export const adminBookingStatusOptions = [
   { value: "Pendiente confirmacion", label: "Pendiente confirmacion" },
   { value: "Confirmada", label: "Confirmada" },
   { value: "Reprogramada", label: "Reprogramada" },
+  { value: "Completada", label: "Asistio" },
   { value: "Cancelada", label: "Cancelada" },
   { value: "No asistio", label: "No asistio" },
 ] as const;
@@ -53,11 +54,13 @@ export function normalizeBookingStatus(status?: string | null) {
 export function getBookingStatusKey(status?: string | null): BookingStatusKey {
   const normalized = normalizeBookingStatus(status);
 
+  if (normalized.includes("no asist")) return "no_show";
   if (normalized.includes("confirmada")) return "confirmed";
   if (normalized.includes("reprogramada")) return "rescheduled";
-  if (normalized.includes("completada")) return "completed";
+  if (normalized.includes("completada") || normalized === "asistio") {
+    return "completed";
+  }
   if (normalized.includes("cancelada")) return "cancelled";
-  if (normalized.includes("asisti")) return "no_show";
   if (normalized.includes("expirada")) return "expired";
   if (normalized.includes("pendiente") || normalized.includes("confirmaci")) {
     return "pending";
@@ -84,6 +87,8 @@ export function getCanonicalAdminBookingStatus(status?: unknown) {
     "pendiente confirmacion",
     "confirmada",
     "reprogramada",
+    "asistio",
+    "completada",
     "cancelada",
     "no asistio",
   ];
@@ -92,7 +97,8 @@ export function getCanonicalAdminBookingStatus(status?: unknown) {
 
   const key = getBookingStatusKey(status);
 
-  if (key === "completed" || key === "expired" || key === "other") return null;
+  if (key === "expired" || key === "other") return null;
+  if (key === "completed") return "Completada";
   if (key === "pending" && normalized.includes("confirmaci")) {
     return "Pendiente confirmacion";
   }

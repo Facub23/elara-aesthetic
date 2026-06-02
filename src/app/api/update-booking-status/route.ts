@@ -111,6 +111,9 @@ export async function POST(req: Request) {
       .from("bookings")
       .update({
         status,
+        ...(status === "Completada"
+          ? { completed_at: new Date().toISOString() }
+          : {}),
       })
       .eq("id", id)
       .select()
@@ -142,10 +145,18 @@ export async function POST(req: Request) {
 
     await recordBookingEvent({
       bookingId: data.id,
-      eventType: status === "Cancelada" ? "cancelled" : "status_changed",
+      eventType:
+        status === "Cancelada"
+          ? "cancelled"
+          : status === "Completada"
+            ? "completed"
+            : "status_changed",
       actorType: "admin",
       resultingStatus: status,
-      description: `La administracion cambio el estado a ${status}.`,
+      description:
+        status === "Completada"
+          ? "La administracion marco la cita como asistida."
+          : `La administracion cambio el estado a ${status}.`,
     });
 
     await notifyBookingUpdated(data);
