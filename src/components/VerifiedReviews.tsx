@@ -29,7 +29,7 @@ export default async function VerifiedReviews() {
             Opiniones verificadas
           </p>
 
-          <h2 className="mt-5 text-5xl font-semibold tracking-tight md:text-7xl">
+          <h2 className="mt-5 text-4xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-5xl md:text-7xl">
             Experiencias reales de pacientes EncuentraTuClinica.
           </h2>
 

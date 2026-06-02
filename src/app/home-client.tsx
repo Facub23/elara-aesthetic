@@ -146,11 +146,13 @@ export default function HomeClient() {
                     />
                   </div>
 
-                  <div className="p-8">
-                    <div className="flex items-center justify-between gap-4">
-                      <h3 className="text-3xl font-semibold">{clinic.name}</h3>
+                  <div className="p-6 sm:p-8">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <h3 className="min-w-0 text-2xl font-semibold sm:text-3xl">
+                        {clinic.name}
+                      </h3>
 
-                      <div className="rounded-full bg-black px-4 py-2 text-sm text-white">
+                      <div className="w-fit rounded-full bg-black px-4 py-2 text-sm text-white">
                         Clinica destacada
                       </div>
                     </div>

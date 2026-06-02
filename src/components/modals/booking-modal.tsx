@@ -458,15 +458,15 @@ export function BookingModal({
 
   const modal = (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[999999] flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
+      <motion.div className="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm lg:items-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 20 }}
           transition={{ duration: 0.35 }}
-          className="relative grid w-full max-w-7xl overflow-hidden rounded-[40px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] lg:grid-cols-[0.85fr_1.15fr]"
+          className="relative my-4 grid w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] sm:rounded-[40px] lg:grid-cols-[0.85fr_1.15fr]"
         >
-          <div className="relative flex flex-col justify-between overflow-hidden bg-[#050505] p-10 text-white lg:p-12">
+          <div className="relative flex flex-col justify-between overflow-hidden bg-[#050505] p-6 text-white sm:p-10 lg:p-12">
             <div className="absolute left-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-white/10 blur-[120px]" />
             <div className="absolute bottom-[-120px] right-[-120px] h-[320px] w-[320px] rounded-full bg-[#D6C3A5]/20 blur-[120px]" />
 
@@ -475,7 +475,7 @@ export function BookingModal({
                 Checkout EncuentraTuClinica
               </div>
 
-              <h2 className="text-5xl font-semibold leading-[0.95] tracking-tight lg:text-6xl">
+              <h2 className="text-4xl font-semibold leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
                 {clinicName}
               </h2>
 
@@ -491,8 +491,8 @@ export function BookingModal({
               </p>
             </div>
 
-            <div className="relative z-10 mt-10 grid grid-cols-2 gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+            <div className="relative z-10 mt-8 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Fecha
                 </div>
@@ -502,7 +502,7 @@ export function BookingModal({
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Hora
                 </div>
@@ -512,7 +512,7 @@ export function BookingModal({
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl col-span-2">
+              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:col-span-2 sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Tratamiento
                 </div>
