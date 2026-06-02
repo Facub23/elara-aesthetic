@@ -54,6 +54,10 @@ export default async function AdminConfigPage() {
   const hasCronSecret = Boolean(process.env.CRON_SECRET || process.env.REMINDER_CRON_SECRET);
   const hasBookingTimezone = Boolean(process.env.ENCUENTRA_BOOKING_TIMEZONE);
   const hasAdminContact = Boolean(process.env.ADMIN_EMAIL || settings?.main_email);
+  const googleCallbackUrl = `${siteUrl || "https://encuentratuclinica-esp.vercel.app"}/api/google-calendar/callback`;
+  const hasGoogleClientId = Boolean(process.env.GOOGLE_CLIENT_ID);
+  const hasGoogleClientSecret = Boolean(process.env.GOOGLE_CLIENT_SECRET);
+  const hasGoogleCalendarConfig = hasGoogleClientId && hasGoogleClientSecret;
 
   const deploymentChecks = [
     {
@@ -143,6 +147,23 @@ export default async function AdminConfigPage() {
       href: "/admin/calendar",
     },
     {
+      group: "Google Calendar",
+      label: "OAuth configurado",
+      done: hasGoogleCalendarConfig,
+      hint: hasGoogleCalendarConfig
+        ? "GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET estan disponibles."
+        : "Configura GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET en Vercel y local.",
+      priority: "recommended" as const,
+      href: "/admin/calendar",
+    },
+    {
+      group: "Google Calendar",
+      label: "Redirect URI",
+      done: hasProductionSiteUrl,
+      hint: `Usar en Google Cloud: ${googleCallbackUrl}`,
+      priority: "manual" as const,
+    },
+    {
       group: "Negocio",
       label: "Pagos reales",
       done: false,
@@ -190,6 +211,45 @@ export default async function AdminConfigPage() {
             appointment_duration: settings?.appointment_duration || 60,
           }}
         />
+
+        <section className="mt-10 rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
+          <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+            Google Calendar
+          </p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            Conexion de agendas externas
+          </h2>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-neutral-500">
+            Usa esta URL como redirect autorizado en Google Cloud para que los
+            especialistas puedan conectar su calendario.
+          </p>
+          <div className="mt-6 rounded-2xl bg-[#F7F5F2] p-4 text-sm break-all text-neutral-700">
+            {googleCallbackUrl}
+          </div>
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {[
+              ["Client ID", hasGoogleClientId],
+              ["Client Secret", hasGoogleClientSecret],
+              ["Site URL publica", hasProductionSiteUrl],
+            ].map(([label, done]) => (
+              <div
+                key={String(label)}
+                className="rounded-2xl bg-[#F7F5F2] p-4"
+              >
+                <div className="text-sm font-medium">{label}</div>
+                <div
+                  className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs ${
+                    done
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {done ? "Configurado" : "Pendiente"}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <AdminDeploymentReadiness checks={deploymentChecks} />
       </div>
