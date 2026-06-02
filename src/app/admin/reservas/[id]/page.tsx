@@ -84,6 +84,22 @@ function sourceLabel(source?: string | null) {
   return source ? sources[source] || source.replaceAll("_", " ") : "No registrado";
 }
 
+function googleSyncLabel(status?: string | null, eventId?: string | null) {
+  if (status === "synced") return "Sincronizada";
+  if (status === "error") return "Con error";
+  if (status === "cancelled") return "Cancelada en Google";
+  if (eventId) return "Vinculada";
+  return "Sin sincronizar";
+}
+
+function googleSyncClass(status?: string | null, eventId?: string | null) {
+  if (status === "synced") return "bg-emerald-50 text-emerald-700";
+  if (status === "error") return "bg-red-50 text-red-700";
+  if (status === "cancelled") return "bg-neutral-100 text-neutral-700";
+  if (eventId) return "bg-sky-50 text-sky-700";
+  return "bg-[#F7F5F2] text-neutral-500";
+}
+
 export default async function AdminBookingDetailPage({
   params,
 }: {
@@ -334,6 +350,38 @@ export default async function AdminBookingDetailPage({
               <div className="mt-6 border-t border-white/10 pt-5 text-sm text-white/60">
                 Creada {formatDateTime(booking.created_at)}
               </div>
+            </section>
+
+            <section className="rounded-[32px] bg-white/75 p-6">
+              <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+                Google Calendar
+              </p>
+              <div
+                className={`mt-4 inline-flex rounded-full px-4 py-2 text-sm ${googleSyncClass(
+                  booking.google_calendar_sync_status,
+                  booking.google_calendar_event_id
+                )}`}
+              >
+                {googleSyncLabel(
+                  booking.google_calendar_sync_status,
+                  booking.google_calendar_event_id
+                )}
+              </div>
+              {booking.google_calendar_event_id ? (
+                <p className="mt-4 break-all text-xs text-neutral-500">
+                  Evento: {booking.google_calendar_event_id}
+                </p>
+              ) : null}
+              {booking.google_calendar_synced_at ? (
+                <p className="mt-3 text-sm text-neutral-500">
+                  Ultima sync: {formatDateTime(booking.google_calendar_synced_at)}
+                </p>
+              ) : null}
+              {booking.google_calendar_last_error ? (
+                <p className="mt-3 rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+                  {booking.google_calendar_last_error}
+                </p>
+              ) : null}
             </section>
 
             <section className="rounded-[32px] bg-white/75 p-6">

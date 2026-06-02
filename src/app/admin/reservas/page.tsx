@@ -197,6 +197,10 @@ export default async function AdminReservasPage({
       rescheduled_by: booking.rescheduled_by || null,
       previous_booking_date: booking.previous_booking_date || null,
       previous_booking_time: booking.previous_booking_time || null,
+      google_calendar_event_id: booking.google_calendar_event_id || null,
+      google_calendar_sync_status: booking.google_calendar_sync_status || null,
+      google_calendar_synced_at: booking.google_calendar_synced_at || null,
+      google_calendar_last_error: booking.google_calendar_last_error || null,
     })) || [];
 
   const sortedBookings = [...liveBookings].sort((a, b) => {

@@ -36,6 +36,10 @@ type Booking = {
   rescheduled_by?: "patient" | "admin" | null;
   previous_booking_date?: string | null;
   previous_booking_time?: string | null;
+  google_calendar_event_id?: string | null;
+  google_calendar_sync_status?: string | null;
+  google_calendar_synced_at?: string | null;
+  google_calendar_last_error?: string | null;
 };
 
 const blockingStatuses = [
@@ -164,6 +168,40 @@ function formatPrice(value?: string | number | null) {
   }).format(parsed);
 }
 
+function getGoogleSyncBadge(booking: Booking) {
+  const status = booking.google_calendar_sync_status;
+
+  if (status === "synced") {
+    return {
+      label: "Google sincronizado",
+      className: "bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  if (status === "error") {
+    return {
+      label: "Error Google",
+      className: "bg-red-50 text-red-700",
+    };
+  }
+
+  if (status === "cancelled") {
+    return {
+      label: "Google cancelado",
+      className: "bg-neutral-200 text-neutral-700",
+    };
+  }
+
+  if (booking.google_calendar_event_id) {
+    return {
+      label: "Google vinculado",
+      className: "bg-sky-50 text-sky-700",
+    };
+  }
+
+  return null;
+}
+
 export default function AdminLiveBookings({
   initialBookings,
 }: {
@@ -205,8 +243,9 @@ export default function AdminLiveBookings({
 
     setUpdatingId(null);
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       showAdminToast(data.error || "Error actualizando estado", "error");
       return;
     }
@@ -216,6 +255,7 @@ export default function AdminLiveBookings({
         String(booking.id) === String(bookingId)
           ? {
               ...booking,
+              ...(data.data || {}),
               status,
             }
           : booking
@@ -311,8 +351,9 @@ export default function AdminLiveBookings({
 
     setUpdatingId(null);
 
+    const data = await res.json().catch(() => ({}));
+
     if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
       showAdminToast(data.error || "Error reprogramando reserva", "error");
       return;
     }
@@ -322,6 +363,7 @@ export default function AdminLiveBookings({
         String(booking.id) === String(reprogrammingBooking.id)
           ? {
               ...booking,
+              ...(data.booking || {}),
               booking_date: formattedDate,
               booking_time: newTime,
               status: "Reprogramada",
@@ -504,6 +546,7 @@ export default function AdminLiveBookings({
             const priceFrom = formatPrice(bookingContext.price_from);
             const sourceLabel = getSourceLabel(booking.booking_source);
             const wasRescheduled = Boolean(booking.rescheduled_at);
+            const googleSyncBadge = getGoogleSyncBadge(booking);
             const previousSchedule = [
               normalizeDate(booking.previous_booking_date || ""),
               booking.previous_booking_time?.slice(0, 5) || "",
@@ -585,6 +628,15 @@ export default function AdminLiveBookings({
                         {bookingContext.availability_checked && (
                           <div className="rounded-full bg-emerald-50 px-4 py-2 text-sm text-emerald-700">
                             Hueco validado
+                          </div>
+                        )}
+
+                        {googleSyncBadge && (
+                          <div
+                            title={booking.google_calendar_last_error || undefined}
+                            className={`rounded-full px-4 py-2 text-sm ${googleSyncBadge.className}`}
+                          >
+                            {googleSyncBadge.label}
                           </div>
                         )}
 
