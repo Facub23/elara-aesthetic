@@ -16,6 +16,22 @@ function hasTreatmentPrice(treatment: any) {
   return hasText(getTreatmentRawPrice(treatment));
 }
 
+function getDuplicateValues(items: any[], field: string) {
+  const counts = new Map<string, number>();
+
+  items.forEach((item) => {
+    const value = normalize(item?.[field]);
+
+    if (!value) return;
+
+    counts.set(value, (counts.get(value) || 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([value]) => value);
+}
+
 export default function AdminMarketplaceHealth({
   clinics,
   specialists,
@@ -28,8 +44,15 @@ export default function AdminMarketplaceHealth({
   availability?: any[];
 }) {
   const clinicNames = new Set(clinics.map((clinic) => normalize(clinic.name)));
+  const clinicIds = new Set(clinics.map((clinic) => String(clinic.id)));
+  const specialistNames = new Set(
+    specialists.map((specialist) => normalize(specialist.name))
+  );
   const treatmentNames = new Set(
     treatments.map((treatment) => normalize(treatment.name))
+  );
+  const clinicNameById = new Map(
+    clinics.map((clinic) => [String(clinic.id), normalize(clinic.name)])
   );
 
   const specialistsByClinic = new Map<string, any[]>();
@@ -71,7 +94,27 @@ export default function AdminMarketplaceHealth({
     (clinic) => (treatmentNamesByClinic.get(normalize(clinic.name)) || new Set()).size === 0
   );
   const specialistsWithoutValidClinic = specialists.filter(
-    (specialist) => !clinicNames.has(normalize(specialist.clinic_name))
+    (specialist) =>
+      !clinicNames.has(normalize(specialist.clinic_name)) &&
+      !clinicIds.has(String(specialist.clinic_id || ""))
+  );
+  const specialistsWithClinicMismatch = specialists.filter((specialist) => {
+    if (!specialist.clinic_id || !specialist.clinic_name) return false;
+
+    const clinicName = clinicNameById.get(String(specialist.clinic_id));
+
+    return Boolean(
+      clinicName && clinicName !== normalize(specialist.clinic_name)
+    );
+  });
+  const duplicateClinicSlugs = getDuplicateValues(clinics, "slug");
+  const duplicateSpecialistSlugs = getDuplicateValues(specialists, "slug");
+  const duplicateTreatmentSlugs = getDuplicateValues(treatments, "slug");
+  const duplicateClinicNames = getDuplicateValues(clinics, "name");
+  const duplicateSpecialistNames = getDuplicateValues(specialists, "name");
+  const duplicateTreatmentNames = getDuplicateValues(treatments, "name");
+  const availabilityWithoutSpecialist = availability.filter(
+    (item) => !specialistNames.has(normalize(item.specialist_name))
   );
   const specialistsWithoutTreatments = specialists.filter(
     (specialist) => !Array.isArray(specialist.treatments) || specialist.treatments.length === 0
@@ -134,7 +177,10 @@ export default function AdminMarketplaceHealth({
     },
     {
       label: "Especialistas conectados",
-      value: specialists.length - specialistsWithoutValidClinic.length,
+      value:
+        specialists.length -
+        specialistsWithoutValidClinic.length -
+        specialistsWithClinicMismatch.length,
       total: specialists.length,
       href: "/admin/especialistas",
     },
@@ -153,6 +199,30 @@ export default function AdminMarketplaceHealth({
   ];
 
   const issues = [
+    ...duplicateClinicSlugs.map((slug) => ({
+      label: `Hay mas de una clinica usando el slug "${slug}".`,
+      href: "/admin/clinicas",
+    })),
+    ...duplicateSpecialistSlugs.map((slug) => ({
+      label: `Hay mas de un especialista usando el slug "${slug}".`,
+      href: "/admin/especialistas",
+    })),
+    ...duplicateTreatmentSlugs.map((slug) => ({
+      label: `Hay mas de un tratamiento usando el slug "${slug}".`,
+      href: "/admin/tratamientos",
+    })),
+    ...duplicateClinicNames.map((name) => ({
+      label: `Hay mas de una clinica con el nombre "${name}".`,
+      href: "/admin/clinicas",
+    })),
+    ...duplicateSpecialistNames.map((name) => ({
+      label: `Hay mas de un especialista con el nombre "${name}".`,
+      href: "/admin/especialistas",
+    })),
+    ...duplicateTreatmentNames.map((name) => ({
+      label: `Hay mas de un tratamiento con el nombre "${name}".`,
+      href: "/admin/tratamientos",
+    })),
     ...clinicsWithoutSpecialists.map((clinic) => ({
       label: `${clinic.name} no tiene especialistas.`,
       href: `/admin/especialistas?clinic=${encodeURIComponent(clinic.name)}&new=1`,
@@ -163,6 +233,10 @@ export default function AdminMarketplaceHealth({
     })),
     ...specialistsWithoutValidClinic.map((specialist) => ({
       label: `${specialist.name} no esta conectado a una clinica valida.`,
+      href: "/admin/especialistas",
+    })),
+    ...specialistsWithClinicMismatch.map((specialist) => ({
+      label: `${specialist.name} tiene clinic_id y nombre de clinica desalineados.`,
       href: "/admin/especialistas",
     })),
     ...specialistsWithoutTreatments.map((specialist) => ({
@@ -194,6 +268,10 @@ export default function AdminMarketplaceHealth({
       href: `/admin/calendar?specialist=${encodeURIComponent(
         specialist.name || ""
       )}`,
+    })),
+    ...availabilityWithoutSpecialist.map((item) => ({
+      label: `Hay horarios para "${item.specialist_name}" pero ese especialista no existe.`,
+      href: "/admin/calendar",
     })),
   ];
 
