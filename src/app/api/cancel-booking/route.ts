@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cancellableBookingStatuses } from "@/lib/booking-lifecycle";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingUpdated } from "@/lib/booking-notifications";
+import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 function redirectToPage(req: Request, token: string, status?: string) {
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
     });
 
     await notifyBookingUpdated(cancelled);
+    await syncBookingToGoogleCalendar(cancelled);
     revalidatePath("/dashboard");
     revalidatePath("/cancel-booking");
   }

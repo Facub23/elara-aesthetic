@@ -13,6 +13,7 @@ import { isBookingInAdminScope } from "@/lib/admin-scope";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingUpdated } from "@/lib/booking-notifications";
 import { getCanonicalAdminBookingStatus } from "@/lib/booking-status";
+import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -256,6 +257,8 @@ export async function POST(req: Request) {
       previousTime: scheduleChanged ? previousTime : null,
       updatedBy: "admin",
     });
+
+    await syncBookingToGoogleCalendar(data);
 
     return NextResponse.json({
       success: true,

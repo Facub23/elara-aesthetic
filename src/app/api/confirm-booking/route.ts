@@ -8,6 +8,7 @@ import {
 } from "@/lib/booking-lifecycle";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingConfirmed } from "@/lib/booking-notifications";
+import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { getSiteUrl } from "@/lib/site-url";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
         ? `${baseUrl}/cancel-booking?token=${confirmedBooking.cancellation_token}`
         : undefined,
     });
+
+    await syncBookingToGoogleCalendar(confirmedBooking);
 
     revalidatePath("/confirm-booking");
   }

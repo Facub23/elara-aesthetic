@@ -104,6 +104,18 @@ type Feedback = {
   message: string;
 } | null;
 
+type GoogleCalendarConnection = {
+  specialist_id: string;
+  specialist_name: string;
+  google_email?: string | null;
+  status?: string | null;
+};
+
+type GoogleCalendarStatus = {
+  configured: boolean;
+  connection: GoogleCalendarConnection | null;
+};
+
 type SlotAvailability = {
   availableSlots: string[];
   blocked: boolean;
@@ -553,6 +565,16 @@ export default function AdminAdvancedCalendarPage({
     setAvailabilityLoading,
   ] = useState(false);
 
+  const [
+    googleCalendarStatus,
+    setGoogleCalendarStatus,
+  ] = useState<GoogleCalendarStatus | null>(null);
+
+  const [
+    googleCalendarLoading,
+    setGoogleCalendarLoading,
+  ] = useState(false);
+
   useEffect(() => {
     async function loadData() {
       const { data: clinicsData } =
@@ -784,6 +806,34 @@ export default function AdminAdvancedCalendarPage({
 
     setSelectedClinic(selectedSpecialistProfile.clinic_name);
   }, [isSpecialistAccess, selectedSpecialistProfile?.clinic_name]);
+
+  useEffect(() => {
+    async function loadGoogleCalendarStatus() {
+      if (!selectedSpecialistProfile?.id) {
+        setGoogleCalendarStatus(null);
+        return;
+      }
+
+      const response = await fetch(
+        `/api/google-calendar/status?specialistId=${encodeURIComponent(
+          String(selectedSpecialistProfile.id)
+        )}`
+      );
+
+      if (!response.ok) {
+        setGoogleCalendarStatus(null);
+        return;
+      }
+
+      const data = await response.json();
+      setGoogleCalendarStatus({
+        configured: Boolean(data.configured),
+        connection: data.connection || null,
+      });
+    }
+
+    loadGoogleCalendarStatus();
+  }, [selectedSpecialistProfile?.id]);
 
   const activeAvailability = useMemo(
     () => availability.filter(isAvailabilityActive),
@@ -1859,6 +1909,41 @@ export default function AdminAdvancedCalendarPage({
     refreshCalendarData();
   }
 
+  async function handleDisconnectGoogleCalendar() {
+    if (!selectedSpecialistProfile?.id) return;
+
+    setGoogleCalendarLoading(true);
+
+    const response = await fetch("/api/google-calendar/disconnect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        specialistId: selectedSpecialistProfile.id,
+      }),
+    });
+
+    setGoogleCalendarLoading(false);
+
+    if (!response.ok) {
+      showFeedback("error", "No pudimos desconectar Google Calendar");
+      return;
+    }
+
+    showFeedback("success", "Google Calendar desconectado");
+    setGoogleCalendarStatus((current) =>
+      current
+        ? {
+            ...current,
+            connection: current.connection
+              ? { ...current.connection, status: "disconnected" }
+              : null,
+          }
+        : current
+    );
+  }
+
   return (
     <AdminShell
       isSuperAdmin={isSuperAdmin}
@@ -2031,6 +2116,59 @@ export default function AdminAdvancedCalendarPage({
                 <div className="mt-1 text-xs uppercase tracking-[0.14em] text-neutral-500">
                   Vacaciones
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[28px] border border-black/10 bg-[#F8F5F1] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+                  Google Calendar
+                </p>
+                <h3 className="mt-2 text-xl font-semibold">
+                  {googleCalendarStatus?.connection?.status === "connected"
+                    ? "Agenda conectada"
+                    : "Agenda no conectada"}
+                </h3>
+                <p className="mt-2 text-sm text-neutral-500">
+                  {googleCalendarStatus?.connection?.google_email
+                    ? googleCalendarStatus.connection.google_email
+                    : googleCalendarStatus?.configured === false
+                      ? "Faltan credenciales de Google en el entorno."
+                      : "Sincroniza reservas confirmadas con la agenda externa del especialista."}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {googleCalendarStatus?.connection?.status === "connected" ? (
+                  <button
+                    type="button"
+                    onClick={handleDisconnectGoogleCalendar}
+                    disabled={googleCalendarLoading}
+                    className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm disabled:opacity-50"
+                  >
+                    Desconectar
+                  </button>
+                ) : (
+                  <Link
+                    href={
+                      selectedSpecialistProfile?.id
+                        ? `/api/google-calendar/connect?specialistId=${encodeURIComponent(
+                            String(selectedSpecialistProfile.id)
+                          )}`
+                        : "#"
+                    }
+                    className={`rounded-full px-5 py-3 text-sm ${
+                      googleCalendarStatus?.configured === false ||
+                      !selectedSpecialistProfile?.id
+                        ? "pointer-events-none bg-neutral-300 text-neutral-500"
+                        : "bg-black text-white"
+                    }`}
+                  >
+                    Conectar Google
+                  </Link>
+                )}
               </div>
             </div>
           </div>

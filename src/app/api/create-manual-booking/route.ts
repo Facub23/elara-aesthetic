@@ -10,6 +10,7 @@ import {
 } from "@/lib/booking-availability";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyManualBookingCreated } from "@/lib/booking-notifications";
+import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { getSiteUrl } from "@/lib/site-url";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -280,6 +281,8 @@ export async function POST(req: Request) {
     await notifyManualBookingCreated(booking, {
       cancellationUrl: `${baseUrl}/cancel-booking?token=${cancellationToken}`,
     });
+
+    await syncBookingToGoogleCalendar(booking);
 
     return NextResponse.json({
       success: true,
