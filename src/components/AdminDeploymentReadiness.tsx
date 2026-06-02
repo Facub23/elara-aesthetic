@@ -85,6 +85,7 @@ export default function AdminDeploymentReadiness({
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {groupChecks.map((check) => {
                 const isCritical = check.priority === "critical";
+                const isManual = check.priority === "manual";
                 const content = (
                   <div
                     className={`h-full rounded-3xl border p-5 transition ${
@@ -92,7 +93,9 @@ export default function AdminDeploymentReadiness({
                         ? "border-emerald-100 bg-emerald-50 text-emerald-800"
                         : isCritical
                           ? "border-red-100 bg-red-50 text-red-800"
-                          : "border-amber-100 bg-amber-50 text-amber-900"
+                          : isManual
+                            ? "border-sky-100 bg-sky-50 text-sky-800"
+                            : "border-amber-100 bg-amber-50 text-amber-900"
                     } ${check.href ? "hover:border-black hover:bg-black hover:text-white" : ""}`}
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -101,7 +104,13 @@ export default function AdminDeploymentReadiness({
                         <div className="mt-2 text-sm opacity-75">{check.hint}</div>
                       </div>
                       <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs text-black">
-                        {check.done ? "OK" : isCritical ? "Bloquea" : "Falta"}
+                        {check.done
+                          ? "OK"
+                          : isCritical
+                            ? "Bloquea"
+                            : isManual
+                              ? "Manual"
+                              : "Falta"}
                       </span>
                     </div>
                   </div>

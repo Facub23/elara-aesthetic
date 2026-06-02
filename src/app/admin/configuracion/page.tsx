@@ -40,6 +40,11 @@ export default async function AdminConfigPage() {
     .limit(1)
     .single();
 
+  const { count: googleConnectionsCount } = await supabase
+    .from("specialist_google_calendar_connections")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "connected");
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   const hasProductionSiteUrl =
     Boolean(siteUrl) &&
@@ -162,6 +167,81 @@ export default async function AdminConfigPage() {
       done: hasProductionSiteUrl,
       hint: `Usar en Google Cloud: ${googleCallbackUrl}`,
       priority: "manual" as const,
+    },
+    {
+      group: "Google Calendar",
+      label: "Agenda conectada",
+      done: (googleConnectionsCount || 0) > 0,
+      hint:
+        (googleConnectionsCount || 0) > 0
+          ? `${googleConnectionsCount} especialista(s) con Google Calendar conectado.`
+          : "Conecta al menos una agenda desde el calendario admin.",
+      priority: "recommended" as const,
+      href: "/admin/calendar",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Reserva publica completa",
+      done: false,
+      hint: "Probar elegir tratamiento, especialista, fecha, hora y confirmar reserva real.",
+      priority: "manual" as const,
+      href: "/tratamientos",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Reprogramacion validada",
+      done: false,
+      hint: "Confirmar que admin solo permite horarios disponibles al cambiar fecha u hora.",
+      priority: "manual" as const,
+      href: "/admin/reservas",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Estados post-consulta",
+      done: false,
+      hint: "Verificar pendiente, confirmada, cancelada, no asistio y asistio tras pasar la cita.",
+      priority: "manual" as const,
+      href: "/admin/reservas",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Roles de clinica y especialista",
+      done: false,
+      hint: "Entrar con usuarios limitados y confirmar que solo ven su clinica o su agenda.",
+      priority: "manual" as const,
+      href: "/admin/admins",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Google crea evento",
+      done: false,
+      hint: "Hacer una reserva confirmada y comprobar que aparece en Google Calendar.",
+      priority: "manual" as const,
+      href: "/admin/calendar",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Google actualiza evento",
+      done: false,
+      hint: "Reprogramar una reserva y comprobar que cambia el evento externo.",
+      priority: "manual" as const,
+      href: "/admin/reservas",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Google cancela evento",
+      done: false,
+      hint: "Cancelar una reserva y confirmar que el evento queda cancelado o eliminado.",
+      priority: "manual" as const,
+      href: "/admin/reservas",
+    },
+    {
+      group: "QA pre-lanzamiento",
+      label: "Reintento de sync",
+      done: false,
+      hint: "Forzar una reserva con error y probar el boton Reintentar sync.",
+      priority: "manual" as const,
+      href: "/admin/reservas",
     },
     {
       group: "Negocio",
