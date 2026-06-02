@@ -409,6 +409,25 @@ export default async function PremiumAdminDashboard() {
             </p>
           </Link>
         )}
+
+        {isSuperAdmin && (
+          <Link
+            href="/admin/configuracion"
+            className="rounded-[36px] border border-black bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.04)] transition hover:scale-[1.01] hover:bg-black hover:text-white"
+          >
+            <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
+              Pre-lanzamiento
+            </p>
+
+            <h2 className="mt-6 text-3xl font-semibold tracking-tight">
+              QA y despliegue
+            </h2>
+
+            <p className="mt-4 text-neutral-500">
+              Cerrar pruebas manuales, variables, Google Calendar, crons y datos reales antes de publicar.
+            </p>
+          </Link>
+        )}
       </div>
 
       {isSuperAdmin && (
