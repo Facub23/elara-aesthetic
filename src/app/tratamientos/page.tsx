@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
+import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import {
   getTreatmentCategory,
@@ -349,15 +350,21 @@ export default async function TreatmentsPage({
       supabase.from("treatments").select("*"),
     ]);
 
+  const publicClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
+  const publicSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]);
+  const publicTreatmentRecords = filterPublicRecords(
+    (treatmentRecords || []) as TreatmentRecord[]
+  );
+
   const clinicName =
-    clinicSlug && clinics
-      ? clinics.find((clinic: ClinicRow) => clinic.slug === clinicSlug)?.name || ""
+    clinicSlug && publicClinics
+      ? publicClinics.find((clinic: ClinicRow) => clinic.slug === clinicSlug)?.name || ""
       : "";
 
   const catalog = buildMarketplaceTreatments({
-    specialists: (specialists || []) as SpecialistRow[],
-    clinics: (clinics || []) as ClinicRow[],
-    treatmentRecords: (treatmentRecords || []) as TreatmentRecord[],
+    specialists: publicSpecialists,
+    clinics: publicClinics,
+    treatmentRecords: publicTreatmentRecords,
     clinicSlug,
   });
 
@@ -426,7 +433,7 @@ export default async function TreatmentsPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white p-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white/85 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:grid-cols-3">
             {[
               ["Tratamientos", catalog.length],
               ["Clinicas", totalClinics],
@@ -447,7 +454,7 @@ export default async function TreatmentsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/tratamientos"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white p-3 md:grid-cols-[1.4fr_0.8fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.4fr_0.8fr_0.8fr_auto]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -545,7 +552,7 @@ export default async function TreatmentsPage({
                 return (
                   <article
                     key={treatment.slug}
-                    className="flex min-h-[360px] flex-col rounded-lg border border-black/10 bg-white p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+                    className="flex min-h-[380px] flex-col rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,0,0,0.08)]"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="rounded-full bg-[#F0ECE5] px-3 py-1 text-xs uppercase tracking-[0.18em] text-neutral-600">
@@ -605,7 +612,7 @@ export default async function TreatmentsPage({
                         href={`/tratamientos/${treatment.slug}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Ver ficha del tratamiento
+                        Ver tratamiento
                       </Link>
 
                       <Link
@@ -614,7 +621,7 @@ export default async function TreatmentsPage({
                         }`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver especialistas
+                        Elegir especialista
                       </Link>
                     </div>
                   </article>

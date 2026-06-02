@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { filterPublicRecords } from "@/lib/public-records";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,7 @@ export async function GET() {
       ),
     supabase
       .from("reviews")
-      .select("clinic_name,rating")
+      .select("clinic_name,specialist_name,patient_name,treatment,review,rating")
       .eq("status", "Aprobada"),
   ]);
 
@@ -44,9 +45,9 @@ export async function GET() {
 
   return NextResponse.json(
     {
-      clinics: clinics || [],
-      specialists: specialists || [],
-      reviews: reviews || [],
+      clinics: filterPublicRecords(clinics || []),
+      specialists: filterPublicRecords(specialists || []),
+      reviews: filterPublicRecords(reviews || []),
     },
     {
       headers: {

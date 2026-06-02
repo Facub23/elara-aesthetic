@@ -20,6 +20,10 @@ Configurar estas variables en Project Settings > Environment Variables:
 | `ENCUENTRA_BOOKING_BUFFER_MINUTES` | Recomendado | Buffer global entre citas. |
 | `ENCUENTRA_MAX_DAILY_BOOKINGS` | Recomendado | `0` significa sin limite global. |
 | `ENCUENTRA_BOOKING_COMPLETION_GRACE_MINUTES` | Recomendado | Margen antes de marcar cita como completada. |
+| `GOOGLE_CLIENT_ID` | Recomendado | Necesario para conectar Google Calendar. |
+| `GOOGLE_CLIENT_SECRET` | Recomendado | Necesario para conectar Google Calendar. |
+| `ENCUENTRA_BILLING_MODEL` | Recomendado | Mantener `simulation` hasta decidir pagos reales. |
+| `ENCUENTRA_COMMISSION_RATE` | Recomendado | Comision si el modelo final usa porcentaje por cita. |
 
 Validar localmente antes de desplegar:
 
@@ -52,6 +56,8 @@ Vercel Hobby no permite crons varias veces al dia. Para produccion real, usar Ve
 - `/api/auto-complete-bookings`: cada 30 minutos.
 
 En Vercel, al configurar `CRON_SECRET`, las invocaciones programadas reciben automaticamente `Authorization: Bearer <CRON_SECRET>`.
+
+Mientras la cuenta siga en Hobby, los crons diarios sirven para demos y pruebas controladas, pero no para operacion real con pacientes porque recordatorios, expiraciones y autocompletado pueden ejecutarse tarde.
 
 ## 3. Supabase
 
@@ -93,6 +99,8 @@ Revisar manualmente:
 8. Revisar `/admin/configuracion`.
 9. Revisar `/admin/notificaciones`.
 10. Revisar `/sitemap.xml` y `/robots.txt`.
+
+Las rutas privadas y de sistema (`/admin`, `/login`, `/mi-cuenta`, `/dashboard`, `/cancel-booking`, `/confirm-booking`, `/review`, `/reserva` y `/api`) deben devolver `X-Robots-Tag: noindex, nofollow`.
 
 ## 5. Antes de datos reales
 

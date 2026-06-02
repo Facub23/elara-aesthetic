@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import ClinicProfilePageClient from "@/components/ClinicProfilePageClient";
+import {
+  filterPublicRecords,
+  isPublicPlaceholderRecord,
+} from "@/lib/public-records";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 type ClinicPageProps = {
@@ -32,7 +36,7 @@ async function getClinicBySlug(slug: string) {
 async function getClinicPageData(slug: string) {
   const clinic = await getClinicBySlug(slug);
 
-  if (!clinic) {
+  if (!clinic || isPublicPlaceholderRecord(clinic)) {
     return null;
   }
 
@@ -54,8 +58,8 @@ async function getClinicPageData(slug: string) {
 
   return {
     clinic,
-    specialists: specialists || [],
-    reviews: reviews || [],
+    specialists: filterPublicRecords(specialists || []),
+    reviews: filterPublicRecords(reviews || []),
   };
 }
 

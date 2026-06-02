@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { filterPublicRecords } from "@/lib/public-records";
 
 function cleanReviewText(value?: string | null) {
   return (value || "").replace(/ELARA/gi, "EncuentraTuClinica");
@@ -17,7 +18,9 @@ export default async function VerifiedReviews() {
     })
     .limit(6);
 
-  if (!reviews || reviews.length === 0) {
+  const publicReviews = filterPublicRecords(reviews || []);
+
+  if (publicReviews.length === 0) {
     return null;
   }
 
@@ -40,7 +43,7 @@ export default async function VerifiedReviews() {
         </div>
 
         <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {reviews.map((review) => (
+          {publicReviews.map((review) => (
             <div
               key={review.id}
               className="rounded-[40px] border border-white/40 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl"

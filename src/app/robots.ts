@@ -18,6 +18,11 @@ export default function robots(): MetadataRoute.Robots {
 
       disallow: [
         "/dashboard",
+        "/mi-cuenta",
+        "/cancel-booking",
+        "/confirm-booking",
+        "/review",
+        "/reserva",
         "/login",
         "/admin",
         "/api",

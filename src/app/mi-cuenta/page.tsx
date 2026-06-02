@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { Navbar } from "@/components/layout/navbar";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 type AccessMode = "login" | "register";
@@ -77,8 +78,10 @@ function PatientAccountContent() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F6F3EE] px-6 py-10 text-black">
-      <div className="mx-auto grid min-h-[calc(100vh-80px)] max-w-5xl overflow-hidden rounded-lg border border-black/10 bg-white lg:grid-cols-[0.9fr_1.1fr]">
+    <main className="min-h-screen bg-[#F6F3EE] px-6 pb-16 pt-28 text-black">
+      <Navbar />
+
+      <div className="mx-auto grid min-h-[calc(100vh-140px)] max-w-5xl overflow-hidden rounded-[32px] border border-black/10 bg-white shadow-[0_24px_90px_rgba(0,0,0,0.06)] lg:grid-cols-[0.9fr_1.1fr]">
         <section className="bg-black p-8 text-white lg:p-12">
           <Link href="/" className="text-sm uppercase tracking-[0.28em] text-white/55">
             EncuentraTuClinica
@@ -93,7 +96,7 @@ function PatientAccountContent() {
         </section>
 
         <section className="p-8 lg:p-12">
-          <div className="inline-flex rounded-md bg-[#F7F5F2] p-1">
+          <div className="inline-flex rounded-full bg-[#F7F5F2] p-1">
             {[
               { value: "login" as const, label: "Entrar" },
               { value: "register" as const, label: "Crear cuenta" },
@@ -106,7 +109,7 @@ function PatientAccountContent() {
                   setError("");
                   setMessage("");
                 }}
-                className={`rounded-md px-5 py-3 text-sm transition ${
+                className={`rounded-full px-5 py-3 text-sm transition ${
                   mode === option.value ? "bg-black text-white" : "text-neutral-600"
                 }`}
               >
@@ -131,7 +134,7 @@ function PatientAccountContent() {
                   required
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  className="mt-2 h-14 w-full rounded-md border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none focus:border-black"
+                  className="mt-2 h-14 w-full rounded-2xl border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none transition focus:border-black"
                 />
               </label>
             )}
@@ -143,7 +146,7 @@ function PatientAccountContent() {
                 required
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="mt-2 h-14 w-full rounded-md border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none focus:border-black"
+                className="mt-2 h-14 w-full rounded-2xl border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none transition focus:border-black"
               />
             </label>
 
@@ -155,17 +158,17 @@ function PatientAccountContent() {
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="mt-2 h-14 w-full rounded-md border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none focus:border-black"
+                className="mt-2 h-14 w-full rounded-2xl border border-black/10 bg-[#F7F5F2] px-5 text-black outline-none transition focus:border-black"
               />
             </label>
 
             {error && (
-              <p className="rounded-md bg-red-50 p-4 text-sm text-red-700" role="alert">
+              <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700" role="alert">
                 {error}
               </p>
             )}
             {message && (
-              <p className="rounded-md bg-emerald-50 p-4 text-sm text-emerald-700">
+              <p className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-700">
                 {message}
               </p>
             )}
@@ -173,7 +176,7 @@ function PatientAccountContent() {
             <button
               type="submit"
               disabled={loading}
-              className="h-14 w-full rounded-md bg-black text-white transition hover:opacity-90 disabled:opacity-50"
+              className="h-14 w-full rounded-2xl bg-black text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
             >
               {loading
                 ? "Procesando..."

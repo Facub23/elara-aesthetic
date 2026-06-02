@@ -19,6 +19,23 @@ const publicRoutes = [
   "/robots.txt",
 ];
 
+const publicIndexableRoutes = [
+  "/",
+  "/clinics",
+  "/tratamientos",
+  "/especialistas",
+];
+
+const privateNoindexRoutes = [
+  "/admin",
+  "/login",
+  "/mi-cuenta",
+  "/dashboard",
+  "/cancel-booking",
+  "/confirm-booking",
+  "/api/public-marketplace-data",
+];
+
 const cronRoutes = [
   "/api/expire-pending-bookings",
   "/api/send-booking-reminders",
@@ -38,6 +55,39 @@ async function checkRoute(path) {
     path,
     status: response.status,
     ok: response.status >= 200 && response.status < 400,
+  };
+}
+
+async function checkIndexableRoute(path) {
+  const response = await fetch(absoluteUrl(path), {
+    redirect: "manual",
+  });
+  const robotsHeader = response.headers.get("x-robots-tag") || "";
+
+  return {
+    path,
+    status: response.status,
+    ok:
+      response.status >= 200 &&
+      response.status < 400 &&
+      !robotsHeader.toLowerCase().includes("noindex"),
+    check: "indexable",
+    header: robotsHeader,
+  };
+}
+
+async function checkNoindexRoute(path) {
+  const response = await fetch(absoluteUrl(path), {
+    redirect: "manual",
+  });
+  const robotsHeader = response.headers.get("x-robots-tag") || "";
+
+  return {
+    path,
+    status: response.status,
+    ok: robotsHeader.toLowerCase().includes("noindex"),
+    check: "noindex",
+    header: robotsHeader,
   };
 }
 
@@ -102,6 +152,14 @@ for (const route of publicRoutes) {
   results.push(await checkRoute(route));
 }
 
+for (const route of publicIndexableRoutes) {
+  results.push(await checkIndexableRoute(route));
+}
+
+for (const route of privateNoindexRoutes) {
+  results.push(await checkNoindexRoute(route));
+}
+
 results.push(await checkMarketplaceApi());
 
 for (const route of cronRoutes) {
@@ -118,8 +176,10 @@ const failed = results.filter((result) => !result.ok);
 console.table(
   results.map((result) => ({
     path: result.path,
+    check: result.check || "",
     status: result.status,
     ok: result.ok ? "OK" : "FAIL",
+    header: result.header || "",
     counts: result.counts ? JSON.stringify(result.counts) : "",
   }))
 );

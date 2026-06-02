@@ -34,7 +34,7 @@ export default function SpecialistBookingButton({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="rounded-full bg-black px-8 py-4 text-white"
+        className="rounded-full bg-black px-8 py-4 text-sm font-medium text-white shadow-[0_14px_35px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:opacity-95"
       >
         Reservar consulta
       </button>

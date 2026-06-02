@@ -1,8 +1,17 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 
 import ReviewForm from "@/components/ReviewForm";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+
+export const metadata: Metadata = {
+  title: "Opinion verificada",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function cleanBrandText(value?: string | null) {
   return (value || "").replace(/ELARA/gi, "EncuentraTuClinica");

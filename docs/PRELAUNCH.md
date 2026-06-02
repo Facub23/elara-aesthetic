@@ -21,6 +21,10 @@ Guia de despliegue: [DEPLOYMENT.md](./DEPLOYMENT.md)
 - `ENCUENTRA_BOOKING_BUFFER_MINUTES`: buffer entre citas.
 - `ENCUENTRA_MAX_DAILY_BOOKINGS`: limite diario global si no hay limite por especialista.
 - `ENCUENTRA_BOOKING_COMPLETION_GRACE_MINUTES`: margen para marcar citas pasadas como completadas.
+- `GOOGLE_CLIENT_ID`: OAuth para Google Calendar.
+- `GOOGLE_CLIENT_SECRET`: OAuth para Google Calendar.
+- `ENCUENTRA_BILLING_MODEL`: mantener `simulation` hasta decidir pagos.
+- `ENCUENTRA_COMMISSION_RATE`: comision si se usa modelo porcentual.
 
 ## Pagos
 
@@ -52,6 +56,12 @@ Antes de activar cobros reales faltan:
 10. Verificar sitemap y robots:
     - `/sitemap.xml`
     - `/robots.txt`
+11. Verificar que rutas privadas devuelven `X-Robots-Tag: noindex, nofollow`:
+    - `/admin`
+    - `/login`
+    - `/mi-cuenta`
+    - `/dashboard`
+    - `/api/public-marketplace-data`
 
 ## Tareas programadas
 
@@ -66,6 +76,8 @@ Configurar estos jobs en el hosting o proveedor de cron cuando el dominio real e
 | `/api/auto-complete-bookings` | Cada 30 minutos | Marcar citas pasadas como completadas y disparar solicitud de review. |
 
 No publicar sin `CRON_SECRET` configurado en produccion. En desarrollo estos endpoints pueden ejecutarse con sesion admin, pero en produccion deben ir protegidos por el secreto.
+
+Nota: Vercel Hobby solo permite crons diarios. Eso alcanza para demo, pero para operacion real usar Vercel Pro o un cron externo con las frecuencias recomendadas.
 
 ## Datos reales
 

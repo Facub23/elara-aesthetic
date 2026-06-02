@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
+import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
@@ -146,7 +147,7 @@ function formatSlotLabel(date: string, time: string) {
     month: "short",
   });
 
-  return `${label} · ${time}`;
+  return `${label} - ${time}`;
 }
 
 function isActiveAvailability(item: AvailabilityRow) {
@@ -189,7 +190,7 @@ function getAvailabilityLabel(rows: AvailabilityRow[]) {
   const firstRange = activeRows.find((row) => row.start_time && row.end_time);
 
   return `${days.size} dias/semana${
-    firstRange ? ` · ${firstRange.start_time?.slice(0, 5)}-${firstRange.end_time?.slice(0, 5)}` : ""
+    firstRange ? ` - ${firstRange.start_time?.slice(0, 5)}-${firstRange.end_time?.slice(0, 5)}` : ""
   }`;
 }
 
@@ -237,8 +238,8 @@ export default async function SpecialistsPage({
     supabase.from("reviews").select("specialist_name,rating").eq("status", "Aprobada"),
   ]);
 
-  const allSpecialists = (specialists || []) as SpecialistRow[];
-  const allClinics = (clinics || []) as ClinicRow[];
+  const allSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]);
+  const allClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
   const allAvailability = (availabilityRows || []) as AvailabilityRow[];
   const reviewSummaries = buildReviewSummaryMap(
     approvedReviews || [],
@@ -410,7 +411,7 @@ export default async function SpecialistsPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white p-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white/85 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:grid-cols-3">
             {[
               ["Especialistas", specialistsWithContext.length],
               ["Con horario", availableSpecialists],
@@ -431,7 +432,7 @@ export default async function SpecialistsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/especialistas"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white p-3 md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -569,7 +570,7 @@ export default async function SpecialistsPage({
                   return (
                     <article
                       key={String(specialist.id || specialist.slug)}
-                      className="flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+                      className="flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_12px_45px_rgba(0,0,0,0.04)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,0,0,0.08)]"
                     >
                       <div className="relative h-64 bg-[#E7DED1]">
                         <img
@@ -608,17 +609,17 @@ export default async function SpecialistsPage({
                         <div className="mt-5 grid gap-3">
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
                             <span className="font-medium">{clinic?.name || specialist.clinic_name}</span>
-                            {clinicCity && <span className="text-neutral-500"> · {clinicCity}</span>}
+                            {clinicCity && <span className="text-neutral-500"> - {clinicCity}</span>}
                           </div>
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
                             <span className="font-medium">Disponibilidad</span>
-                            <span className="text-neutral-500"> · {availabilityLabel}</span>
+                            <span className="text-neutral-500"> - {availabilityLabel}</span>
                           </div>
                           <div className="rounded-md bg-black p-3 text-sm text-white">
                             <span className="font-medium">Proximo hueco</span>
                             <span className="text-white/70">
                               {" "}
-                              ·{" "}
+                              -{" "}
                               {nextSlot
                                 ? formatSlotLabel(nextSlot.date, nextSlot.time)
                                 : "Sin huecos proximos"}
@@ -680,7 +681,7 @@ export default async function SpecialistsPage({
                             }`}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Ver perfil y reservar
+                            Ver perfil
                           </Link>
 
                           {clinic?.slug && (

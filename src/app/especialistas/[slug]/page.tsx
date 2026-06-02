@@ -5,6 +5,10 @@ import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
 import {
+  filterPublicRecords,
+  isPublicPlaceholderRecord,
+} from "@/lib/public-records";
+import {
   getTreatmentName as readTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -125,7 +129,7 @@ export async function generateMetadata({
     .eq("slug", slug)
     .maybeSingle();
 
-  if (!specialist) {
+  if (!specialist || isPublicPlaceholderRecord(specialist)) {
     return {
       title: "Especialista no encontrado",
     };
@@ -196,7 +200,7 @@ export default async function SpecialistDetailPage({
     .eq("slug", slug)
     .single();
 
-  if (!specialist) {
+  if (!specialist || isPublicPlaceholderRecord(specialist)) {
     notFound();
   }
 
@@ -236,11 +240,12 @@ export default async function SpecialistDetailPage({
   const activeDays = new Set(availability.map(getAvailabilityWeekday)).size;
   const prices = treatments.map(getTreatmentPrice).filter(Boolean) as number[];
   const priceFrom = prices.length > 0 ? Math.min(...prices) : undefined;
-  const reviewCount = reviews?.length || 0;
+  const publicReviews = filterPublicRecords(reviews || []);
+  const reviewCount = publicReviews.length;
   const approvedReviewRating =
     reviewCount > 0
       ? (
-          reviews!.reduce(
+          publicReviews.reduce(
             (sum, review) => sum + Number(review.rating || 0),
             0
           ) / reviewCount
@@ -306,7 +311,7 @@ export default async function SpecialistDetailPage({
           </Link>
 
           <div className="mt-8 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-            <div className="overflow-hidden rounded-lg border border-black/10 bg-white">
+            <div className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_18px_55px_rgba(0,0,0,0.06)]">
               <div className="relative h-[520px]">
                 <Image
                   src={specialistImage}
@@ -365,7 +370,7 @@ export default async function SpecialistDetailPage({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-3 rounded-lg border border-black/10 bg-white p-3 sm:grid-cols-2">
+              <div className="mt-4 grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_12px_45px_rgba(0,0,0,0.04)] sm:grid-cols-2">
                 <div className="rounded-md bg-[#F8F6F2] p-4">
                   <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
                     Tratamiento seleccionado
@@ -414,7 +419,7 @@ export default async function SpecialistDetailPage({
 
       <section className="px-6 py-10">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-lg border border-black/10 bg-white p-6">
+          <div className="rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
             <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
               Disponibilidad
             </p>
@@ -458,7 +463,7 @@ export default async function SpecialistDetailPage({
             )}
           </div>
 
-          <div className="rounded-lg border border-black/10 bg-white p-6">
+          <div className="rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
@@ -516,14 +521,14 @@ export default async function SpecialistDetailPage({
                           )}`}
                           className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
                         >
-                          Reservar este tratamiento
+                          Reservar consulta
                         </Link>
 
                         <Link
                           href={`/tratamientos/${slugify(name)}`}
                           className="rounded-md border border-black/10 px-4 py-2 text-sm font-medium transition hover:border-black"
                         >
-                          Ver ficha
+                          Ver tratamiento
                         </Link>
                       </div>
                     </article>
@@ -540,7 +545,7 @@ export default async function SpecialistDetailPage({
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                Reviews verificadas
+                Opiniones verificadas
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
                 Opiniones de pacientes
@@ -554,14 +559,14 @@ export default async function SpecialistDetailPage({
             </div>
           </div>
 
-          {!reviews || reviews.length === 0 ? (
-            <div className="rounded-lg border border-black/10 bg-white p-8 text-neutral-500">
+          {publicReviews.length === 0 ? (
+            <div className="rounded-lg border border-black/10 bg-white p-8 text-neutral-500 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
               Este especialista todavia no tiene reviews verificadas.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {reviews.map((review) => (
-                <article key={review.id} className="rounded-lg border border-black/10 bg-white p-6">
+              {publicReviews.map((review) => (
+                <article key={review.id} className="rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
                   <div className="flex items-center justify-between gap-4">
                     <div className="rounded-full bg-black px-3 py-1 text-sm text-white">
                       Verificada

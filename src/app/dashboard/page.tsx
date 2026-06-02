@@ -1,12 +1,22 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 
+import { Navbar } from "@/components/layout/navbar";
 import {
   getBookingStatusClass,
   getBookingStatusKey,
 } from "@/lib/booking-status";
 import { createClient } from "@/lib/supabase/server";
 import { supabase } from "@/lib/supabase";
+
+export const metadata: Metadata = {
+  title: "Mi cuenta",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function normalizeDate(value?: string) {
   if (!value) return "";
@@ -49,12 +59,12 @@ function getStatusClass(status?: string) {
 
   if (
     status === "Cancelada" ||
-    status === "No asistió"
+    status === "No asistio"
   ) {
     return "bg-red-100 text-red-700";
   }
 
-  if (status === "Pendiente confirmación") {
+  if (status === "Pendiente confirmacion") {
     return "bg-amber-100 text-amber-700";
   }
 
@@ -246,16 +256,19 @@ export default async function PatientDashboardPage() {
     userEmail;
 
   return (
-    <main className="min-h-screen bg-[#F6F3EE] p-6 text-black lg:p-10">
+    <main className="min-h-screen bg-[#F6F3EE] text-black">
+      <Navbar />
+
+      <section className="px-6 pb-24 pt-28 lg:px-10">
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <Link href="/" className="text-sm font-medium underline underline-offset-4">
+          <Link href="/" className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium transition hover:border-black">
             Volver al marketplace
           </Link>
             <Link
               href="/api/logout?next=/mi-cuenta"
               prefetch={false}
-              className="rounded-md border border-black/10 bg-white px-5 py-3 text-sm"
+              className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm font-medium transition hover:border-black"
             >
               Cerrar sesion
             </Link>
@@ -278,7 +291,7 @@ export default async function PatientDashboardPage() {
               <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/60">
                 Gestiona tus reservas,
                 favoritos, historial y
-                próximas visitas dentro
+                proximas visitas dentro
                 de EncuentraTuClinica.
               </p>
 
@@ -298,7 +311,7 @@ export default async function PatientDashboardPage() {
 
               <div className="rounded-[28px] bg-white/10 p-5 backdrop-blur-xl">
                 <div className="text-sm text-white/60">
-                  Próximas
+                  Proximas
                 </div>
 
                 <div className="mt-3 text-4xl font-semibold">
@@ -342,7 +355,7 @@ export default async function PatientDashboardPage() {
             <section className="rounded-[40px] border border-white/40 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
 
               <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
-                Próximas reservas
+                Proximas reservas
               </p>
 
               <h2 className="mt-3 text-3xl font-semibold tracking-tight">
@@ -354,7 +367,7 @@ export default async function PatientDashboardPage() {
                 {upcomingBookings.length === 0 ? (
 
                   <div className="rounded-[28px] bg-[#F7F5F2] p-8 text-neutral-500">
-                    No tienes próximas reservas.
+                    No tienes proximas reservas.
                   </div>
 
                 ) : (
@@ -463,7 +476,7 @@ export default async function PatientDashboardPage() {
                 {completedBookings.length === 0 ? (
 
                   <div className="rounded-[28px] bg-[#F7F5F2] p-8 text-neutral-500">
-                    Aún no tienes tratamientos completados.
+                    Aun no tienes tratamientos completados.
                   </div>
 
                 ) : (
@@ -568,7 +581,7 @@ export default async function PatientDashboardPage() {
               </p>
 
               <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                Clínicas guardadas
+                Clinicas guardadas
               </h2>
 
               <div className="mt-8 space-y-4">
@@ -576,7 +589,7 @@ export default async function PatientDashboardPage() {
                 {filteredFavoriteClinics.length === 0 ? (
 
                   <div className="rounded-[28px] bg-[#F7F5F2] p-6 text-neutral-500">
-                    Todavía no guardaste clínicas favoritas.
+                    Todavia no guardaste clinicas favoritas.
                   </div>
 
                 ) : (
@@ -624,7 +637,7 @@ export default async function PatientDashboardPage() {
                 {filteredFavoriteSpecialists.length === 0 ? (
 
                   <div className="rounded-[28px] bg-[#F7F5F2] p-6 text-neutral-500">
-                    Todavía no guardaste especialistas favoritos.
+                    Todavia no guardaste especialistas favoritos.
                   </div>
 
                 ) : (
@@ -663,6 +676,7 @@ export default async function PatientDashboardPage() {
         </div>
 
       </div>
+      </section>
     </main>
   );
 }

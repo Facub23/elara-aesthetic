@@ -124,11 +124,6 @@ export default function ClinicProfilePageClient({
     <main className="min-h-screen overflow-hidden bg-[#F6F3EE] text-black">
       <Navbar />
 
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-10%] top-[-10%] h-[500px] w-[500px] rounded-full bg-[#E8DED0] blur-[140px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-[#EFE7DD] blur-[140px]" />
-      </div>
-
       <motion.section
         initial={false}
         className="relative overflow-hidden pt-32"
@@ -183,7 +178,7 @@ export default function ClinicProfilePageClient({
                 href={`/tratamientos?clinic=${clinic.slug}`}
                 className="w-full rounded-full border border-black/5 bg-white/70 px-8 py-5 text-center backdrop-blur-xl transition-all duration-300 hover:bg-black hover:text-white sm:w-auto sm:px-10"
               >
-                Ver catalogo
+                Ver tratamientos
               </Link>
 
               <a
@@ -307,7 +302,7 @@ export default function ClinicProfilePageClient({
                     key={name}
                     className="flex min-h-[330px] flex-col rounded-lg border border-black/10 bg-white/75 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-xl"
                   >
-                    <div className="rounded-full bg-[#F6F3EE] px-3 py-1 text-xs uppercase tracking-[0.18em] text-neutral-600 w-fit">
+                    <div className="w-fit rounded-full bg-[#F6F3EE] px-3 py-1 text-xs uppercase tracking-[0.18em] text-neutral-600">
                       Tratamiento
                     </div>
 
@@ -347,7 +342,7 @@ export default function ClinicProfilePageClient({
                         href={`/tratamientos/${treatmentSlug}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Ver ficha del tratamiento
+                        Ver tratamiento
                       </Link>
 
                       <Link
@@ -366,7 +361,7 @@ export default function ClinicProfilePageClient({
                           )}`}
                           className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                         >
-                          Reservar
+                          Reservar consulta
                         </Link>
                       )}
                     </div>
@@ -462,7 +457,7 @@ export default function ClinicProfilePageClient({
                             }`}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Reservar
+                            Reservar consulta
                           </Link>
                         )}
 
@@ -488,7 +483,7 @@ export default function ClinicProfilePageClient({
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
             <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-              Reviews verificadas
+              Opiniones verificadas
             </p>
 
             <h2 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl md:text-7xl">

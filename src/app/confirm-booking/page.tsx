@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
 import {
   expirePendingBooking,
@@ -7,6 +8,14 @@ import {
   pendingConfirmationStatuses,
 } from "@/lib/booking-lifecycle";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+
+export const metadata: Metadata = {
+  title: "Confirmar reserva",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 function getBookingDate(value?: string | null) {
   return (value || "").slice(0, 10);

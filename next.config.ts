@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   async headers() {
+    const privateHeaders = [
+      {
+        key: "X-Robots-Tag",
+        value: "noindex, nofollow",
+      },
+    ];
+
     return [
       {
         source: "/(.*)",
@@ -25,6 +32,42 @@ const nextConfig: NextConfig = {
               "camera=(), microphone=(), geolocation=(), payment=()",
           },
         ],
+      },
+      {
+        source: "/admin/:path*",
+        headers: privateHeaders,
+      },
+      {
+        source: "/api/:path*",
+        headers: privateHeaders,
+      },
+      {
+        source: "/dashboard",
+        headers: privateHeaders,
+      },
+      {
+        source: "/mi-cuenta",
+        headers: privateHeaders,
+      },
+      {
+        source: "/cancel-booking",
+        headers: privateHeaders,
+      },
+      {
+        source: "/confirm-booking",
+        headers: privateHeaders,
+      },
+      {
+        source: "/review/:path*",
+        headers: privateHeaders,
+      },
+      {
+        source: "/reserva/:path*",
+        headers: privateHeaders,
+      },
+      {
+        source: "/login",
+        headers: privateHeaders,
       },
     ];
   },

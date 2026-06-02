@@ -100,47 +100,87 @@ export default function ManageBookingReschedule({
   }
 
   return (
-    <section className="mt-7 border-t border-black/10 pt-7">
-      <h2 className="text-lg font-semibold">Reprogramar cita</h2>
-      <form onSubmit={submitReschedule} className="mt-5 space-y-4">
-        <label className="block text-sm text-neutral-600">
+    <section className="mt-8 rounded-[24px] border border-black/10 bg-white p-5 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+            Reprogramacion
+          </p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+            Elige un nuevo horario disponible
+          </h2>
+        </div>
+
+        <div className="rounded-full bg-[#F8F6F2] px-4 py-2 text-xs text-neutral-600">
+          Actual: {currentDate} - {currentTime}
+        </div>
+      </div>
+
+      <form onSubmit={submitReschedule} className="mt-6 space-y-5">
+        <label className="block text-sm font-medium text-neutral-700">
           Nueva fecha
           <input
             type="date"
             min={today}
             value={date}
             onChange={(event) => selectDate(event.target.value)}
-            className="mt-2 block h-12 w-full rounded-md border border-black/10 bg-white px-4 text-black"
+            className="mt-2 block h-12 w-full rounded-2xl border border-black/10 bg-[#F8F6F2] px-4 text-black outline-none transition focus:border-black"
           />
         </label>
 
-        <label className="block text-sm text-neutral-600">
-          Horario disponible
-          <select
-            value={time}
-            onChange={(event) => setTime(event.target.value)}
-            disabled={loadingSlots || slots.length === 0}
-            className="mt-2 block h-12 w-full rounded-md border border-black/10 bg-white px-4 text-black disabled:bg-neutral-100"
-          >
-            <option value="">
-              {loadingSlots ? "Consultando horarios..." : "Selecciona una hora"}
-            </option>
-            {slots.map((slot) => (
-              <option key={slot} value={slot}>
-                {slot}
-                {date === currentDate && slot === currentTime ? " (horario actual)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div>
+          <div className="text-sm font-medium text-neutral-700">
+            Horarios disponibles
+          </div>
 
-        {error && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        {message && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
+          {loadingSlots ? (
+            <div className="mt-3 rounded-2xl border border-black/10 bg-[#F8F6F2] p-4 text-sm text-neutral-600">
+              Consultando disponibilidad real...
+            </div>
+          ) : slots.length > 0 ? (
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {slots.map((slot) => {
+                const isCurrentSlot = date === currentDate && slot === currentTime;
+                const active = time === slot;
+
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    disabled={isCurrentSlot}
+                    onClick={() => {
+                      setTime(slot);
+                      setError("");
+                      setMessage("");
+                    }}
+                    className={`h-12 rounded-2xl border text-sm font-medium transition ${
+                      active
+                        ? "border-black bg-black text-white"
+                        : isCurrentSlot
+                          ? "cursor-not-allowed border-black/5 bg-neutral-100 text-neutral-400"
+                          : "border-black/10 bg-white hover:border-black"
+                    }`}
+                  >
+                    {slot}
+                    {isCurrentSlot ? " actual" : ""}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+              No hay horarios disponibles para esta fecha.
+            </div>
+          )}
+        </div>
+
+        {error && <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+        {message && <p className="rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-700">{message}</p>}
 
         <button
           type="submit"
           disabled={!time || submitting || (date === currentDate && time === currentTime)}
-          className="h-12 w-full rounded-md bg-black px-6 text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="h-12 w-full rounded-2xl bg-black px-6 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-neutral-300"
         >
           {submitting ? "Reprogramando..." : "Confirmar nueva fecha"}
         </button>

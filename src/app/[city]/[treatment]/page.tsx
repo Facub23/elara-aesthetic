@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Navbar } from "@/components/layout/navbar";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
+import { filterPublicRecords } from "@/lib/public-records";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import { supabase } from "@/lib/supabase";
 import {
@@ -127,18 +128,18 @@ export async function generateStaticParams() {
   ]);
 
   const clinicsById = new Map(
-    ((clinics || []) as ClinicRow[])
+    filterPublicRecords((clinics || []) as ClinicRow[])
       .filter((clinic) => clinic.id)
       .map((clinic) => [String(clinic.id), clinic])
   );
   const clinicsByName = new Map(
-    ((clinics || []) as ClinicRow[])
+    filterPublicRecords((clinics || []) as ClinicRow[])
       .filter((clinic) => clinic.name)
       .map((clinic) => [normalize(clinic.name), clinic])
   );
   const params = new Map<string, { city: string; treatment: string }>();
 
-  ((specialists || []) as SpecialistRow[]).forEach((specialist) => {
+  filterPublicRecords((specialists || []) as SpecialistRow[]).forEach((specialist) => {
     const clinic =
       (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
       clinicsByName.get(normalize(specialist.clinic_name));
@@ -209,7 +210,7 @@ export default async function CityTreatmentPage({
     supabase.from("reviews").select("clinic_name,specialist_name,rating").eq("status", "Aprobada"),
   ]);
 
-  const allClinics = (clinics || []) as ClinicRow[];
+  const allClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
   const clinicsById = new Map(
     allClinics.filter((clinic) => clinic.id).map((clinic) => [String(clinic.id), clinic])
   );
@@ -228,7 +229,7 @@ export default async function CityTreatmentPage({
     "specialist_name"
   );
 
-  const specialistContexts = ((specialists || []) as SpecialistRow[])
+  const specialistContexts = filterPublicRecords((specialists || []) as SpecialistRow[])
     .map((specialist) => {
       const clinic =
         (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||

@@ -2,8 +2,29 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+const noindexPathPrefixes = [
+  "/admin",
+  "/api",
+  "/dashboard",
+  "/mi-cuenta",
+  "/cancel-booking",
+  "/confirm-booking",
+  "/review",
+  "/reserva",
+  "/login",
+];
+
+function applySeoHeaders(response: NextResponse, pathname: string) {
+  if (noindexPathPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
+  const pathname = request.nextUrl.pathname;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,7 +38,7 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          response = NextResponse.next({ request });
+          response = applySeoHeaders(NextResponse.next({ request }), pathname);
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
@@ -30,12 +51,17 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!request.nextUrl.pathname.startsWith("/admin")) {
+  applySeoHeaders(response, pathname);
+
+  if (!pathname.startsWith("/admin")) {
     return response;
   }
 
   if (!user) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return applySeoHeaders(
+      NextResponse.redirect(new URL("/login", request.url)),
+      pathname
+    );
   }
 
   const { data: adminUser } = await supabase
@@ -45,7 +71,10 @@ export async function proxy(request: NextRequest) {
     .maybeSingle();
 
   if (!adminUser) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return applySeoHeaders(
+      NextResponse.redirect(new URL("/login", request.url)),
+      pathname
+    );
   }
 
   return response;

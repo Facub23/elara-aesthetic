@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { getSiteUrl } from "@/lib/site-url";
 import { getTreatmentName } from "@/lib/treatment-utils";
@@ -9,17 +10,54 @@ function slugify(value: string) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replaceAll(" ", "-");
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
-function getCityFromClinicName(clinicName?: string) {
-  const value = clinicName?.toLowerCase() || "";
+function getClinicCity(clinic?: { city?: string | null; location?: string | null }) {
+  return clinic?.city || clinic?.location?.split(",")[0]?.trim() || "";
+}
 
-  if (value.includes("madrid")) return "madrid";
-  if (value.includes("barcelona")) return "barcelona";
-  if (value.includes("valencia")) return "valencia";
+function normalize(value?: string | null) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
-  return "";
+type ClinicRow = {
+  id?: string | number | null;
+  name?: string | null;
+  slug?: string | null;
+  city?: string | null;
+  location?: string | null;
+};
+
+type TreatmentOption =
+  | string
+  | {
+      name?: string | null;
+    };
+
+type SpecialistRow = {
+  id?: string | number | null;
+  name?: string | null;
+  slug?: string | null;
+  clinic_id?: string | number | null;
+  clinic_name?: string | null;
+  treatments?: TreatmentOption[] | null;
+};
+
+function getSpecialistClinic(
+  specialist: SpecialistRow,
+  clinicsById: Map<string, ClinicRow>,
+  clinicsByName: Map<string, ClinicRow>
+) {
+  return (
+    (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
+    clinicsByName.get(normalize(specialist.clinic_name))
+  );
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -43,7 +81,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
 
-  clinics?.forEach((clinic: any) => {
+  const publicClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
+  const publicSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]);
+  const clinicsById = new Map(
+    publicClinics.filter((clinic) => clinic.id).map((clinic) => [String(clinic.id), clinic])
+  );
+  const clinicsByName = new Map(
+    publicClinics.filter((clinic) => clinic.name).map((clinic) => [normalize(clinic.name), clinic])
+  );
+
+  publicClinics.forEach((clinic) => {
     if (!clinic.slug) return;
 
     const url = `${baseUrl}/clinics/${clinic.slug}`;
@@ -54,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
 
-  specialists?.forEach((specialist: any) => {
+  publicSpecialists.forEach((specialist) => {
     if (!specialist.slug) return;
 
     const url = `${baseUrl}/especialistas/${specialist.slug}`;
@@ -65,12 +112,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
   });
 
-  specialists?.forEach((specialist: any) => {
+  publicSpecialists.forEach((specialist) => {
     if (!Array.isArray(specialist.treatments)) return;
 
-    const city = getCityFromClinicName(specialist.clinic_name);
+    const clinic = getSpecialistClinic(specialist, clinicsById, clinicsByName);
+    const city = slugify(getClinicCity(clinic));
 
-    specialist.treatments.forEach((treatment: any) => {
+    specialist.treatments.forEach((treatment) => {
       const treatmentName = getTreatmentName(treatment);
 
       if (!treatmentName) return;

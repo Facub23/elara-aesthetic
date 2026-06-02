@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
+import { filterPublicRecords, isPublicPlaceholderRecord } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
@@ -111,11 +112,11 @@ function getFallbackDescription(treatmentName: string) {
 export async function generateStaticParams() {
   const { data: specialists } = await supabase
     .from("specialists")
-    .select("treatments");
+    .select("name,slug,clinic_name,treatments");
 
   const params = new Map<string, { slug: string }>();
 
-  specialists?.forEach((specialist: { treatments?: TreatmentOption[] | null }) => {
+  filterPublicRecords(specialists || []).forEach((specialist: { treatments?: TreatmentOption[] | null }) => {
     if (!Array.isArray(specialist.treatments)) {
       return;
     }
@@ -189,20 +190,24 @@ export default async function TreatmentPage({
       .order("created_at", { ascending: false }),
   ]);
 
-  const allSpecialists = ((specialists || []) as SpecialistRow[]).filter((specialist) =>
-    findSpecialistTreatment(specialist, slug)
+  const allSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]).filter(
+    (specialist) => findSpecialistTreatment(specialist, slug)
   );
 
-  const allClinics = (clinics || []) as ClinicRow[];
+  const allClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
   const clinicsById = new Map(
     allClinics.filter((clinic) => clinic.id).map((clinic) => [String(clinic.id), clinic])
   );
   const clinicsByName = new Map(
     allClinics.filter((clinic) => clinic.name).map((clinic) => [normalize(clinic.name), clinic])
   );
-  const treatmentRecord = ((treatmentRecords || []) as TreatmentRecord[]).find(
-    (treatment) => treatment.slug === slug || slugify(treatment.name || "") === slug
-  );
+  const treatmentRecord = filterPublicRecords(
+    (treatmentRecords || []) as TreatmentRecord[]
+  ).find((treatment) => treatment.slug === slug || slugify(treatment.name || "") === slug);
+
+  if (treatmentRecord && isPublicPlaceholderRecord(treatmentRecord)) {
+    notFound();
+  }
   const matchedSpecialistTreatment = allSpecialists
     .map((specialist) => findSpecialistTreatment(specialist, slug))
     .find(Boolean);
@@ -248,7 +253,8 @@ export default async function TreatmentPage({
     treatmentRecord?.description || getFallbackDescription(treatmentName);
   const featuredSpecialists = allSpecialists.slice(0, 3);
   const featuredClinics = clinicsForTreatment.slice(0, 3);
-  const treatmentReviews = (approvedReviews || []).filter(
+  const publicApprovedReviews = filterPublicRecords(approvedReviews || []);
+  const treatmentReviews = publicApprovedReviews.filter(
     (review) => slugify(review.treatment || "") === slug
   );
   const treatmentRating =
@@ -261,11 +267,11 @@ export default async function TreatmentPage({
         ).toFixed(1)
       : null;
   const specialistReviewSummaries = buildReviewSummaryMap(
-    approvedReviews || [],
+    publicApprovedReviews,
     "specialist_name"
   );
   const clinicReviewSummaries = buildReviewSummaryMap(
-    approvedReviews || [],
+    publicApprovedReviews,
     "clinic_name"
   );
 
@@ -336,7 +342,7 @@ export default async function TreatmentPage({
             </div>
           </div>
 
-          <div className="rounded-lg border border-black/10 bg-white p-3">
+          <div className="rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
             <div className="grid grid-cols-2 gap-3">
               {stats.map(([label, value]) => (
                 <div key={label} className="rounded-md bg-[#F8F6F2] p-4">
@@ -384,7 +390,7 @@ export default async function TreatmentPage({
 
       <section className="px-6 pb-20 pt-4">
         <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-lg border border-black/10 bg-white p-7">
+          <div className="rounded-lg border border-black/10 bg-white p-7 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
             <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
               Opciones destacadas
             </p>
@@ -414,7 +420,7 @@ export default async function TreatmentPage({
                       </div>
                     </div>
 
-                    <span className="text-sm font-medium">Reservar</span>
+                    <span className="text-sm font-medium">Reservar consulta</span>
                   </Link>
                 );
               })}
@@ -471,13 +477,13 @@ export default async function TreatmentPage({
 
       <section className="px-6 pb-20">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-lg border border-black/10 bg-white p-7">
+          <div className="rounded-lg border border-black/10 bg-white p-7 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
             <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-              Guia rapida
+              Criterios clinicos
             </p>
 
             <h2 className="mt-4 text-3xl font-semibold tracking-tight">
-              Como elegir donde hacer {treatmentName}
+              Que revisar antes de reservar {treatmentName}
             </h2>
 
             <div className="mt-6 space-y-4 text-sm leading-6 text-neutral-600">
@@ -534,7 +540,7 @@ export default async function TreatmentPage({
                 </h2>
               </div>
               <div className="rounded-full bg-black px-5 py-3 text-sm text-white">
-                {treatmentRating}/5 · {treatmentReviews.length} reservas verificadas
+                {treatmentRating}/5 - {treatmentReviews.length} reservas verificadas
               </div>
             </div>
 
@@ -640,7 +646,7 @@ export default async function TreatmentPage({
 
                   <div className="mt-5 text-sm text-neutral-500">
                     {clinic?.name || specialist.clinic_name}
-                    {clinic ? ` · ${getClinicLocation(clinic)}` : ""}
+                    {clinic ? ` - ${getClinicLocation(clinic)}` : ""}
                   </div>
 
                   {price && (
@@ -656,7 +662,7 @@ export default async function TreatmentPage({
                       )}`}
                       className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                     >
-                      Reservar
+                      Reservar consulta
                     </Link>
 
                     {clinic?.slug && (
@@ -758,7 +764,7 @@ export default async function TreatmentPage({
                           )}`}
                           className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                         >
-                          Reservar aqui
+                          Reservar consulta
                         </Link>
                       )}
 

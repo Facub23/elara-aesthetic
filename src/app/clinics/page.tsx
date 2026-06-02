@@ -372,7 +372,7 @@ function ClinicsPageContent() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white p-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white/85 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:grid-cols-3">
             {[
               ["Clinicas", visibleClinicContexts.length],
               ["Especialistas", specialistCount],
@@ -391,7 +391,7 @@ function ClinicsPageContent() {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-3 rounded-lg border border-black/10 bg-white p-3 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
+          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
             <input
               type="text"
               placeholder="Buscar clinica, ciudad o tratamiento..."
@@ -508,7 +508,7 @@ function ClinicsPageContent() {
                   return (
                     <article
                       key={clinicKey}
-                      className="overflow-hidden rounded-lg border border-black/10 bg-white transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+                      className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_12px_45px_rgba(0,0,0,0.04)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,0,0,0.08)]"
                     >
                       <div className="relative h-[360px] overflow-hidden bg-[#E7DED1]">
                         <Image
@@ -607,7 +607,7 @@ function ClinicsPageContent() {
                             href={specialistHref}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Reservar con disponibilidad
+                            Reservar consulta
                           </Link>
 
                           <Link

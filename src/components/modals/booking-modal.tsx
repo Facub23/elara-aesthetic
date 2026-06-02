@@ -467,12 +467,9 @@ export function BookingModal({
           className="relative my-4 grid w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] sm:rounded-[40px] lg:grid-cols-[0.85fr_1.15fr]"
         >
           <div className="relative flex flex-col justify-between overflow-hidden bg-[#050505] p-6 text-white sm:p-10 lg:p-12">
-            <div className="absolute left-[-120px] top-[-120px] h-[320px] w-[320px] rounded-full bg-white/10 blur-[120px]" />
-            <div className="absolute bottom-[-120px] right-[-120px] h-[320px] w-[320px] rounded-full bg-[#D6C3A5]/20 blur-[120px]" />
-
             <div className="relative z-10">
               <div className="mb-4 text-xs uppercase tracking-[0.35em] text-white/40">
-                Checkout EncuentraTuClinica
+                Reserva EncuentraTuClinica
               </div>
 
               <h2 className="text-4xl font-semibold leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
