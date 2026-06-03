@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "@/components/layout/navbar";
@@ -303,6 +304,11 @@ export default async function CityTreatmentPage({
   const firstSlot = firstSpecialist
     ? slotsBySpecialist.get(String(firstSpecialist.id || firstSpecialist.slug || firstSpecialist.name))
     : null;
+  const marketplaceChecks = [
+    "Compara clinicas verificadas de la ciudad antes de elegir.",
+    "Revisa especialistas, reviews, precio y primer hueco disponible.",
+    "Reserva manteniendo el contexto de tratamiento, ciudad y profesional.",
+  ];
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#F6F3EE] text-black">
@@ -364,7 +370,7 @@ export default async function CityTreatmentPage({
                 )}`}
                 className="rounded-md border border-black/10 bg-white px-6 py-3 text-sm font-medium transition hover:border-black"
               >
-                Ver clinicas
+                Comparar clinicas
               </Link>
             </div>
           </div>
@@ -386,6 +392,22 @@ export default async function CityTreatmentPage({
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
+          {marketplaceChecks.map((check, index) => (
+            <article
+              key={check}
+              className="rounded-lg border border-black/10 bg-white p-5 shadow-[0_12px_45px_rgba(0,0,0,0.04)]"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm text-white">
+                {index + 1}
+              </div>
+              <p className="mt-4 text-sm font-medium leading-6">{check}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -422,13 +444,18 @@ export default async function CityTreatmentPage({
               return (
                 <article
                   key={String(clinic.id || clinic.slug)}
-                  className="overflow-hidden rounded-lg border border-black/10 bg-white transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+                  className="group overflow-hidden rounded-lg border border-black/10 bg-white transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
                 >
-                  <Link href={`/clinics/${clinic.slug}`}>
-                    <img
+                  <Link
+                    href={`/clinics/${clinic.slug}`}
+                    className="relative block h-56 overflow-hidden"
+                  >
+                    <Image
                       src={clinic.heroImage || clinic.image || "/og-image.jpg"}
                       alt={clinic.name || "Clinica EncuentraTuClinica"}
-                      className="h-56 w-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
                     />
                   </Link>
 
@@ -471,7 +498,7 @@ export default async function CityTreatmentPage({
                           )}${primarySlot ? `&date=${primarySlot.date}&time=${primarySlot.time}` : ""}`}
                           className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                         >
-                          Reservar
+                          Reservar este tratamiento
                         </Link>
                       ) : null}
 
@@ -479,7 +506,7 @@ export default async function CityTreatmentPage({
                         href={`/clinics/${clinic.slug}`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver clinica
+                        Ver clinica y tratamientos
                       </Link>
                     </div>
                   </div>
@@ -521,11 +548,15 @@ export default async function CityTreatmentPage({
                   className="flex min-h-[390px] flex-col rounded-lg border border-black/10 bg-white p-5"
                 >
                   <div className="flex items-center gap-4">
-                    <img
-                      src={specialist.image || "/og-image.jpg"}
-                      alt={specialist.name || "Especialista EncuentraTuClinica"}
-                      className="h-20 w-20 rounded-full object-cover"
-                    />
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+                      <Image
+                        src={specialist.image || "/og-image.jpg"}
+                        alt={specialist.name || "Especialista EncuentraTuClinica"}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    </div>
 
                     <div>
                       <h3 className="text-xl font-semibold">{specialist.name}</h3>
@@ -567,7 +598,7 @@ export default async function CityTreatmentPage({
                         )}${slot ? `&date=${slot.date}&time=${slot.time}` : ""}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Reservar
+                        Reservar este tratamiento
                       </Link>
                     ) : null}
 
@@ -576,7 +607,7 @@ export default async function CityTreatmentPage({
                         href={`/clinics/${clinic.slug}`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver clinica
+                        Ver clinica y tratamientos
                       </Link>
                     ) : null}
                   </div>
