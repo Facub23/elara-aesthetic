@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
@@ -406,8 +407,8 @@ export default async function SpecialistsPage({
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-neutral-600 md:text-xl">
-              Filtra por tratamiento, ciudad y clinica para llegar antes al
-              profesional adecuado.
+              Filtra por tratamiento, ciudad, precio y horario para llegar al
+              profesional adecuado con contexto antes de reservar.
             </p>
           </div>
 
@@ -513,6 +514,19 @@ export default async function SpecialistsPage({
               </Link>
             </div>
           )}
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {[
+              ["Agenda real", "Los perfiles muestran horario activo y proximo hueco disponible."],
+              ["Clinica vinculada", "Cada especialista aparece asociado a su centro correspondiente."],
+              ["Precio orientativo", "Cuando existe tarifa, se muestra el precio minimo del tratamiento."],
+            ].map(([title, text]) => (
+              <div key={title} className="rounded-lg border border-black/5 bg-white/70 p-5">
+                <p className="text-sm font-semibold">{title}</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -573,10 +587,12 @@ export default async function SpecialistsPage({
                       className="flex min-h-[520px] flex-col overflow-hidden rounded-lg border border-black/10 bg-white shadow-[0_12px_45px_rgba(0,0,0,0.04)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(0,0,0,0.08)]"
                     >
                       <div className="relative h-64 bg-[#E7DED1]">
-                        <img
+                        <Image
                           src={specialist.image || "/og-image.jpg"}
                           alt={specialist.name || "Especialista EncuentraTuClinica"}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                          className="object-cover"
                         />
                         <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-sm font-medium">
                           {reviewSummary

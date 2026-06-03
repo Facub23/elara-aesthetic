@@ -428,8 +428,8 @@ export default async function TreatmentsPage({
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-neutral-600 md:text-xl">
-              Explora procedimientos, clinicas verificadas y especialistas para
-              pasar de la busqueda a la reserva con informacion clara.
+              Explora procedimientos, compara clinicas y elige especialistas
+              disponibles con precios orientativos antes de reservar.
             </p>
           </div>
 
@@ -510,6 +510,19 @@ export default async function TreatmentsPage({
               ))}
             </div>
           )}
+
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {[
+              ["Por objetivo", "Encuentra opciones faciales, labios, piel, corporal y regenerativo."],
+              ["Por ciudad", "Compara que tratamientos existen en cada zona disponible."],
+              ["Por especialista", "Pasa del tratamiento al profesional con disponibilidad real."],
+            ].map(([title, text]) => (
+              <div key={title} className="rounded-lg border border-black/5 bg-white/70 p-5">
+                <p className="text-sm font-semibold">{title}</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -612,7 +625,7 @@ export default async function TreatmentsPage({
                         href={`/tratamientos/${treatment.slug}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Ver tratamiento
+                        Ver guia del tratamiento
                       </Link>
 
                       <Link

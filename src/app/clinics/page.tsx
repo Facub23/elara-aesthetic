@@ -367,8 +367,8 @@ function ClinicsPageContent() {
             </h1>
 
             <p className="mt-6 max-w-3xl text-lg leading-relaxed text-neutral-600 md:text-xl">
-              Encuentra clinicas premium, especialistas disponibles y el primer
-              hueco posible para avanzar directo a reserva.
+              Compara clinicas premium por tratamientos, especialistas, precio
+              orientativo y primer hueco disponible antes de avanzar a reserva.
             </p>
           </div>
 
@@ -465,6 +465,20 @@ function ClinicsPageContent() {
               </Link>
             </div>
           )}
+
+          <div className="mt-6 grid gap-3 md:grid-cols-4">
+            {[
+              ["Comparacion", "Ciudad, tratamientos y especialistas en una sola vista."],
+              ["Agenda", "Primer hueco estimado desde disponibilidad real."],
+              ["Precios", "Importe orientativo cuando el especialista lo informa."],
+              ["Reserva", "Acceso directo al perfil con fecha y hora sugeridas."],
+            ].map(([label, text]) => (
+              <div key={label} className="rounded-lg border border-black/5 bg-white/70 p-5">
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -607,7 +621,7 @@ function ClinicsPageContent() {
                             href={specialistHref}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Reservar consulta
+                            Reservar con especialista
                           </Link>
 
                           <Link
