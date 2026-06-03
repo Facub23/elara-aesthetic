@@ -26,12 +26,12 @@ export function Navbar() {
       href: "/clinics",
     },
     {
-      label: "Contacto",
-      href: "/#contacto",
-    },
-    {
       label: "Mi cuenta",
       href: "/mi-cuenta",
+    },
+    {
+      label: "Contacto",
+      href: "/#contacto",
     },
   ];
 
@@ -95,13 +95,14 @@ export function Navbar() {
             href="/especialistas"
             className="hidden shrink-0 items-center rounded-full bg-black px-5 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)] transition-all duration-300 hover:scale-[1.04] hover:opacity-95 md:flex xl:px-7"
           >
-            Reservar consulta
+            Buscar disponibilidad
           </Link>
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="relative flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/70 backdrop-blur-xl md:hidden"
             aria-label="Abrir menu"
+            aria-expanded={menuOpen}
           >
             <div className="relative h-4 w-5">
               <span
@@ -139,9 +140,9 @@ export function Navbar() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 40, opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex h-full flex-col items-center justify-center px-6 text-center"
+              className="flex h-full flex-col items-center justify-center overflow-y-auto px-6 py-24 text-center"
             >
-              <div className="mb-16">
+              <div className="mb-10">
                 <div className="mx-auto max-w-[320px] text-4xl font-semibold leading-none sm:max-w-none sm:text-5xl">
                   EncuentraTuClinica
                 </div>
@@ -151,13 +152,13 @@ export function Navbar() {
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-8">
+              <div className="flex flex-col items-center gap-5">
                 {navItems.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
                     onClick={() => setMenuOpen(false)}
-                    className="text-4xl font-semibold sm:text-5xl"
+                    className="text-3xl font-semibold sm:text-5xl"
                   >
                     {item.label}
                   </Link>
@@ -169,7 +170,7 @@ export function Navbar() {
                 onClick={() => setMenuOpen(false)}
                 className="mt-16 rounded-full bg-black px-10 py-5 text-lg text-white shadow-[0_10px_30px_rgba(0,0,0,0.2)]"
               >
-                Reservar consulta
+                Buscar disponibilidad
               </Link>
             </motion.div>
           </motion.div>
