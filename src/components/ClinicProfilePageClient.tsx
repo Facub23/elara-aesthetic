@@ -98,6 +98,16 @@ export default function ClinicProfilePageClient({
     [clinicTreatments, specialists]
   );
 
+  const lowestTreatmentPrice = useMemo(() => {
+    const prices = specialists
+      .flatMap((specialist) =>
+        Array.isArray(specialist.treatments) ? specialist.treatments : []
+      )
+      .map(getTreatmentPriceValue)
+      .filter((price): price is number => Boolean(price));
+
+    return prices.length > 0 ? formatPrice(Math.min(...prices)) : null;
+  }, [specialists]);
 
   const approvedReviewRating =
     reviews.length > 0
@@ -117,7 +127,21 @@ export default function ClinicProfilePageClient({
     ["Tratamientos", clinicTreatments.length],
     ["Especialistas", specialists.length],
     ["Reviews", reviews.length],
-    ["Rating", displayedRating],
+    ["Desde", lowestTreatmentPrice || "Consultar"],
+  ];
+  const decisionSteps = [
+    {
+      title: "Tratamientos conectados",
+      text: "Cada tratamiento apunta a especialistas reales de esta clinica.",
+    },
+    {
+      title: "Reserva con contexto",
+      text: "Puedes elegir profesional, tratamiento y horario sin salir del flujo.",
+    },
+    {
+      title: "Confianza verificable",
+      text: "Reviews, rating y datos de clinica quedan juntos antes de reservar.",
+    },
   ];
 
   return (
@@ -171,14 +195,14 @@ export default function ClinicProfilePageClient({
                 onClick={() => setBookingOpen(true)}
                 className="w-full rounded-full bg-black px-8 py-5 text-white transition-all duration-300 hover:scale-[1.03] sm:w-auto sm:px-10"
               >
-                Reservar en esta clinica
+                Reservar consulta
               </button>
 
               <Link
                 href={`/tratamientos?clinic=${clinic.slug}`}
                 className="w-full rounded-full border border-black/5 bg-white/70 px-8 py-5 text-center backdrop-blur-xl transition-all duration-300 hover:bg-black hover:text-white sm:w-auto sm:px-10"
               >
-                Ver tratamientos
+                Comparar tratamientos
               </Link>
 
               <a
@@ -250,6 +274,20 @@ export default function ClinicProfilePageClient({
           </motion.div>
         </div>
       </motion.section>
+
+      <section className="mt-16 px-6">
+        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
+          {decisionSteps.map((item) => (
+            <article
+              key={item.title}
+              className="rounded-lg border border-black/10 bg-white/75 p-5 shadow-[0_12px_45px_rgba(0,0,0,0.04)] backdrop-blur-xl"
+            >
+              <div className="text-sm font-semibold">{item.title}</div>
+              <p className="mt-3 text-sm leading-6 text-neutral-600">{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
 
       {treatmentContexts.length > 0 && (
         <section className="relative mt-28 px-6">
@@ -342,7 +380,7 @@ export default function ClinicProfilePageClient({
                         href={`/tratamientos/${treatmentSlug}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Ver tratamiento
+                        Comparar tratamiento
                       </Link>
 
                       <Link
@@ -351,7 +389,7 @@ export default function ClinicProfilePageClient({
                         )}&treatment=${encodeURIComponent(name)}`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver especialistas
+                        Elegir especialista
                       </Link>
 
                       {firstSpecialist?.slug && (
@@ -361,7 +399,7 @@ export default function ClinicProfilePageClient({
                           )}`}
                           className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                         >
-                          Reservar consulta
+                          Reservar primera cita
                         </Link>
                       )}
                     </div>

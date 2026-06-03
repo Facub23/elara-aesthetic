@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
@@ -281,6 +282,11 @@ export default async function TreatmentPage({
     ["Ciudades", cityNames.length],
     ["Duracion", `${duration} min`],
   ];
+  const marketplaceChecks = [
+    "Compara clinicas verificadas antes de elegir.",
+    "Elige especialista por perfil, reviews y disponibilidad.",
+    "Reserva el tratamiento sin perder el contexto de precio y ciudad.",
+  ];
 
   return (
     <main className="min-h-screen bg-[#F6F3EE] text-black">
@@ -330,14 +336,14 @@ export default async function TreatmentPage({
                 href={`/especialistas?treatment=${encodeURIComponent(treatmentName)}`}
                 className="rounded-md bg-black px-6 py-3 text-sm font-medium text-white transition hover:opacity-90"
               >
-                Ver especialistas disponibles
+                Elegir especialista
               </Link>
 
               <Link
                 href={`/clinics?treatment=${encodeURIComponent(treatmentName)}`}
                 className="rounded-md border border-black/10 bg-white px-6 py-3 text-sm font-medium transition hover:border-black"
               >
-                Ver clinicas disponibles
+                Comparar clinicas
               </Link>
             </div>
           </div>
@@ -363,6 +369,22 @@ export default async function TreatmentPage({
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
+          {marketplaceChecks.map((check, index) => (
+            <article
+              key={check}
+              className="rounded-lg border border-black/10 bg-white p-5 shadow-[0_12px_45px_rgba(0,0,0,0.04)]"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-sm text-white">
+                {index + 1}
+              </div>
+              <p className="mt-4 text-sm font-medium leading-6">{check}</p>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -420,7 +442,7 @@ export default async function TreatmentPage({
                       </div>
                     </div>
 
-                    <span className="text-sm font-medium">Reservar consulta</span>
+                    <span className="text-sm font-medium">Reservar este tratamiento</span>
                   </Link>
                 );
               })}
@@ -514,14 +536,16 @@ export default async function TreatmentPage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-black/10 bg-white">
-            <img
+          <div className="relative min-h-[420px] overflow-hidden rounded-lg border border-black/10 bg-white">
+            <Image
               src={
                 treatmentRecord?.image ||
                 "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1600&auto=format&fit=crop"
               }
               alt={treatmentName}
-              className="h-full min-h-[420px] w-full object-cover"
+              fill
+              sizes="(max-width: 1024px) 100vw, 52vw"
+              className="object-cover"
             />
           </div>
         </div>
@@ -608,11 +632,15 @@ export default async function TreatmentPage({
                   className="flex min-h-[390px] flex-col rounded-lg border border-black/10 bg-white p-5"
                 >
                   <div className="flex items-center gap-4">
-                    <img
-                      src={specialist.image || "/og-image.jpg"}
-                      alt={specialist.name || "Especialista EncuentraTuClinica"}
-                      className="h-20 w-20 rounded-full object-cover"
-                    />
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full">
+                      <Image
+                        src={specialist.image || "/og-image.jpg"}
+                        alt={specialist.name || "Especialista EncuentraTuClinica"}
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    </div>
 
                     <div>
                       <h3 className="text-xl font-semibold">{specialist.name}</h3>
@@ -662,7 +690,7 @@ export default async function TreatmentPage({
                       )}`}
                       className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                     >
-                      Reservar consulta
+                      Reservar este tratamiento
                     </Link>
 
                     {clinic?.slug && (
@@ -722,11 +750,16 @@ export default async function TreatmentPage({
                   key={String(clinic.id || clinic.slug)}
                   className="group overflow-hidden rounded-lg border border-black/10 bg-white transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
                 >
-                  <Link href={`/clinics/${clinic.slug}`}>
-                    <img
+                  <Link
+                    href={`/clinics/${clinic.slug}`}
+                    className="relative block h-56 overflow-hidden"
+                  >
+                    <Image
                       src={clinic.heroImage || clinic.image || "/og-image.jpg"}
                       alt={clinic.name || "Clinica EncuentraTuClinica"}
-                      className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
                     />
                   </Link>
 
@@ -764,7 +797,7 @@ export default async function TreatmentPage({
                           )}`}
                           className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                         >
-                          Reservar consulta
+                          Reservar este tratamiento
                         </Link>
                       )}
 
