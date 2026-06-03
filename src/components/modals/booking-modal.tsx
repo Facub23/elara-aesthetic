@@ -344,6 +344,12 @@ export function BookingModal({
     });
   }
 
+  const bookingReady =
+    Boolean(selectedSpecialist) &&
+    Boolean(selectedTreatment) &&
+    Boolean(selectedDate) &&
+    Boolean(selectedTime);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -554,9 +560,9 @@ export function BookingModal({
                 <h2 className="text-4xl font-semibold">Reserva enviada</h2>
 
                 <p className="mt-5 max-w-md text-lg leading-relaxed text-neutral-500">
-                  Te enviamos un email para confirmar la solicitud. La clinica
-                  recibira el tratamiento, especialista, precio orientativo y
-                  hueco seleccionado.
+                  Te enviamos un email para confirmar la solicitud. El hueco queda
+                  protegido durante el plazo de confirmacion y la clinica recibira
+                  todos los detalles.
                 </p>
 
                 <div className="mt-8 grid w-full max-w-xl gap-3 rounded-[28px] border border-black/10 bg-white p-5 text-left text-sm">
@@ -573,6 +579,11 @@ export function BookingModal({
                     {bookingStatus || "Pendiente"}
                   </div>
                 </div>
+
+                <div className="mt-5 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                  Importante: abre el email y pulsa confirmar para dejar la cita
+                  definitivamente reservada.
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} noValidate className="grid gap-6">
@@ -586,6 +597,19 @@ export function BookingModal({
                     autoComplete="off"
                   />
                 </div>
+
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+                    Paso 1
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Tus datos
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-neutral-500">
+                    Usaremos estos datos solo para confirmar y gestionar la cita.
+                  </p>
+                </div>
+
                 {canChooseSpecialist && (
                   <select
                     value={selectedSpecialist}
@@ -655,6 +679,19 @@ export function BookingModal({
                     </option>
                   ))}
                 </select>
+
+                <div className="pt-2">
+                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+                    Paso 2
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Elige dia y hora
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-neutral-500">
+                    Los horarios se comprueban contra la disponibilidad real del
+                    especialista.
+                  </p>
+                </div>
 
                 <div className="rounded-[28px] border border-black/10 bg-white p-4">
                   <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -779,6 +816,15 @@ export function BookingModal({
                     )}
                 </div>
 
+                <div className="pt-2">
+                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+                    Paso 3
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Revisa y envia
+                  </h2>
+                </div>
+
                 <div className="rounded-[28px] border border-black/10 bg-white p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
@@ -786,7 +832,7 @@ export function BookingModal({
                         Resumen
                       </div>
                       <div className="mt-2 text-lg font-semibold">
-                        {selectedSpecialist && selectedTreatment && selectedDate && selectedTime
+                        {bookingReady
                           ? "Todo listo para solicitar la reserva"
                           : "Completa los pasos para continuar"}
                       </div>
@@ -794,12 +840,12 @@ export function BookingModal({
 
                     <div
                       className={`rounded-full px-4 py-2 text-xs ${
-                        selectedSpecialist && selectedTreatment && selectedDate && selectedTime
+                        bookingReady
                           ? "bg-emerald-50 text-emerald-700"
                           : "bg-amber-50 text-amber-700"
                       }`}
                     >
-                      {selectedSpecialist && selectedTreatment && selectedDate && selectedTime
+                      {bookingReady
                         ? "Listo"
                         : "Pendiente"}
                     </div>
@@ -851,15 +897,16 @@ export function BookingModal({
                     loading ||
                     availabilityLoading ||
                     dayBlocked ||
-                    !selectedSpecialist ||
-                    !selectedTreatment ||
-                    !selectedDate ||
-                    !selectedTime
+                    !bookingReady
                   }
                   className="mt-3 h-16 rounded-2xl bg-black text-lg font-medium text-white transition-all duration-300 hover:scale-[1.01] hover:opacity-95 disabled:opacity-50"
                 >
-                  {loading ? "Enviando..." : "Confirmar reserva"}
+                  {loading ? "Enviando..." : "Enviar solicitud de reserva"}
                 </button>
+
+                <p className="text-center text-xs leading-5 text-neutral-500">
+                  La cita se confirma definitivamente desde el email que recibiras.
+                </p>
               </form>
             )}
           </div>

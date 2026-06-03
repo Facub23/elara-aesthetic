@@ -81,7 +81,7 @@ function StatusCard({
 
               <div className={`mt-8 rounded-2xl border px-4 py-3 text-sm ${toneClasses[tone]}`}>
                 {confirmationToken
-                  ? "El horario queda reservado durante 30 minutos mientras completas la confirmacion."
+                  ? "El horario queda protegido durante 30 minutos mientras completas la confirmacion."
                   : tone === "success"
                   ? "Tu cita queda registrada y el equipo puede verla en el panel admin."
                   : tone === "info"
@@ -131,7 +131,7 @@ function StatusCard({
                       type="submit"
                       className="rounded-full bg-black px-6 py-3 text-sm text-white transition hover:opacity-90"
                     >
-                      Confirmar cita
+                      Confirmar definitivamente
                     </button>
                   </form>
                 )}
@@ -226,7 +226,7 @@ export default async function ConfirmBookingPage({
   return (
     <StatusCard
       title="Confirma tu reserva"
-      message="Revisa los datos de la cita y pulsa confirmar para reservar definitivamente este horario."
+      message="Revisa los datos de la cita y confirma desde este enlace para dejar el horario reservado definitivamente."
       tone="info"
       booking={booking}
       confirmationToken={token}
