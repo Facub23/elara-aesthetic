@@ -39,6 +39,30 @@ npm run env:check -- --file .env.vercel.local
 
 El comando falla si falta una variable obligatoria o si el dominio sigue apuntando a localhost.
 
+### Variables pendientes habituales de pre-lanzamiento
+
+Si `npm run env:check` falla, revisar primero estas tres variables:
+
+| Variable | Valor recomendado |
+| --- | --- |
+| `EMAIL_FROM` | `EncuentraTuClinica <reservas@encuentratuclinica.es>` o un remitente verificado en Resend. |
+| `CRON_SECRET` | Secreto largo aleatorio, minimo 24 caracteres. No reutilizar contrasenas. |
+| `ENCUENTRA_BOOKING_TIMEZONE` | `Europe/Madrid` |
+
+En Vercel:
+
+1. Abrir Project Settings.
+2. Entrar en Environment Variables.
+3. Agregar las variables para `Production` y `Preview`.
+4. Guardar.
+5. Hacer redeploy para que las funciones usen los nuevos valores.
+
+En Resend:
+
+1. Verificar dominio o remitente.
+2. Confirmar que `EMAIL_FROM` coincide con un remitente aprobado.
+3. Enviar un email de prueba desde `/admin/emails`.
+
 ## 2. Crons
 
 El archivo `vercel.json` registra estos jobs:
@@ -99,6 +123,7 @@ Revisar manualmente:
 8. Revisar `/admin/configuracion`.
 9. Revisar `/admin/notificaciones`.
 10. Revisar `/sitemap.xml` y `/robots.txt`.
+11. Revisar `/privacidad`, `/terminos`, `/aviso-legal` y `/cookies`.
 
 Las rutas privadas y de sistema (`/admin`, `/login`, `/mi-cuenta`, `/dashboard`, `/cancel-booking`, `/confirm-booking`, `/review`, `/reserva` y `/api`) deben devolver `X-Robots-Tag: noindex, nofollow`.
 

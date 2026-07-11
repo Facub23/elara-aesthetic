@@ -15,6 +15,10 @@ const publicRoutes = [
   "/clinics",
   "/tratamientos",
   "/especialistas",
+  "/privacidad",
+  "/terminos",
+  "/aviso-legal",
+  "/cookies",
   "/sitemap.xml",
   "/robots.txt",
 ];
@@ -24,6 +28,10 @@ const publicIndexableRoutes = [
   "/clinics",
   "/tratamientos",
   "/especialistas",
+  "/privacidad",
+  "/terminos",
+  "/aviso-legal",
+  "/cookies",
 ];
 
 const privateNoindexRoutes = [
