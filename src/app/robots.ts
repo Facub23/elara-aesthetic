@@ -14,6 +14,10 @@ export default function robots(): MetadataRoute.Robots {
         "/clinics",
         "/especialistas",
         "/tratamientos",
+        "/privacidad",
+        "/terminos",
+        "/aviso-legal",
+        "/cookies",
       ],
 
       disallow: [

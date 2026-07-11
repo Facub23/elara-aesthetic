@@ -136,12 +136,20 @@ export function Footer() {
           <div>Copyright 2026 EncuentraTuClinica. Todos los derechos reservados.</div>
 
           <div className="flex items-center gap-6">
-            <Link href="/" className="transition hover:text-black">
+            <Link href="/privacidad" className="transition hover:text-black">
               Privacidad
             </Link>
 
-            <Link href="/" className="transition hover:text-black">
+            <Link href="/terminos" className="transition hover:text-black">
               Terminos
+            </Link>
+
+            <Link href="/aviso-legal" className="transition hover:text-black">
+              Aviso legal
+            </Link>
+
+            <Link href="/cookies" className="transition hover:text-black">
+              Cookies
             </Link>
           </div>
         </div>

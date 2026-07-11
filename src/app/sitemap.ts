@@ -67,6 +67,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/clinics",
     "/especialistas",
     "/tratamientos",
+    "/privacidad",
+    "/terminos",
+    "/aviso-legal",
+    "/cookies",
   ];
 
   const { data: clinics } = await supabase.from("clinics").select("*");

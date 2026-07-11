@@ -42,6 +42,23 @@ Antes de activar cobros reales faltan:
 - Politica de reembolsos o cancelaciones.
 - Datos fiscales y facturacion.
 
+## Legal
+
+Ya existen paginas base para pre-lanzamiento:
+
+- `/privacidad`
+- `/terminos`
+- `/aviso-legal`
+- `/cookies`
+
+Antes de publicar con datos reales faltan:
+
+- Revision juridica final.
+- Razon social, NIF/CIF, domicilio y datos registrales.
+- Politica definitiva de cancelacion/reembolso.
+- Banner y preferencias de cookies si se activan analiticas o marketing.
+- Textos finales adaptados a RGPD y al modelo comercial elegido.
+
 ## Pruebas antes de publicar
 
 1. `npm run lint -- --quiet`
@@ -56,7 +73,12 @@ Antes de activar cobros reales faltan:
 10. Verificar sitemap y robots:
     - `/sitemap.xml`
     - `/robots.txt`
-11. Verificar que rutas privadas devuelven `X-Robots-Tag: noindex, nofollow`:
+11. Revisar paginas legales:
+    - `/privacidad`
+    - `/terminos`
+    - `/aviso-legal`
+    - `/cookies`
+12. Verificar que rutas privadas devuelven `X-Robots-Tag: noindex, nofollow`:
     - `/admin`
     - `/login`
     - `/mi-cuenta`

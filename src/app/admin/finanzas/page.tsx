@@ -135,6 +135,8 @@ export default async function AdminFinanzasPage() {
   const averageTicket =
     pricedBookings.length > 0 ? capturedVolume / pricedBookings.length : 0;
   const simulatedCommission = Math.round(completedVolume * 0.12);
+  const billingModel = process.env.ENCUENTRA_BILLING_MODEL || "simulation";
+  const paymentsSimulationMode = billingModel === "simulation";
   const paymentChecks = [
     {
       label: "Proveedor de pagos",
@@ -216,17 +218,20 @@ export default async function AdminFinanzasPage() {
         <section className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="rounded-[32px] border border-black/5 bg-black p-8 text-white">
             <p className="text-xs uppercase tracking-[0.25em] text-white/50">
-              Simulacion
+              {paymentsSimulationMode ? "Simulacion activa" : "Modelo comercial"}
             </p>
             <h2 className="mt-4 text-3xl font-semibold">
-              Comision estimada 12%
+              {paymentsSimulationMode
+                ? "Cobros reales desactivados"
+                : "Comision estimada 12%"}
             </h2>
             <p className="mt-4 text-5xl font-semibold">
               {formatCurrency(simulatedCommission)}
             </p>
             <p className="mt-5 text-sm leading-7 text-white/60">
-              Calculo orientativo sobre citas completadas con precio capturado.
-              No representa cobros reales ni facturacion emitida.
+              {paymentsSimulationMode
+                ? "Esta pantalla calcula oportunidad comercial, pero no cobra, no liquida y no emite facturas reales."
+                : "Calculo orientativo sobre citas completadas con precio capturado. Revisa proveedor, webhook y facturacion antes de operar."}
             </p>
           </div>
 
@@ -267,6 +272,23 @@ export default async function AdminFinanzasPage() {
             </p>
           </div>
         </section>
+
+        {paymentsSimulationMode && (
+          <section className="mt-6 rounded-[32px] border border-amber-100 bg-amber-50 p-8 text-amber-950">
+            <p className="text-xs uppercase tracking-[0.25em] text-amber-700">
+              Pre-lanzamiento
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold">
+              Pagos en modo simulacion
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-7">
+              Puedes validar reservas, precios orientativos, pipeline y
+              comisiones estimadas sin mover dinero real. Antes de publicar con
+              cobros activos faltan proveedor de pagos, webhook, politica de
+              cancelacion/reembolso y datos fiscales.
+            </p>
+          </section>
+        )}
 
         <section className="mt-6 rounded-[32px] border border-black/5 bg-white/80 p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
