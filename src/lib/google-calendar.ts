@@ -137,7 +137,19 @@ async function refreshGoogleAccessToken(refreshToken: string) {
   const data = (await response.json()) as GoogleTokenResponse;
 
   if (!response.ok || !data.access_token) {
-    throw new Error(data.error_description || data.error || "Google refresh error");
+    const message = data.error_description || data.error || "Google refresh error";
+
+    if (
+      response.status === 400 ||
+      data.error === "invalid_grant" ||
+      message.toLowerCase().includes("bad request")
+    ) {
+      throw new Error(
+        "La agenda debe reconectarse para renovar permisos de Google Calendar."
+      );
+    }
+
+    throw new Error(message);
   }
 
   return data;
