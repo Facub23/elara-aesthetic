@@ -516,7 +516,7 @@ export default async function SpecialistsPage({
                 href={`/clinics?treatment=${encodeURIComponent(selectedTreatment)}`}
                 className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm transition hover:border-black"
               >
-                Ver clinicas disponibles
+                Ver clinicas
               </Link>
             </div>
           )}
@@ -524,7 +524,7 @@ export default async function SpecialistsPage({
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             {[
               ["Agenda real", "Los perfiles muestran horario activo y proximo hueco disponible."],
-              ["Lugar de atencion", "Cada especialista aparece asociado a una clinica o consulta independiente."],
+              ["Lugar de atencion", "Compara especialistas con clinica asociada o consulta independiente."],
               ["Precio orientativo", "Cuando existe tarifa, se muestra el precio minimo del tratamiento."],
             ].map(([title, text]) => (
               <div key={title} className="rounded-lg border border-black/5 bg-white/70 p-5">
@@ -586,6 +586,11 @@ export default async function SpecialistsPage({
                     getSpecialistPriceFrom(specialist, selectedTreatment)
                   );
                   const treatments = specialist.treatments || [];
+                  const isIndependent = !clinic?.name && !specialist.clinic_name;
+                  const placeName = clinic?.name || specialist.clinic_name;
+                  const placeDetail = isIndependent
+                    ? specialist.consultation_address
+                    : clinicCity;
 
                   return (
                     <article
@@ -630,17 +635,20 @@ export default async function SpecialistsPage({
 
                         <div className="mt-5 grid gap-3">
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
-                            <span className="font-medium">
-                              {clinic?.name ||
-                                specialist.clinic_name ||
-                                "Especialista independiente"}
-                            </span>
-                            {clinicCity && <span className="text-neutral-500"> - {clinicCity}</span>}
-                            {!clinicCity && specialist.consultation_address && (
-                              <span className="text-neutral-500">
-                                {" "}
-                                - {specialist.consultation_address}
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium">
+                                {placeName || "Consulta independiente"}
                               </span>
+                              {isIndependent && (
+                                <span className="rounded-full bg-black px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-white">
+                                  Independiente
+                                </span>
+                              )}
+                            </div>
+                            {placeDetail && (
+                              <div className="mt-1 text-neutral-500">
+                                {placeDetail}
+                              </div>
                             )}
                           </div>
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
@@ -716,14 +724,18 @@ export default async function SpecialistsPage({
                             Ver perfil
                           </Link>
 
-                          {clinic?.slug && (
+                          {clinic?.slug ? (
                             <Link
                               href={`/clinics/${clinic.slug}`}
                               className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                             >
                               Ver clinica
                             </Link>
-                          )}
+                          ) : isIndependent ? (
+                            <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">
+                              Consulta independiente
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </article>

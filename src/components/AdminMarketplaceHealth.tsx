@@ -93,8 +93,15 @@ export default function AdminMarketplaceHealth({
   const clinicsWithoutTreatments = clinics.filter(
     (clinic) => (treatmentNamesByClinic.get(normalize(clinic.name)) || new Set()).size === 0
   );
+  const independentSpecialistsWithoutAddress = specialists.filter(
+    (specialist) =>
+      !hasText(specialist.clinic_name) &&
+      !hasText(String(specialist.clinic_id || "")) &&
+      !hasText(specialist.consultation_address)
+  );
   const specialistsWithoutValidClinic = specialists.filter(
     (specialist) =>
+      hasText(specialist.clinic_name) &&
       !clinicNames.has(normalize(specialist.clinic_name)) &&
       !clinicIds.has(String(specialist.clinic_id || ""))
   );
@@ -176,11 +183,12 @@ export default function AdminMarketplaceHealth({
       href: "/admin/tratamientos",
     },
     {
-      label: "Especialistas conectados",
+      label: "Lugar de atencion",
       value:
         specialists.length -
         specialistsWithoutValidClinic.length -
-        specialistsWithClinicMismatch.length,
+        specialistsWithClinicMismatch.length -
+        independentSpecialistsWithoutAddress.length,
       total: specialists.length,
       href: "/admin/especialistas",
     },
@@ -233,6 +241,10 @@ export default function AdminMarketplaceHealth({
     })),
     ...specialistsWithoutValidClinic.map((specialist) => ({
       label: `${specialist.name} no esta conectado a una clinica valida.`,
+      href: "/admin/especialistas",
+    })),
+    ...independentSpecialistsWithoutAddress.map((specialist) => ({
+      label: `${specialist.name} es independiente y necesita direccion de atencion.`,
       href: "/admin/especialistas",
     })),
     ...specialistsWithClinicMismatch.map((specialist) => ({
@@ -293,8 +305,8 @@ export default function AdminMarketplaceHealth({
           </h2>
 
           <p className="mt-3 max-w-2xl text-neutral-500">
-            Controla que cada clinica, tratamiento y especialista este alineado
-            antes de mostrarse en la web publica.
+            Controla que cada clinica, consulta independiente, tratamiento y
+            especialista este alineado antes de mostrarse en la web publica.
           </p>
         </div>
 

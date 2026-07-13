@@ -28,6 +28,7 @@ type SpecialistRow = {
   slug?: string | null;
   clinic_id?: string | number | null;
   clinic_name?: string | null;
+  consultation_address?: string | null;
   specialty?: string | null;
   bio?: string | null;
   image?: string | null;
@@ -235,7 +236,10 @@ export default async function CityTreatmentPage({
       const clinic =
         (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
         clinicsByName.get(normalize(specialist.clinic_name));
-      const clinicCity = getClinicCity(clinic);
+      const clinicCity =
+        getClinicCity(clinic) ||
+        specialist.consultation_address?.split(",").at(-1)?.trim() ||
+        "";
 
       return {
         specialist,
@@ -541,6 +545,7 @@ export default async function CityTreatmentPage({
               const price = formatPrice(
                 getTreatmentPrice(findSpecialistTreatment(specialist, treatment))
               );
+              const isIndependent = !clinic?.name && !specialist.clinic_name;
 
               return (
                 <article
@@ -572,8 +577,16 @@ export default async function CityTreatmentPage({
                   </p>
 
                   <div className="mt-5 rounded-md bg-[#F8F6F2] p-3 text-sm">
-                    {clinic?.name || specialist.clinic_name || "Especialista independiente"}
-                    {clinic ? ` - ${getClinicLocation(clinic)}` : ""}
+                    <div className="font-medium">
+                      {clinic?.name ||
+                        specialist.clinic_name ||
+                        "Consulta independiente"}
+                    </div>
+                    <div className="mt-1 text-neutral-500">
+                      {clinic
+                        ? getClinicLocation(clinic)
+                        : specialist.consultation_address || "Direccion a confirmar"}
+                    </div>
                   </div>
 
                   <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
@@ -609,6 +622,10 @@ export default async function CityTreatmentPage({
                       >
                         Ver clinica y tratamientos
                       </Link>
+                    ) : isIndependent ? (
+                      <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">
+                        Consulta independiente
+                      </span>
                     ) : null}
                   </div>
                 </article>

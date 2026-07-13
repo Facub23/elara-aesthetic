@@ -207,8 +207,11 @@ export default function EditSpecialistButton({
                     Lugar de atencion
                   </p>
                   <h3 className="mt-3 text-3xl font-semibold">
-                    Clinica asociada
+                    Donde atiende
                   </h3>
+                  <p className="mt-4 text-sm leading-6 text-neutral-600">
+                    Elige una clinica vinculada o dejalo como consulta independiente con direccion propia.
+                  </p>
                   <select
                     value={form.clinic_name}
                     onChange={(e) =>
@@ -216,10 +219,10 @@ export default function EditSpecialistButton({
                     }
                     className="mt-10 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                   >
-                    <option value="">Sin clinica asociada</option>
+                    <option value="">Consulta independiente</option>
                     {clinics.map((clinic) => (
                       <option key={clinic.id} value={clinic.name}>
-                        {clinic.name}
+                        Clinica: {clinic.name}
                       </option>
                     ))}
                   </select>
@@ -232,9 +235,12 @@ export default function EditSpecialistButton({
                         consultation_address: e.target.value,
                       })
                     }
-                    placeholder="Direccion de atencion independiente"
+                    placeholder="Direccion de atencion si es consulta independiente"
                     className="mt-4 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                   />
+                  <div className="mt-4 rounded-[24px] bg-[#F8F5F1] p-5 text-sm leading-6 text-neutral-600">
+                    Si hay clinica asociada, esta direccion queda como apoyo interno. Si no hay clinica, sera el lugar visible de atencion.
+                  </div>
                 </>
               )}
 
@@ -354,7 +360,7 @@ export default function EditSpecialistButton({
                       {form.name}
                     </div>
                     <div className="mt-3 text-white/80">
-                      {form.clinic_name || "Especialista independiente"}
+                      {form.clinic_name || "Consulta independiente"}
                     </div>
                   </div>
                 </div>

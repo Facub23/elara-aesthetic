@@ -63,7 +63,10 @@ export default function AdminPrelaunchChecklist({
   );
 
   const connectedSpecialists = specialists.filter((specialist) =>
-    clinicNames.has(normalize(specialist.clinic_name))
+    clinicNames.has(normalize(specialist.clinic_name)) ||
+    (!hasText(specialist.clinic_name) &&
+      !hasText(String(specialist.clinic_id || "")) &&
+      hasText(specialist.consultation_address))
   );
   const specialistsWithTreatments = specialists.filter(
     (specialist) =>
@@ -120,11 +123,11 @@ export default function AdminPrelaunchChecklist({
       priority: "critical",
     },
     {
-      label: "Especialistas conectados",
+      label: "Especialistas con lugar de atencion",
       done:
         specialists.length > 0 &&
         connectedSpecialists.length === specialists.length,
-      hint: `${connectedSpecialists.length}/${specialists.length} conectados a clinica`,
+      hint: `${connectedSpecialists.length}/${specialists.length} con clinica o consulta independiente`,
       href: "/admin/especialistas",
       priority: "critical",
     },

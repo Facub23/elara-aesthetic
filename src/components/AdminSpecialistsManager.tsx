@@ -14,7 +14,7 @@ import {
   getTreatmentRawPrice,
 } from "@/lib/treatment-utils";
 
-const INDEPENDENT_SPECIALIST_LABEL = "Especialista independiente";
+const INDEPENDENT_SPECIALIST_LABEL = "Consulta independiente";
 
 const specialistEditorSteps = [
   { id: "profile", label: "Perfil" },
@@ -69,7 +69,7 @@ function getSpecialistIssues(specialist: any, clinics: any[], treatments: any[])
   }
 
   if (!hasText(specialist.clinic_name) && !hasText(specialist.consultation_address)) {
-    issues.push("Falta direccion de atencion para especialista independiente.");
+    issues.push("Falta direccion de atencion para consulta independiente.");
   }
 
   if (!hasText(specialist.image)) {
@@ -220,7 +220,7 @@ function getSpecialistChecklist(specialist: any, clinics: any[] = [], treatments
       done: hasText(specialist.clinic_name)
         ? clinics.length === 0 || clinicNames.has(normalize(specialist.clinic_name))
         : hasText(specialist.consultation_address),
-      hint: "Asocia una clinica o indica direccion de consulta independiente.",
+      hint: "Asocia una clinica o indica una direccion de consulta independiente.",
     },
     {
       label: "Foto profesional",
@@ -610,7 +610,7 @@ export default function AdminSpecialistsManager({
                   <div className="mt-10 grid gap-5">
                     <div>
                       <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
-                        Clinica asociada
+                        Tipo de lugar
                       </label>
                       <select
                         value={form.clinic_name}
@@ -619,13 +619,16 @@ export default function AdminSpecialistsManager({
                         }
                         className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                       >
-                        <option value="">Sin clinica asociada</option>
+                        <option value="">Consulta independiente</option>
                         {clinics.map((clinic) => (
                           <option key={clinic.id} value={clinic.name}>
-                            {clinic.name}
+                            Clinica: {clinic.name}
                           </option>
                         ))}
                       </select>
+                      <p className="mt-2 text-xs leading-5 text-neutral-500">
+                        Si eliges una clinica, hereda su ubicacion publica. Si lo dejas como consulta independiente, la direccion de abajo sera obligatoria.
+                      </p>
                     </div>
 
                     <div>
@@ -646,8 +649,7 @@ export default function AdminSpecialistsManager({
                     </div>
 
                     <div className="rounded-[28px] bg-[#F8F5F1] p-6 text-sm leading-6 text-neutral-600">
-                      Si no seleccionas clinica, el especialista se mostrara como
-                      independiente y usara esta direccion como lugar de atencion.
+                      Las consultas independientes aparecen en el marketplace junto a las clinicas, pero con su propia direccion de atencion y sin ficha de clinica vinculada.
                     </div>
                   </div>
                 </>
@@ -841,7 +843,7 @@ export default function AdminSpecialistsManager({
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr]">
           <input
-            placeholder="Buscar especialista, especialidad o clinica..."
+            placeholder="Buscar especialista, especialidad o lugar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
@@ -852,8 +854,8 @@ export default function AdminSpecialistsManager({
             onChange={(e) => setClinicFilter(e.target.value)}
             className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
-            <option value="">Todas las clinicas</option>
-            <option value="__independent__">Especialistas independientes</option>
+            <option value="">Todos los lugares</option>
+            <option value="__independent__">Consultas independientes</option>
             {clinics.map((clinic) => (
               <option key={clinic.id} value={clinic.name}>
                 {clinic.name}
@@ -955,7 +957,8 @@ export default function AdminSpecialistsManager({
                   {specialist.clinic_name || INDEPENDENT_SPECIALIST_LABEL}
                 </p>
                 {!specialist.clinic_name && specialist.consultation_address && (
-                  <p className="mt-2 text-sm text-neutral-500">
+                  <p className="mt-2 rounded-2xl bg-[#F8F5F1] p-3 text-sm leading-6 text-neutral-600">
+                    <span className="font-medium text-black">Direccion:</span>{" "}
                     {specialist.consultation_address}
                   </p>
                 )}

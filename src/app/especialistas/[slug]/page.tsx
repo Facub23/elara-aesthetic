@@ -227,7 +227,7 @@ export default async function SpecialistDetailPage({
   ]);
 
   const isIndependent = !clinic?.name && !specialist.clinic_name;
-  const clinicName = clinic?.name || specialist.clinic_name || "Especialista independiente";
+  const clinicName = clinic?.name || specialist.clinic_name || "Consulta independiente";
   const clinicSlug =
     clinic?.slug || specialist.clinic_name?.toLowerCase().replaceAll(" ", "-") || "";
   const clinicLocation =
@@ -363,8 +363,16 @@ export default async function SpecialistDetailPage({
 
               <p className="mt-4 text-lg text-neutral-500">
                 {specialist.specialty || "Medicina estetica"} - {clinicName}
-                {clinicLocation ? ` - ${clinicLocation}` : ""}
               </p>
+
+              {clinicLocation ? (
+                <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-neutral-600">
+                  <span className="font-medium text-black">
+                    {isIndependent ? "Direccion de atencion" : "Ubicacion"}
+                  </span>
+                  <span>{clinicLocation}</span>
+                </div>
+              ) : null}
 
               <p className="mt-6 max-w-3xl text-lg leading-relaxed text-neutral-600">
                 {specialist.bio ||
@@ -429,14 +437,18 @@ export default async function SpecialistDetailPage({
                   bookingSource="specialist_profile"
                 />
 
-                {clinicSlug && (
+                {clinicSlug ? (
                   <Link
                     href={`/clinics/${clinicSlug}`}
                     className="rounded-md border border-black/10 bg-white px-6 py-4 text-sm font-medium transition hover:border-black"
                   >
                     Ver clinica y tratamientos
                   </Link>
-                )}
+                ) : isIndependent ? (
+                  <span className="rounded-md border border-black/10 bg-white px-6 py-4 text-sm font-medium text-neutral-600">
+                    Atiende en consulta independiente
+                  </span>
+                ) : null}
 
                 <FavoriteSpecialistButton specialistId={String(specialist.id)} />
               </div>
