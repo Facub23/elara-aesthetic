@@ -145,6 +145,7 @@ function ClinicsPageContent() {
   const [availabilityFilter, setAvailabilityFilter] = useState("Todos");
   const [clinics, setClinics] = useState<ClinicRow[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [approvedReviews, setApprovedReviews] = useState<
     { clinic_name?: string | null; rating?: string | number | null }[]
   >([]);
@@ -158,12 +159,16 @@ function ClinicsPageContent() {
 
   useEffect(() => {
     async function loadMarketplaceData() {
-      const response = await fetch("/api/public-marketplace-data");
-      const data = await response.json();
+      try {
+        const response = await fetch("/api/public-marketplace-data");
+        const data = await response.json();
 
-      setClinics((data.clinics || []) as ClinicRow[]);
-      setSpecialists((data.specialists || []) as SpecialistRow[]);
-      setApprovedReviews(data.reviews || []);
+        setClinics((data.clinics || []) as ClinicRow[]);
+        setSpecialists((data.specialists || []) as SpecialistRow[]);
+        setApprovedReviews(data.reviews || []);
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadMarketplaceData();
@@ -374,15 +379,47 @@ function ClinicsPageContent() {
 
           <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white/85 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:grid-cols-3">
             {[
-              ["Clinicas", visibleClinicContexts.length],
-              ["Especialistas", specialistCount],
-              ["Ciudades", cities.length - 1],
+              ["Clinicas", loading ? "..." : visibleClinicContexts.length],
+              ["Especialistas", loading ? "..." : specialistCount],
+              ["Ciudades", loading ? "..." : cities.length - 1],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md bg-[#F8F6F2] p-4">
                 <div className="text-2xl font-semibold">{value}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.16em] text-neutral-500">
                   {label}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-lg bg-black p-6 text-white md:p-8">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Comparador premium
+            </p>
+            <h2 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight md:text-4xl">
+              Elige clinica por datos utiles, no solo por una foto bonita.
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-white/65 md:text-base">
+              Cada ficha conecta tratamientos, especialistas, precios desde y
+              disponibilidad estimada para que puedas comparar antes de entrar
+              al calendario.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              ["Tratamientos", "Que ofrece cada clinica y desde que precio."],
+              ["Especialistas", "Quien atiende y con que disponibilidad."],
+              ["Ubicacion", "Ciudad y ficha publica para revisar contexto."],
+              ["Reserva", "Acceso directo al perfil con horario sugerido."],
+            ].map(([label, text]) => (
+              <div key={label} className="rounded-lg border border-black/10 bg-white/80 p-5">
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p>
               </div>
             ))}
           </div>
@@ -489,11 +526,22 @@ function ClinicsPageContent() {
               Resultados
             </p>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-              {visibleClinicContexts.length} clinicas para comparar
+              {loading
+                ? "Cargando clinicas verificadas"
+                : `${visibleClinicContexts.length} clinicas para comparar`}
             </h2>
           </div>
 
-          {visibleClinicContexts.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {[0, 1].map((item) => (
+                <div
+                  key={item}
+                  className="min-h-[620px] animate-pulse rounded-lg border border-black/10 bg-white/70"
+                />
+              ))}
+            </div>
+          ) : visibleClinicContexts.length === 0 ? (
             <div className="rounded-lg border border-black/10 bg-white p-10 text-center">
               <h3 className="text-2xl font-semibold">No encontramos clinicas</h3>
               <p className="mt-3 text-neutral-500">

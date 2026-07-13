@@ -348,7 +348,11 @@ export default async function SpecialistsPage({
               (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
               clinicsByName.get(normalize(specialist.clinic_name));
 
-            return clinic?.city || clinic?.location?.split(",")[0]?.trim();
+            return (
+              clinic?.city ||
+              clinic?.location?.split(",")[0]?.trim() ||
+              specialist.consultation_address?.split(",").at(-1)?.trim()
+            );
           })
           .filter(Boolean)
       )
@@ -359,12 +363,21 @@ export default async function SpecialistsPage({
   const availableSpecialists = specialistsWithContext.filter(
     ({ availability }) => availability.filter(isActiveAvailability).length > 0
   ).length;
-  const clinicCount = new Set(
+  const placeCount = new Set(
     specialistsWithContext
-      .map(({ clinic, specialist }) => clinic?.id || clinic?.slug || specialist.clinic_name)
+      .map(({ clinic, specialist }) =>
+        clinic?.id ||
+        clinic?.slug ||
+        specialist.clinic_name ||
+        specialist.consultation_address ||
+        specialist.name
+      )
       .filter(Boolean)
       .map(String)
   ).size;
+  const independentCount = specialistsWithContext.filter(
+    ({ clinic, specialist }) => !clinic?.name && !specialist.clinic_name
+  ).length;
   const specialistsWithNextSlot = await Promise.all(
     specialistsWithContext.map(async (item) => ({
       ...item,
@@ -422,9 +435,41 @@ export default async function SpecialistsPage({
             {[
               ["Especialistas", specialistsWithContext.length],
               ["Con horario", availableSpecialists],
-              ["Clinicas", clinicCount],
+              ["Lugares", placeCount],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md bg-[#F8F6F2] p-4">
+                <div className="text-2xl font-semibold">{value}</div>
+                <div className="mt-1 text-xs uppercase tracking-[0.16em] text-neutral-500">
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-lg bg-black p-6 text-white md:p-8">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Comparador de profesionales
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+              Compara por tratamiento, agenda y lugar de atencion.
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/65 md:text-base">
+              El perfil del especialista concentra bio, tratamientos, precios
+              desde, proximo hueco y si atiende en clinica o consulta propia.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["Con horario", availableSpecialists],
+              ["Consultas", independentCount],
+              ["Tratamientos", uniqueTreatments.length],
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-lg border border-black/10 bg-white/80 p-5">
                 <div className="text-2xl font-semibold">{value}</div>
                 <div className="mt-1 text-xs uppercase tracking-[0.16em] text-neutral-500">
                   {label}

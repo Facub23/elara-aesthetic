@@ -18,9 +18,15 @@ type TreatmentSummary =
 export default function HomeClient() {
   const featuredClinics = clinics.slice(0, 3);
   const marketplaceStats = [
-    ["2", "Ciudades piloto"],
-    ["5 dias", "Disponibilidad visible"],
-    ["30 min", "Reserva guiada"],
+    ["Marketplace", "Clinicas y consultas"],
+    ["Agenda real", "Huecos por especialista"],
+    ["Decision guiada", "Tratamiento, precio y lugar"],
+  ];
+  const quickRoutes = [
+    ["Botox en Madrid", "/madrid/botox"],
+    ["Especialistas con horario", "/especialistas?availability=Con+horario"],
+    ["Clinicas para Botox", "/clinics?treatment=Botox"],
+    ["Especialistas en Madrid", "/especialistas?city=Madrid"],
   ];
   const decisionSteps = [
     {
@@ -70,6 +76,18 @@ export default function HomeClient() {
             </p>
 
             <SearchBar />
+
+            <div className="mt-6 flex flex-wrap gap-2">
+              {quickRoutes.map(([label, href]) => (
+                <Link
+                  key={label}
+                  href={href}
+                  className="rounded-full border border-black/10 bg-white/65 px-4 py-2 text-sm text-neutral-700 backdrop-blur-xl transition hover:border-black hover:bg-white"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
 
             <div className="mt-12 flex flex-wrap gap-4">
               <Link
@@ -179,6 +197,28 @@ export default function HomeClient() {
                   {step.title}
                 </h3>
                 <p className="mt-4 leading-7 text-neutral-600">{step.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 grid gap-4 rounded-[28px] border border-black/10 bg-white/80 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.04)] lg:grid-cols-[1.2fr_0.8fr_0.8fr]">
+            <div className="rounded-2xl bg-black p-6 text-white">
+              <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                Marketplace final
+              </p>
+              <h3 className="mt-3 text-2xl font-semibold tracking-tight">
+                No eliges solo una clinica: comparas el lugar, el profesional y el horario.
+              </h3>
+            </div>
+            {[
+              ["Antes", "Busqueda dispersa, precios poco claros y mensajes para pedir disponibilidad."],
+              ["Ahora", "Fichas conectadas, precios desde, especialistas y reserva guiada."],
+            ].map(([label, text]) => (
+              <div key={label} className="rounded-2xl bg-[#F6F3EE] p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+                  {label}
+                </p>
+                <p className="mt-3 text-sm leading-6 text-neutral-700">{text}</p>
               </div>
             ))}
           </div>

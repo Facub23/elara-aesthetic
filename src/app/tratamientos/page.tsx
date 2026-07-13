@@ -59,6 +59,7 @@ type SpecialistRow = {
   slug?: string | null;
   clinic_id?: string | number | null;
   clinic_name?: string | null;
+  consultation_address?: string | null;
   specialty?: string | null;
   rating?: string | number | null;
   reviews_count?: string | number | null;
@@ -166,7 +167,7 @@ function getClinicCity(clinic?: ClinicRow) {
 function getDefaultDescription(name: string, specialistCount: number, clinicCount: number) {
   return `${name} con ${specialistCount} especialista${
     specialistCount === 1 ? "" : "s"
-  } y ${clinicCount} clinica${clinicCount === 1 ? "" : "s"} verificada${
+  } y ${clinicCount} lugar${clinicCount === 1 ? "" : "es"} de atencion conectado${
     clinicCount === 1 ? "" : "s"
   } dentro de EncuentraTuClinica.`;
 }
@@ -269,8 +270,17 @@ function buildMarketplaceTreatments({
 
       const item = catalog.get(slug)!;
       const specialistKey = String(specialist.id || specialist.slug || specialist.name || "");
-      const clinicKey = String(clinic?.id || specialist.clinic_name || "");
-      const city = getClinicCity(clinic);
+      const clinicKey = String(
+        clinic?.id ||
+          specialist.clinic_name ||
+          (specialist.consultation_address
+            ? `consulta:${specialist.id || specialist.slug || specialist.name}`
+            : "")
+      );
+      const city =
+        getClinicCity(clinic) ||
+        specialist.consultation_address?.split(",").at(-1)?.trim() ||
+        "";
       const price = getTreatmentPrice(treatment) || getTreatmentPrice(record || {});
 
       if (specialistKey && !item.specialistIds.has(specialistKey)) {
@@ -282,8 +292,10 @@ function buildMarketplaceTreatments({
         item.clinicKeys.add(clinicKey);
       }
 
-      if (clinic?.name || specialist.clinic_name) {
-        item.clinicNames.push(clinic?.name || specialist.clinic_name || "");
+      if (clinic?.name || specialist.clinic_name || specialist.consultation_address) {
+        item.clinicNames.push(
+          clinic?.name || specialist.clinic_name || "Consulta independiente"
+        );
       }
 
       if (city) {
@@ -393,7 +405,7 @@ export default async function TreatmentsPage({
       treatment.specialists.map((specialist) => String(specialist.id || specialist.slug))
     )
   ).size;
-  const totalClinics = new Set(catalog.flatMap((treatment) => treatment.clinicNames)).size;
+  const totalPlaces = new Set(catalog.flatMap((treatment) => treatment.clinicNames)).size;
   const popularTreatments = catalog.slice(0, 4);
 
   return (
@@ -436,7 +448,7 @@ export default async function TreatmentsPage({
           <div className="grid grid-cols-1 gap-3 rounded-lg border border-black/10 bg-white/85 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)] sm:grid-cols-3">
             {[
               ["Tratamientos", catalog.length],
-              ["Clinicas", totalClinics],
+              ["Lugares", totalPlaces],
               ["Especialistas", totalSpecialists],
             ].map(([label, value]) => (
               <div key={label} className="rounded-md bg-[#F6F3EE] p-4">
@@ -444,6 +456,38 @@ export default async function TreatmentsPage({
                 <div className="mt-1 text-xs uppercase tracking-[0.18em] text-neutral-500">
                   {label}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-lg bg-black p-6 text-white md:p-8">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Busqueda por objetivo
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+              Del tratamiento al profesional adecuado.
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-white/65 md:text-base">
+              Cada tratamiento agrupa lugares de atencion, especialistas,
+              ciudades y precios orientativos para comparar antes de reservar.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ["1", "Elige el tratamiento"],
+              ["2", "Compara lugares y precios"],
+              ["3", "Reserva con especialista"],
+            ].map(([step, label]) => (
+              <div key={step} className="rounded-lg border border-black/10 bg-white/80 p-6">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-sm text-white">
+                  {step}
+                </div>
+                <p className="mt-5 text-lg font-semibold">{label}</p>
               </div>
             ))}
           </div>
@@ -592,7 +636,7 @@ export default async function TreatmentsPage({
                       <div className="rounded-md bg-[#F8F6F2] p-4">
                         <div className="text-2xl font-semibold">{treatment.clinicCount}</div>
                         <div className="text-xs uppercase tracking-[0.18em] text-neutral-500">
-                          Clinicas
+                          Lugares
                         </div>
                       </div>
 

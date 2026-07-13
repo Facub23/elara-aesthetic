@@ -205,14 +205,16 @@ export default function ClinicProfilePageClient({
                 Comparar tratamientos
               </Link>
 
-              <a
-                href={`https://wa.me/${clinic.whatsapp || "34600000000"}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full rounded-full border border-black/5 bg-white/70 px-8 py-5 text-center backdrop-blur-xl transition-all duration-300 hover:bg-black hover:text-white sm:w-auto sm:px-10"
-              >
-                WhatsApp
-              </a>
+              {clinic.whatsapp && (
+                <a
+                  href={`https://wa.me/${clinic.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-full border border-black/5 bg-white/70 px-8 py-5 text-center backdrop-blur-xl transition-all duration-300 hover:bg-black hover:text-white sm:w-auto sm:px-10"
+                >
+                  WhatsApp
+                </a>
+              )}
 
               <FavoriteClinicButton
                 clinicId={String(clinic.id)}
