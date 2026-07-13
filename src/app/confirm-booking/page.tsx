@@ -29,6 +29,12 @@ function getBookingTime(booking: any) {
   );
 }
 
+function formatPlace(value?: string | null) {
+  return (value || "")
+    .replace(/ELARA/gi, "EncuentraTuClinica")
+    .replace(/Especialista independiente/gi, "Consulta independiente");
+}
+
 function formatDate(value?: string | null) {
   if (!value) return "Sin fecha";
 
@@ -100,7 +106,7 @@ function StatusCard({
                   <div className="mt-6 grid gap-3">
                     {[
                       ["Paciente", booking.full_name],
-                      ["Clinica", booking.clinic_name],
+                      ["Lugar", formatPlace(booking.clinic_name)],
                       ["Especialista", booking.specialist_name],
                       ["Tratamiento", booking.treatment],
                       ["Fecha", formatDate(date)],

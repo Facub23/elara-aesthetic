@@ -442,7 +442,7 @@ export default async function SpecialistDetailPage({
                     href={`/clinics/${clinicSlug}`}
                     className="rounded-md border border-black/10 bg-white px-6 py-4 text-sm font-medium transition hover:border-black"
                   >
-                    Ver clinica y tratamientos
+                    Ver ficha de la clinica
                   </Link>
                 ) : isIndependent ? (
                   <span className="rounded-md border border-black/10 bg-white px-6 py-4 text-sm font-medium text-neutral-600">

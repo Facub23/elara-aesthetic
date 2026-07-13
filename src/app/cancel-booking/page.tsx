@@ -37,6 +37,12 @@ function formatAppointment(booking: {
   })}${time ? ` a las ${time}` : ""}`;
 }
 
+function formatPlace(value?: string | null) {
+  return (value || "")
+    .replace(/ELARA/gi, "EncuentraTuClinica")
+    .replace(/Especialista independiente/gi, "Consulta independiente");
+}
+
 export default async function CancelBookingPage({
   searchParams,
 }: {
@@ -104,7 +110,7 @@ export default async function CancelBookingPage({
                   <div className="mt-6 grid gap-3">
                     {[
                       ["Tratamiento", booking.treatment || "Tratamiento"],
-                      ["Clinica", booking.clinic_name],
+                      ["Lugar", formatPlace(booking.clinic_name)],
                       ["Especialista", booking.specialist_name],
                       ["Fecha y hora", formatAppointment(booking)],
                     ].map(([label, value]) => (

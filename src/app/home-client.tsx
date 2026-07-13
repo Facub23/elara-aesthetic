@@ -303,7 +303,7 @@ export default function HomeClient() {
                       </div>
 
                       <div className="mt-8 inline-flex rounded-full bg-black px-6 py-3 text-sm text-white transition group-hover:scale-[1.03]">
-                        Ver clinica y tratamientos
+                        Ver ficha de la clinica
                       </div>
                     </div>
                   </Link>

@@ -234,7 +234,7 @@ export async function POST(req: Request) {
       .insert([
         {
           clinic_name: isIndependentSpecialist
-            ? "Especialista independiente"
+            ? "Consulta independiente"
             : normalizedClinicName,
           specialist_name,
           full_name,

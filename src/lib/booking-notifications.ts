@@ -69,7 +69,9 @@ function getBookingVariables(
 }
 
 function cleanBrandText(value?: string | null) {
-  return (value || "").replace(/ELARA/gi, "EncuentraTuClinica");
+  return (value || "")
+    .replace(/ELARA/gi, "EncuentraTuClinica")
+    .replace(/Especialista independiente/gi, "Consulta independiente");
 }
 
 function getManageBookingUrl(booking: BookingNotification) {
@@ -176,7 +178,7 @@ export async function notifyBookingCreated(
 
   await createActivityLog({
     title: "Nueva reserva recibida",
-    description: `${booking.full_name || "Paciente"} - ${booking.clinic_name || "Clinica"} - ${bookingLabel}`,
+    description: `${variables.nombre} - ${variables.clinica} - ${bookingLabel}`,
   });
 
   await createAdminNotification({
@@ -190,7 +192,7 @@ export async function notifyBookingCreated(
     to: booking.email,
     subject: "Confirma tu reserva en EncuentraTuClinica",
     title: "Confirma tu reserva",
-    message: `Hola ${booking.full_name || ""}, recibimos tu solicitud para ${booking.treatment || "tu tratamiento"} en ${booking.clinic_name || "EncuentraTuClinica"}${bookingLabel ? ` el ${bookingLabel}` : ""}. Para confirmar tu reserva, entra en el enlace seguro.`,
+    message: `Hola ${booking.full_name || ""}, recibimos tu solicitud para ${variables.tratamiento} en ${variables.clinica}${bookingLabel ? ` el ${bookingLabel}` : ""}. Para confirmar tu reserva, entra en el enlace seguro.`,
     ctaLabel: options.confirmationUrl
       ? "Confirmar reserva"
       : undefined,
@@ -221,7 +223,7 @@ export async function notifyBookingCreated(
     to: await getAdminEmail(),
     subject: "Nueva reserva pendiente en EncuentraTuClinica",
     title: "Nueva reserva pendiente",
-    message: `${booking.full_name || "Paciente"} solicito ${booking.treatment || "un tratamiento"} con ${booking.specialist_name || "especialista"} en ${booking.clinic_name || "EncuentraTuClinica"}${bookingLabel ? ` el ${bookingLabel}` : ""}.`,
+    message: `${variables.nombre} solicito ${variables.tratamiento} con ${variables.especialista} en ${variables.clinica}${bookingLabel ? ` el ${bookingLabel}` : ""}.`,
     failureLog: "Email admin de nueva reserva no enviado",
     templateKey: "booking_created_admin",
     templateVariables: variables,
@@ -252,7 +254,7 @@ export async function notifyManualBookingCreated(
     to: booking.email,
     subject: "Tu cita en EncuentraTuClinica esta confirmada",
     title: "Cita confirmada",
-    message: `Hola ${booking.full_name || ""}, tu cita para ${booking.treatment || "tu tratamiento"} en ${booking.clinic_name || "EncuentraTuClinica"}${bookingLabel ? ` el ${bookingLabel}` : ""} quedo confirmada.`,
+    message: `Hola ${booking.full_name || ""}, tu cita para ${variables.tratamiento} en ${variables.clinica}${bookingLabel ? ` el ${bookingLabel}` : ""} quedo confirmada.`,
     failureLog: "Email de reserva manual no enviado",
     templateKey: "manual_booking_patient",
     templateVariables: variables,
@@ -290,7 +292,7 @@ export async function notifyBookingConfirmed(
 
   await createActivityLog({
     title: "Reserva confirmada por paciente",
-    description: `${booking.full_name || "Paciente"} - ${booking.clinic_name || "Clinica"} - ${bookingLabel}`,
+    description: `${variables.nombre} - ${variables.clinica} - ${bookingLabel}`,
   });
 
   await createAdminNotification({
@@ -405,7 +407,7 @@ export async function notifyBookingReminder(
     title: isTwoHourReminder
       ? "Tu cita comienza en 2 horas"
       : "Tu cita es manana",
-    message: `Hola ${booking.full_name || ""}, te recordamos tu cita para ${booking.treatment || "tu tratamiento"} en ${booking.clinic_name || "EncuentraTuClinica"} con ${booking.specialist_name || "nuestro equipo"}${bookingLabel ? ` el ${bookingLabel}` : ""}.`,
+    message: `Hola ${booking.full_name || ""}, te recordamos tu cita para ${variables.tratamiento} en ${variables.clinica} con ${variables.especialista}${bookingLabel ? ` el ${bookingLabel}` : ""}.`,
     failureLog: isTwoHourReminder
       ? "Recordatorio 2h no enviado"
       : "Recordatorio 24h no enviado",

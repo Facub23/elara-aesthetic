@@ -80,7 +80,9 @@ export async function sendReviewRequest(
 
   await createActivityLog({
     title: options.resent ? "Solicitud de opinion reenviada" : "Solicitud de opinion enviada",
-    description: `${booking.full_name || "Paciente"} - ${booking.clinic_name || "Clinica"}`,
+    description: `${booking.full_name || "Paciente"} - ${
+      cleanBrandText(booking.clinic_name) || "Consulta"
+    }`,
   });
 
   await createPatientActivity({
@@ -104,5 +106,7 @@ export async function sendReviewRequest(
 }
 
 function cleanBrandText(value?: string | null) {
-  return (value || "").replace(/ELARA/gi, "EncuentraTuClinica");
+  return (value || "")
+    .replace(/ELARA/gi, "EncuentraTuClinica")
+    .replace(/Especialista independiente/gi, "Consulta independiente");
 }

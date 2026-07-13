@@ -510,7 +510,7 @@ export default async function CityTreatmentPage({
                         href={`/clinics/${clinic.slug}`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver clinica y tratamientos
+                        Ver ficha de la clinica
                       </Link>
                     </div>
                   </div>
@@ -620,7 +620,7 @@ export default async function CityTreatmentPage({
                         href={`/clinics/${clinic.slug}`}
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
-                        Ver clinica y tratamientos
+                        Ver ficha de la clinica
                       </Link>
                     ) : isIndependent ? (
                       <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">

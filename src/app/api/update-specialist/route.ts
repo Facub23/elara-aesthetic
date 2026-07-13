@@ -180,7 +180,7 @@ export async function POST(req: Request) {
 
     await createActivityLog({
       title: "Especialista actualizado",
-      description: `${name} - ${clinic?.name || "Especialista independiente"}`,
+      description: `${name} - ${clinic?.name || "Consulta independiente"}`,
       actor: admin,
       entityType: "specialist",
       entityId: id,

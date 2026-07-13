@@ -189,7 +189,9 @@ export async function POST(req: Request) {
     const isIndependentSpecialist =
       !specialistRecord.clinic_id && !specialistRecord.clinic_name;
     const belongsToClinic = isIndependentSpecialist
-      ? !clinic_name || normalize(clinic_name) === normalize("Especialista independiente")
+      ? !clinic_name ||
+        normalize(clinic_name) === normalize("Especialista independiente") ||
+        normalize(clinic_name) === normalize("Consulta independiente")
       : (selectedClinic?.id &&
           specialistRecord.clinic_id &&
           String(selectedClinic.id) === String(specialistRecord.clinic_id)) ||
@@ -271,9 +273,7 @@ export async function POST(req: Request) {
     const confirmationExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     const bookingPayload = {
-      clinic_name: isIndependentSpecialist
-        ? "Especialista independiente"
-        : clinic_name,
+      clinic_name: isIndependentSpecialist ? "Consulta independiente" : clinic_name,
       specialist_name,
       full_name,
       email,

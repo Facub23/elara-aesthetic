@@ -93,7 +93,9 @@ function isFutureBooking(booking: any) {
 }
 
 function cleanBrandText(value?: string | null) {
-  return (value || "").replace(/ELARA/gi, "EncuentraTuClinica");
+  return (value || "")
+    .replace(/ELARA/gi, "EncuentraTuClinica")
+    .replace(/Especialista independiente/gi, "Consulta independiente");
 }
 
 function getReviewStatusLabel(status?: string | null) {
