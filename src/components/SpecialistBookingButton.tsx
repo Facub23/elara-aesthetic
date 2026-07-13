@@ -19,6 +19,7 @@ export default function SpecialistBookingButton({
   initialDate,
   initialTime,
   bookingSource = "specialist_profile",
+  label = "Reservar consulta",
 }: {
   clinicName: string;
   specialistName: string;
@@ -27,6 +28,7 @@ export default function SpecialistBookingButton({
   initialDate?: string;
   initialTime?: string;
   bookingSource?: string;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export default function SpecialistBookingButton({
         onClick={() => setOpen(true)}
         className="rounded-full bg-black px-8 py-4 text-sm font-medium text-white shadow-[0_14px_35px_rgba(0,0,0,0.18)] transition hover:scale-[1.02] hover:opacity-95"
       >
-        Reservar consulta
+        {label}
       </button>
 
       <BookingModal
