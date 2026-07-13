@@ -262,7 +262,9 @@ export function BookingModal({
     fetch(
       `/api/booked-slots?specialist=${encodeURIComponent(
         selectedSpecialist
-      )}&date=${selectedDate}&duration=${treatmentDuration}`
+      )}&date=${selectedDate}&duration=${treatmentDuration}&treatment=${encodeURIComponent(
+        selectedTreatment
+      )}`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -315,6 +317,7 @@ export function BookingModal({
     selectedDate,
     selectedSpecialist,
     selectedTime,
+    selectedTreatment,
     treatmentDuration,
   ]);
 
@@ -810,8 +813,21 @@ export function BookingModal({
                     selectedSpecialist &&
                     !availabilityLoading &&
                     availableSlots.length === 0 && (
-                      <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                        No hay horarios disponibles para esta fecha.
+                      <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+                        <p className="font-medium">
+                          No hay horarios disponibles para esta fecha.
+                        </p>
+                        <p className="mt-1">
+                          Prueba otro dia de la semana o avanza a la semana
+                          siguiente para ver mas huecos.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setWeekOffset((value) => value + 1)}
+                          className="mt-3 rounded-full bg-white px-4 py-2 text-xs font-medium text-amber-900 transition hover:bg-amber-100"
+                        >
+                          Ver semana siguiente
+                        </button>
                       </div>
                     )}
                 </div>
