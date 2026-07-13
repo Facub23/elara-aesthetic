@@ -111,6 +111,107 @@ function getFallbackDescription(treatmentName: string) {
   return `${treatmentName} es un tratamiento de medicina estetica que puedes comparar en EncuentraTuClinica por clinica, ciudad, especialista y disponibilidad.`;
 }
 
+function getTreatmentLandingContent(slug: string, treatmentName: string) {
+  const normalized = normalize(`${slug} ${treatmentName}`);
+  const base = {
+    heroImage:
+      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1800&auto=format&fit=crop",
+    gallery: [
+      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1629909615184-74f495363b67?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1200&auto=format&fit=crop",
+    ],
+    intro:
+      "Una guia pensada para entender el tratamiento, comparar opciones y elegir profesional con mas contexto antes de reservar.",
+    idealFor: [
+      "Personas que quieren comparar opciones antes de decidir.",
+      "Pacientes que valoran ver especialista, lugar de atencion y precio orientativo.",
+      "Reservas donde la disponibilidad real importa tanto como la ficha del tratamiento.",
+    ],
+    expectations: [
+      "Consulta inicial para valorar objetivo, historial y expectativas.",
+      "Recomendacion personalizada segun zona, tecnica y experiencia del especialista.",
+      "Reserva online con confirmacion, gestion de cambios y seguimiento por email.",
+    ],
+  };
+
+  if (normalized.includes("botox") || normalized.includes("toxina")) {
+    return {
+      ...base,
+      heroImage:
+        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=1800&auto=format&fit=crop",
+      gallery: [
+        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1629909615184-74f495363b67?q=80&w=1200&auto=format&fit=crop",
+      ],
+      intro:
+        "El botox se suele valorar para suavizar lineas de expresion y planificar un resultado natural con un especialista cualificado.",
+      idealFor: [
+        "Lineas de expresion en frente, entrecejo o zona periocular.",
+        "Pacientes que buscan una mejora sutil y progresiva.",
+        "Personas que quieren comparar experiencia, precio y disponibilidad antes de reservar.",
+      ],
+      expectations: [
+        "Valoracion facial y explicacion de zonas recomendadas.",
+        "Sesion habitualmente breve, con indicaciones posteriores del especialista.",
+        "Seguimiento segun criterio medico y respuesta individual.",
+      ],
+    };
+  }
+
+  if (
+    normalized.includes("hialuronico") ||
+    normalized.includes("labial") ||
+    normalized.includes("relleno")
+  ) {
+    return {
+      ...base,
+      heroImage:
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1800&auto=format&fit=crop",
+      gallery: [
+        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1200&auto=format&fit=crop",
+      ],
+      intro:
+        "Los tratamientos con acido hialuronico se plantean para armonizar volumen, hidratacion o definicion segun la zona y el objetivo.",
+      idealFor: [
+        "Personas que buscan hidratacion, definicion o soporte facial.",
+        "Pacientes que quieren comparar tecnica y criterio estetico del profesional.",
+        "Reservas donde es importante revisar precio orientativo por zona.",
+      ],
+      expectations: [
+        "Analisis de proporciones y plan de tratamiento personalizado.",
+        "Explicacion de producto, cantidad estimada y cuidados posteriores.",
+        "Resultado dependiente de anatomia, tecnica y seguimiento profesional.",
+      ],
+    };
+  }
+
+  if (normalized.includes("rino")) {
+    return {
+      ...base,
+      heroImage:
+        "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1800&auto=format&fit=crop",
+      intro:
+        "La rinomodelacion se valora para armonizar el perfil nasal sin cirugia, siempre con indicacion profesional y expectativas realistas.",
+      idealFor: [
+        "Pacientes que quieren valorar alternativas no quirurgicas.",
+        "Casos donde el perfil y la armonia facial son el objetivo principal.",
+        "Personas que necesitan comparar especialistas con experiencia especifica.",
+      ],
+      expectations: [
+        "Valoracion individual para confirmar si el caso es candidato.",
+        "Planificacion de zonas, producto y limites del resultado.",
+        "Indicaciones posteriores y seguimiento segun criterio profesional.",
+      ],
+    };
+  }
+
+  return base;
+}
+
 export async function generateStaticParams() {
   const { data: specialists } = await supabase
     .from("specialists")
@@ -261,6 +362,11 @@ export default async function TreatmentPage({
       ?.duration_minutes || 60;
   const description =
     treatmentRecord?.description || getFallbackDescription(treatmentName);
+  const landingContent = getTreatmentLandingContent(slug, treatmentName);
+  const heroImage = treatmentRecord?.image || landingContent.heroImage;
+  const galleryImages = Array.from(
+    new Set([heroImage, ...landingContent.gallery])
+  ).slice(0, 3);
   const featuredSpecialists = allSpecialists.slice(0, 3);
   const featuredClinics = clinicsForTreatment.slice(0, 3);
   const publicApprovedReviews = filterPublicRecords(approvedReviews || []);
@@ -319,7 +425,7 @@ export default async function TreatmentPage({
       />
 
       <section className="border-b border-black/10 px-6 pb-12 pt-28">
-        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
           <div>
             <Link
               href="/tratamientos"
@@ -340,6 +446,10 @@ export default async function TreatmentPage({
               {description}
             </p>
 
+            <p className="mt-4 max-w-3xl text-base leading-7 text-neutral-600">
+              {landingContent.intro}
+            </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={`/especialistas?treatment=${encodeURIComponent(treatmentName)}`}
@@ -358,6 +468,20 @@ export default async function TreatmentPage({
           </div>
 
           <div className="rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
+            <div className="relative mb-3 h-[360px] overflow-hidden rounded-md bg-[#E7DED1]">
+              <Image
+                src={heroImage}
+                alt={treatmentName}
+                fill
+                priority
+                sizes="(max-width: 1024px) 100vw, 46vw"
+                className="object-cover"
+              />
+              <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs uppercase tracking-[0.18em] backdrop-blur">
+                Guia del tratamiento
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               {stats.map(([label, value]) => (
                 <div key={label} className="rounded-md bg-[#F8F6F2] p-4">
@@ -377,6 +501,74 @@ export default async function TreatmentPage({
                 <div className="mt-1 text-3xl font-semibold">{formattedPrice}</div>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-10">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-lg border border-black/10 bg-white p-7 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
+            <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+              Guia del tratamiento
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+              Que debes saber antes de reservar {treatmentName}
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-neutral-600 md:text-base">
+              Esta landing agrupa explicacion, fotos de contexto, lugares de
+              atencion y especialistas disponibles para que compares antes de
+              elegir horario.
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                  Para quien puede encajar
+                </h3>
+                <div className="mt-4 grid gap-3">
+                  {landingContent.idealFor.map((item) => (
+                    <div key={item} className="rounded-md bg-[#F8F6F2] p-4 text-sm leading-6">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                  Como suele ser el proceso
+                </h3>
+                <div className="mt-4 grid gap-3">
+                  {landingContent.expectations.map((item, index) => (
+                    <div key={item} className="flex gap-3 rounded-md bg-[#F8F6F2] p-4 text-sm leading-6">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-black text-xs text-white">
+                        {index + 1}
+                      </span>
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+            {galleryImages.map((image, index) => (
+              <div
+                key={image}
+                className={`relative overflow-hidden rounded-lg border border-black/10 bg-white ${
+                  index === 0 ? "min-h-[320px] sm:col-span-3 lg:col-span-1" : "min-h-[180px]"
+                }`}
+              >
+                <Image
+                  src={image}
+                  alt={`${treatmentName} ${index + 1}`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -617,11 +809,16 @@ export default async function TreatmentPage({
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                Especialistas
+                Especialistas disponibles
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Elige profesional para {treatmentName}
+                Especialistas disponibles para este tratamiento
               </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
+                Profesionales que ofrecen {treatmentName}, con su lugar de
+                atencion, precio orientativo cuando existe y acceso directo a
+                la reserva.
+              </p>
             </div>
 
             <Link
@@ -716,7 +913,7 @@ export default async function TreatmentPage({
                       )}`}
                       className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                     >
-                      Reservar este tratamiento
+                      Ver agenda y reservar
                     </Link>
 
                     {clinic?.slug ? (
