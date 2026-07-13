@@ -111,7 +111,6 @@ export async function POST(req: Request) {
     }
 
     if (
-      !clinic_name ||
       !specialist_name ||
       !full_name ||
       !booking_date ||
@@ -160,23 +159,30 @@ export async function POST(req: Request) {
     }
 
     const specialistRecord = specialist as SpecialistRecord;
-    const { data: selectedClinic } = await supabase
-      .from("clinics")
-      .select("id,name")
-      .eq("name", clinic_name)
-      .maybeSingle();
+    const normalizedClinicName =
+      clinic_name === "__independent__" ? "" : String(clinic_name || "").trim();
+    const { data: selectedClinic } = normalizedClinicName
+      ? await supabase
+          .from("clinics")
+          .select("id,name")
+          .eq("name", normalizedClinicName)
+          .maybeSingle()
+      : { data: null };
 
-    const belongsToClinic =
-      (selectedClinic?.id &&
-        specialistRecord.clinic_id &&
-        String(selectedClinic.id) === String(specialistRecord.clinic_id)) ||
-      normalize(specialistRecord.clinic_name) === normalize(clinic_name);
+    const isIndependentSpecialist =
+      !specialistRecord.clinic_id && !specialistRecord.clinic_name;
+    const belongsToClinic = isIndependentSpecialist
+      ? !normalizedClinicName
+      : (selectedClinic?.id &&
+          specialistRecord.clinic_id &&
+          String(selectedClinic.id) === String(specialistRecord.clinic_id)) ||
+        normalize(specialistRecord.clinic_name) === normalize(normalizedClinicName);
 
     if (!belongsToClinic) {
       return NextResponse.json(
         {
           success: false,
-          error: "El especialista no pertenece a la clinica seleccionada",
+          error: "El especialista no pertenece al lugar de atencion seleccionado",
         },
         {
           status: 409,
@@ -227,7 +233,9 @@ export async function POST(req: Request) {
       .from("bookings")
       .insert([
         {
-          clinic_name,
+          clinic_name: isIndependentSpecialist
+            ? "Especialista independiente"
+            : normalizedClinicName,
           specialist_name,
           full_name,
           email: email || null,

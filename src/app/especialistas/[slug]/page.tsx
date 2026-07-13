@@ -226,10 +226,12 @@ export default async function SpecialistDetailPage({
       .eq("specialist_name", specialist.name),
   ]);
 
-  const clinicName = clinic?.name || specialist.clinic_name || "Clinica EncuentraTuClinica";
+  const isIndependent = !clinic?.name && !specialist.clinic_name;
+  const clinicName = clinic?.name || specialist.clinic_name || "Especialista independiente";
   const clinicSlug =
     clinic?.slug || specialist.clinic_name?.toLowerCase().replaceAll(" ", "-") || "";
-  const clinicLocation = getClinicLocation(clinic);
+  const clinicLocation =
+    getClinicLocation(clinic) || specialist.consultation_address || "";
   const specialistImage = specialist.image || "/og-image.jpg";
   const treatments = Array.isArray(specialist.treatments)
     ? (specialist.treatments as TreatmentOption[])
@@ -272,7 +274,9 @@ export default async function SpecialistDetailPage({
   const decisionHighlights = [
     {
       title: "Perfil conectado",
-      text: `Compara a ${specialist.name} con su clinica, tratamientos y horarios activos antes de reservar.`,
+      text: isIndependent
+        ? `Consulta tratamientos, direccion de atencion y horarios activos de ${specialist.name} antes de reservar.`
+        : `Compara a ${specialist.name} con su clinica, tratamientos y horarios activos antes de reservar.`,
     },
     {
       title: "Precio antes de reservar",
@@ -302,10 +306,16 @@ export default async function SpecialistDetailPage({
             description: specialist.bio,
             medicalSpecialty: specialist.specialty || "AestheticMedicine",
             image: specialistImage,
-            worksFor: {
-              "@type": "MedicalBusiness",
-              name: clinicName,
-            },
+            ...(isIndependent
+              ? {
+                  address: specialist.consultation_address,
+                }
+              : {
+                  worksFor: {
+                    "@type": "MedicalBusiness",
+                    name: clinicName,
+                  },
+                }),
             ...(reviewCount > 0
               ? {
                   aggregateRating: {
@@ -459,6 +469,13 @@ export default async function SpecialistDetailPage({
             <h2 className="mt-3 text-3xl font-semibold tracking-tight">
               Horarios activos
             </h2>
+
+            {isIndependent && clinicLocation ? (
+              <div className="mt-5 rounded-md border border-black/10 bg-[#F8F6F2] p-4 text-sm leading-6 text-neutral-700">
+                <span className="font-semibold text-black">Direccion de atencion:</span>{" "}
+                {clinicLocation}
+              </div>
+            ) : null}
 
             {availability.length === 0 ? (
               <div className="mt-6 rounded-md bg-[#F8F6F2] p-4 text-sm text-neutral-600">

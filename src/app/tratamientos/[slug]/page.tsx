@@ -438,7 +438,7 @@ export default async function TreatmentPage({
                     <div>
                       <div className="font-semibold">{specialist.name}</div>
                       <div className="mt-1 text-sm opacity-70">
-                        {clinic?.name || specialist.clinic_name || "Clinica verificada"}
+                        {clinic?.name || specialist.clinic_name || "Especialista independiente"}
                       </div>
                     </div>
 
@@ -673,7 +673,7 @@ export default async function TreatmentPage({
                   </p>
 
                   <div className="mt-5 text-sm text-neutral-500">
-                    {clinic?.name || specialist.clinic_name}
+                    {clinic?.name || specialist.clinic_name || "Especialista independiente"}
                     {clinic ? ` - ${getClinicLocation(clinic)}` : ""}
                   </div>
 

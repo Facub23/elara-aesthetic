@@ -65,6 +65,7 @@ export async function POST(req: Request) {
       name,
       specialty,
       clinic_name,
+      consultation_address,
       image,
       bio,
       treatments,
@@ -78,7 +79,6 @@ export async function POST(req: Request) {
       !id ||
       !name ||
       !specialty ||
-      !clinic_name ||
       !image ||
       !bio ||
       selectedTreatments.length === 0
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         {
           success: false,
           error:
-            "Completa nombre, clinica, imagen, bio y al menos un tratamiento",
+            "Completa nombre, imagen, bio y al menos un tratamiento",
         },
         {
           status: 400,
@@ -108,11 +108,13 @@ export async function POST(req: Request) {
     }
 
     const [{ data: clinic }, { data: catalogTreatments }] = await Promise.all([
-      supabase.from("clinics").select("id,name").eq("name", clinic_name).maybeSingle(),
+      clinic_name
+        ? supabase.from("clinics").select("id,name").eq("name", clinic_name).maybeSingle()
+        : Promise.resolve({ data: null }),
       supabase.from("treatments").select("name"),
     ]);
 
-    if (!clinic) {
+    if (clinic_name && !clinic) {
       return NextResponse.json(
         {
           success: false,
@@ -153,8 +155,9 @@ export async function POST(req: Request) {
         name,
         slug: slugify(name),
         specialty,
-        clinic_id: clinic.id,
-        clinic_name,
+        clinic_id: clinic?.id || null,
+        clinic_name: clinic?.name || null,
+        consultation_address: String(consultation_address || "").trim() || null,
         image,
         bio,
         treatments: selectedTreatments,
@@ -177,7 +180,7 @@ export async function POST(req: Request) {
 
     await createActivityLog({
       title: "Especialista actualizado",
-      description: `${name} - ${clinic_name}`,
+      description: `${name} - ${clinic?.name || "Especialista independiente"}`,
       actor: admin,
       entityType: "specialist",
       entityId: id,

@@ -29,7 +29,10 @@ export default function CreateManualBookingButton({
 
   const filteredSpecialists = form.clinic_name
     ? specialists.filter(
-        (specialist) => specialist.clinic_name === form.clinic_name
+        (specialist) =>
+          form.clinic_name === "__independent__"
+            ? !specialist.clinic_name
+            : specialist.clinic_name === form.clinic_name
       )
     : specialists;
 
@@ -174,7 +177,8 @@ export default function CreateManualBookingButton({
                     }
                     className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                   >
-                    <option value="">Seleccionar clínica</option>
+                    <option value="">Todos los lugares</option>
+                    <option value="__independent__">Especialistas independientes</option>
 
                     {clinics.map((clinic) => (
                       <option key={clinic.id} value={clinic.name}>
@@ -273,6 +277,17 @@ export default function CreateManualBookingButton({
                     </div>
                     <div className="mt-2 text-3xl font-semibold">
                       {form.full_name || "Paciente"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[28px] bg-[#F8F5F1] p-6">
+                    <div className="text-sm text-neutral-500">
+                      Lugar
+                    </div>
+                    <div className="mt-2 text-2xl font-semibold">
+                      {form.clinic_name === "__independent__"
+                        ? "Especialista independiente"
+                        : form.clinic_name || "Sin seleccionar"}
                     </div>
                   </div>
 

@@ -572,7 +572,7 @@ export default async function CityTreatmentPage({
                   </p>
 
                   <div className="mt-5 rounded-md bg-[#F8F6F2] p-3 text-sm">
-                    {clinic?.name || specialist.clinic_name}
+                    {clinic?.name || specialist.clinic_name || "Especialista independiente"}
                     {clinic ? ` - ${getClinicLocation(clinic)}` : ""}
                   </div>
 

@@ -14,6 +14,8 @@ import {
   getTreatmentRawPrice,
 } from "@/lib/treatment-utils";
 
+const INDEPENDENT_SPECIALIST_LABEL = "Especialista independiente";
+
 const specialistEditorSteps = [
   { id: "profile", label: "Perfil" },
   { id: "clinic", label: "Clinica" },
@@ -62,10 +64,12 @@ function getSpecialistIssues(specialist: any, clinics: any[], treatments: any[])
     issues.push("Falta nombre o especialidad.");
   }
 
-  if (!hasText(specialist.clinic_name)) {
-    issues.push("No tiene clinica asignada.");
-  } else if (!clinicNames.has(normalize(specialist.clinic_name))) {
+  if (hasText(specialist.clinic_name) && !clinicNames.has(normalize(specialist.clinic_name))) {
     issues.push("La clinica asignada no existe.");
+  }
+
+  if (!hasText(specialist.clinic_name) && !hasText(specialist.consultation_address)) {
+    issues.push("Falta direccion de atencion para especialista independiente.");
   }
 
   if (!hasText(specialist.image)) {
@@ -109,7 +113,9 @@ function getSpecialistStatus(specialist: any, clinics: any[], treatments: any[])
   if (
     issues.some(
       (issue) =>
-        issue.includes("clinica") || issue.includes("tratamientos fuera")
+        issue.includes("clinica") ||
+        issue.includes("direccion") ||
+        issue.includes("tratamientos fuera")
     )
   ) {
     return {
@@ -210,12 +216,11 @@ function getSpecialistChecklist(specialist: any, clinics: any[] = [], treatments
       hint: "Completa nombre y especialidad visible.",
     },
     {
-      label: "Clinica asociada",
-      done:
-        hasText(specialist.clinic_name) &&
-        (clinics.length === 0 ||
-          clinicNames.has(normalize(specialist.clinic_name))),
-      hint: "Asocia el especialista a una clinica existente.",
+      label: "Lugar de atencion",
+      done: hasText(specialist.clinic_name)
+        ? clinics.length === 0 || clinicNames.has(normalize(specialist.clinic_name))
+        : hasText(specialist.consultation_address),
+      hint: "Asocia una clinica o indica direccion de consulta independiente.",
     },
     {
       label: "Foto profesional",
@@ -254,6 +259,7 @@ function emptyForm() {
     name: "",
     specialty: "",
     clinic_name: "",
+    consultation_address: "",
     image: "",
     bio: "",
     rating: "5",
@@ -266,7 +272,7 @@ function isSpecialistReady(form: ReturnType<typeof emptyForm>) {
   return (
     hasText(form.name) &&
     hasText(form.specialty) &&
-    hasText(form.clinic_name) &&
+    (hasText(form.clinic_name) || hasText(form.consultation_address)) &&
     hasText(form.image) &&
     hasText(form.bio) &&
     form.treatments.length > 0
@@ -341,8 +347,13 @@ export default function AdminSpecialistsManager({
     const matchesSearch =
       specialist.name?.toLowerCase().includes(searchValue) ||
       specialist.specialty?.toLowerCase().includes(searchValue) ||
-      specialist.clinic_name?.toLowerCase().includes(searchValue);
-    const matchesClinic = !clinicFilter || specialist.clinic_name === clinicFilter;
+      specialist.clinic_name?.toLowerCase().includes(searchValue) ||
+      specialist.consultation_address?.toLowerCase().includes(searchValue);
+    const matchesClinic =
+      !clinicFilter ||
+      (clinicFilter === "__independent__"
+        ? !specialist.clinic_name
+        : specialist.clinic_name === clinicFilter);
     const matchesTreatment =
       !treatmentFilter || treatmentNames.includes(treatmentFilter);
     const matchesStatus = !statusFilter || status === statusFilter;
@@ -418,7 +429,7 @@ export default function AdminSpecialistsManager({
   async function createSpecialist(options?: { configureAvailability?: boolean }) {
     if (!isSpecialistReady(form)) {
       showAdminToast(
-        "Completa perfil, clinica, imagen, bio y al menos un tratamiento",
+        "Completa perfil, lugar de atencion, imagen, bio y al menos un tratamiento",
         "error"
       );
       return;
@@ -590,7 +601,7 @@ export default function AdminSpecialistsManager({
               {activeStep === "clinic" && (
                 <>
                   <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
-                    Clinica asociada
+                    Lugar de atencion
                   </p>
                   <h3 className="mt-3 text-3xl font-semibold">
                     Donde atiende
@@ -599,7 +610,7 @@ export default function AdminSpecialistsManager({
                   <div className="mt-10 grid gap-5">
                     <div>
                       <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
-                        Clinica
+                        Clinica asociada
                       </label>
                       <select
                         value={form.clinic_name}
@@ -608,7 +619,7 @@ export default function AdminSpecialistsManager({
                         }
                         className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                       >
-                        <option value="">Seleccionar clinica</option>
+                        <option value="">Sin clinica asociada</option>
                         {clinics.map((clinic) => (
                           <option key={clinic.id} value={clinic.name}>
                             {clinic.name}
@@ -617,10 +628,26 @@ export default function AdminSpecialistsManager({
                       </select>
                     </div>
 
+                    <div>
+                      <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
+                        Direccion de atencion
+                      </label>
+                      <input
+                        value={form.consultation_address}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            consultation_address: e.target.value,
+                          })
+                        }
+                        placeholder="Ej: Calle Serrano 45, 1B, Madrid"
+                        className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                      />
+                    </div>
+
                     <div className="rounded-[28px] bg-[#F8F5F1] p-6 text-sm leading-6 text-neutral-600">
-                      Esta relacion alimenta el marketplace: una clinica aparece
-                      para un tratamiento cuando tiene especialistas asociados a
-                      ese tratamiento.
+                      Si no seleccionas clinica, el especialista se mostrara como
+                      independiente y usara esta direccion como lugar de atencion.
                     </div>
                   </div>
                 </>
@@ -709,7 +736,7 @@ export default function AdminSpecialistsManager({
                   {!isSpecialistReady(form) && (
                     <div className="mt-6 rounded-[24px] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
                       Para publicarlo correctamente necesitas perfil completo,
-                      clinica existente y al menos un tratamiento del catalogo.
+                      lugar de atencion y al menos un tratamiento del catalogo.
                     </div>
                   )}
                 </>
@@ -735,7 +762,7 @@ export default function AdminSpecialistsManager({
                       {form.name || "Nuevo especialista"}
                     </div>
                     <div className="mt-3 text-white/80">
-                      {form.clinic_name || "Clinica"}
+                      {form.clinic_name || INDEPENDENT_SPECIALIST_LABEL}
                     </div>
                   </div>
                 </div>
@@ -826,6 +853,7 @@ export default function AdminSpecialistsManager({
             className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="">Todas las clinicas</option>
+            <option value="__independent__">Especialistas independientes</option>
             {clinics.map((clinic) => (
               <option key={clinic.id} value={clinic.name}>
                 {clinic.name}
@@ -924,8 +952,13 @@ export default function AdminSpecialistsManager({
                   {specialist.specialty || "Sin especialidad"}
                 </p>
                 <p className="mt-2 text-sm text-neutral-400">
-                  {specialist.clinic_name || "Sin clinica"}
+                  {specialist.clinic_name || INDEPENDENT_SPECIALIST_LABEL}
                 </p>
+                {!specialist.clinic_name && specialist.consultation_address && (
+                  <p className="mt-2 text-sm text-neutral-500">
+                    {specialist.consultation_address}
+                  </p>
+                )}
 
                 <div className="mt-5 grid grid-cols-3 gap-3">
                   <div className="rounded-2xl bg-[#F8F5F1] p-4">

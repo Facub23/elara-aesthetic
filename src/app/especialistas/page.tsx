@@ -57,6 +57,7 @@ type SpecialistRow = {
   slug?: string | null;
   clinic_id?: string | number | null;
   clinic_name?: string | null;
+  consultation_address?: string | null;
   specialty?: string | null;
   bio?: string | null;
   image?: string | null;
@@ -262,7 +263,11 @@ export default async function SpecialistsPage({
       const clinic =
         (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
         clinicsByName.get(normalize(specialist.clinic_name));
-      const clinicCity = clinic?.city || clinic?.location?.split(",")[0]?.trim() || "";
+      const clinicCity =
+        clinic?.city ||
+        clinic?.location?.split(",")[0]?.trim() ||
+        specialist.consultation_address?.split(",").at(-1)?.trim() ||
+        "";
       const availability = allAvailability.filter(
         (item) => normalize(item.specialist_name) === normalize(specialist.name)
       );
@@ -310,6 +315,7 @@ export default async function SpecialistsPage({
         normalize(specialist.name).includes(searchValue) ||
         normalize(specialist.specialty).includes(searchValue) ||
         normalize(specialist.clinic_name).includes(searchValue) ||
+        normalize(specialist.consultation_address).includes(searchValue) ||
         normalize(clinic?.name).includes(searchValue);
 
       return (
@@ -518,7 +524,7 @@ export default async function SpecialistsPage({
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             {[
               ["Agenda real", "Los perfiles muestran horario activo y proximo hueco disponible."],
-              ["Clinica vinculada", "Cada especialista aparece asociado a su centro correspondiente."],
+              ["Lugar de atencion", "Cada especialista aparece asociado a una clinica o consulta independiente."],
               ["Precio orientativo", "Cuando existe tarifa, se muestra el precio minimo del tratamiento."],
             ].map(([title, text]) => (
               <div key={title} className="rounded-lg border border-black/5 bg-white/70 p-5">
@@ -624,8 +630,18 @@ export default async function SpecialistsPage({
 
                         <div className="mt-5 grid gap-3">
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
-                            <span className="font-medium">{clinic?.name || specialist.clinic_name}</span>
+                            <span className="font-medium">
+                              {clinic?.name ||
+                                specialist.clinic_name ||
+                                "Especialista independiente"}
+                            </span>
                             {clinicCity && <span className="text-neutral-500"> - {clinicCity}</span>}
+                            {!clinicCity && specialist.consultation_address && (
+                              <span className="text-neutral-500">
+                                {" "}
+                                - {specialist.consultation_address}
+                              </span>
+                            )}
                           </div>
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
                             <span className="font-medium">Disponibilidad</span>

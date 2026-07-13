@@ -51,6 +51,7 @@ export default function EditSpecialistButton({
     name: specialist.name || "",
     specialty: specialist.specialty || "",
     clinic_name: specialist.clinic_name || "",
+    consultation_address: specialist.consultation_address || "",
     image: specialist.image || "",
     slug: specialist.slug || "",
     bio: specialist.bio || "",
@@ -99,13 +100,13 @@ export default function EditSpecialistButton({
     if (
       !hasText(form.name) ||
       !hasText(form.specialty) ||
-      !hasText(form.clinic_name) ||
+      (!hasText(form.clinic_name) && !hasText(form.consultation_address)) ||
       !hasText(form.image) ||
       !hasText(form.bio) ||
       form.treatments.length === 0
     ) {
       showAdminToast(
-        "Completa perfil, clinica, imagen, bio y al menos un tratamiento",
+        "Completa perfil, lugar de atencion, imagen, bio y al menos un tratamiento",
         "error"
       );
       return;
@@ -203,7 +204,7 @@ export default function EditSpecialistButton({
               {activeStep === "clinic" && (
                 <>
                   <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
-                    Clinica
+                    Lugar de atencion
                   </p>
                   <h3 className="mt-3 text-3xl font-semibold">
                     Clinica asociada
@@ -215,12 +216,25 @@ export default function EditSpecialistButton({
                     }
                     className="mt-10 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                   >
+                    <option value="">Sin clinica asociada</option>
                     {clinics.map((clinic) => (
                       <option key={clinic.id} value={clinic.name}>
                         {clinic.name}
                       </option>
                     ))}
                   </select>
+
+                  <input
+                    value={form.consultation_address}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        consultation_address: e.target.value,
+                      })
+                    }
+                    placeholder="Direccion de atencion independiente"
+                    className="mt-4 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                  />
                 </>
               )}
 
@@ -340,7 +354,7 @@ export default function EditSpecialistButton({
                       {form.name}
                     </div>
                     <div className="mt-3 text-white/80">
-                      {form.clinic_name}
+                      {form.clinic_name || "Especialista independiente"}
                     </div>
                   </div>
                 </div>

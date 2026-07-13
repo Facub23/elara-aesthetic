@@ -105,7 +105,6 @@ export async function POST(req: Request) {
     }
 
     if (
-      !clinic_name ||
       !specialist_name ||
       !full_name ||
       !email ||
@@ -179,23 +178,28 @@ export async function POST(req: Request) {
     }
 
     const specialistRecord = specialist as SpecialistRecord;
-    const { data: selectedClinic } = await supabase
-      .from("clinics")
-      .select("id,name")
-      .eq("name", clinic_name)
-      .maybeSingle();
+    const { data: selectedClinic } = clinic_name
+      ? await supabase
+          .from("clinics")
+          .select("id,name")
+          .eq("name", clinic_name)
+          .maybeSingle()
+      : { data: null };
 
-    const belongsToClinic =
-      (selectedClinic?.id &&
-        specialistRecord.clinic_id &&
-        String(selectedClinic.id) === String(specialistRecord.clinic_id)) ||
-      normalize(specialistRecord.clinic_name) === normalize(clinic_name);
+    const isIndependentSpecialist =
+      !specialistRecord.clinic_id && !specialistRecord.clinic_name;
+    const belongsToClinic = isIndependentSpecialist
+      ? !clinic_name || normalize(clinic_name) === normalize("Especialista independiente")
+      : (selectedClinic?.id &&
+          specialistRecord.clinic_id &&
+          String(selectedClinic.id) === String(specialistRecord.clinic_id)) ||
+        normalize(specialistRecord.clinic_name) === normalize(clinic_name);
 
     if (!belongsToClinic) {
       return NextResponse.json(
         {
           success: false,
-          error: "El especialista no pertenece a la clinica seleccionada",
+          error: "El especialista no pertenece al lugar de atencion seleccionado",
         },
         {
           status: 409,
@@ -267,7 +271,9 @@ export async function POST(req: Request) {
     const confirmationExpiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
 
     const bookingPayload = {
-      clinic_name,
+      clinic_name: isIndependentSpecialist
+        ? "Especialista independiente"
+        : clinic_name,
       specialist_name,
       full_name,
       email,

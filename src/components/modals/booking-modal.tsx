@@ -561,7 +561,7 @@ export function BookingModal({
 
                 <p className="mt-5 max-w-md text-lg leading-relaxed text-neutral-500">
                   Te enviamos un email para confirmar la solicitud. El hueco queda
-                  protegido durante el plazo de confirmacion y la clinica recibira
+                  protegido durante el plazo de confirmacion y el equipo recibira
                   todos los detalles.
                 </p>
 
@@ -853,7 +853,7 @@ export function BookingModal({
 
                   <div className="mt-5 grid gap-3 text-sm text-neutral-600 md:grid-cols-2">
                     <div>
-                      <span className="font-medium text-black">Clinica:</span>{" "}
+                      <span className="font-medium text-black">Lugar:</span>{" "}
                       {clinicName}
                     </div>
                     <div>
