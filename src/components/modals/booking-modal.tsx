@@ -475,55 +475,63 @@ export function BookingModal({
           transition={{ duration: 0.35 }}
           className="relative my-4 grid w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] sm:rounded-[40px] lg:grid-cols-[0.85fr_1.15fr]"
         >
-          <div className="relative flex flex-col justify-between overflow-hidden bg-[#050505] p-6 text-white sm:p-10 lg:p-12">
+          <button
+            onClick={onClose}
+            aria-label="Cerrar modal"
+            className="absolute right-5 top-5 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-xl text-black shadow-sm transition-all duration-300 hover:scale-105 hover:bg-black hover:text-white"
+          >
+            x
+          </button>
+
+          <div className="relative flex flex-col justify-between overflow-hidden bg-[#050505] p-5 text-white sm:p-10 lg:p-12">
             <div className="relative z-10">
-              <div className="mb-4 text-xs uppercase tracking-[0.35em] text-white/40">
+              <div className="mb-3 max-w-[calc(100%-56px)] text-xs uppercase tracking-[0.28em] text-white/40 sm:mb-4 sm:tracking-[0.35em]">
                 Reserva EncuentraTuClinica
               </div>
 
-              <h2 className="text-4xl font-semibold leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
+              <h2 className="max-w-[calc(100%-56px)] text-3xl font-semibold leading-[1.02] tracking-tight sm:max-w-none sm:text-5xl lg:text-6xl">
                 {clinicName}
               </h2>
 
               {selectedSpecialist && (
-                <div className="mt-6 inline-flex rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white/80 backdrop-blur-xl">
+                <div className="mt-4 inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/80 backdrop-blur-xl sm:mt-6 sm:px-5 sm:py-3">
                   Con {selectedSpecialist}
                 </div>
               )}
 
-              <p className="mt-8 max-w-md text-lg leading-relaxed text-white/55">
+              <p className="mt-5 max-w-md text-sm leading-6 text-white/55 sm:mt-8 sm:text-lg sm:leading-relaxed">
                 Revisa tratamiento, especialista y huecos reales antes de
                 enviar tu solicitud de reserva.
               </p>
             </div>
 
-            <div className="relative z-10 mt-8 grid grid-cols-1 gap-3 sm:mt-10 sm:grid-cols-2 sm:gap-4">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:p-5">
+            <div className="relative z-10 mt-5 grid grid-cols-2 gap-3 sm:mt-10 sm:gap-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl sm:rounded-3xl sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Fecha
                 </div>
 
-                <div className="mt-4 text-xl font-medium capitalize">
+                <div className="mt-3 text-base font-medium capitalize sm:mt-4 sm:text-xl">
                   {formatReadableDate(selectedDate)}
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:p-5">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl sm:rounded-3xl sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Hora
                 </div>
 
-                <div className="mt-4 text-xl font-medium">
+                <div className="mt-3 text-base font-medium sm:mt-4 sm:text-xl">
                   {selectedTime || "Sin seleccionar"}
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl sm:col-span-2 sm:p-5">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl sm:col-span-2 sm:rounded-3xl sm:p-5">
                 <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                   Tratamiento
                 </div>
 
-                <div className="mt-4 text-xl font-medium">
+                <div className="mt-3 text-base font-medium sm:mt-4 sm:text-xl">
                   {selectedTreatment || "Sin seleccionar"} - {treatmentDuration} min
                 </div>
                 <div className="mt-2 text-sm text-white/50">
@@ -532,12 +540,12 @@ export function BookingModal({
               </div>
 
               {selectedSpecialist && (
-                <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-xl col-span-2">
+                <div className="col-span-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl sm:rounded-3xl sm:p-5">
                   <div className="text-[11px] uppercase tracking-[0.3em] text-white/40">
                     Especialista
                   </div>
 
-                  <div className="mt-4 text-xl font-medium">
+                  <div className="mt-3 text-base font-medium sm:mt-4 sm:text-xl">
                     {selectedSpecialist}
                   </div>
                 </div>
@@ -546,14 +554,6 @@ export function BookingModal({
           </div>
 
           <div className="relative bg-[#FAF8F5] p-8 pt-20 lg:p-12 lg:pt-20">
-            <button
-              onClick={onClose}
-              aria-label="Cerrar modal"
-              className="absolute right-6 top-6 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-black/10 bg-white text-xl text-black shadow-sm transition-all duration-300 hover:scale-105 hover:bg-black hover:text-white"
-            >
-              x
-            </button>
-
             {success ? (
               <div className="flex min-h-[620px] flex-col items-center justify-center text-center">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-black text-3xl text-white">
