@@ -7,6 +7,11 @@ import AdminShell from "@/components/AdminShell";
 import PrintReportButton from "@/components/PrintReportButton";
 import { hasAnyAdminPermission } from "@/lib/admin-access";
 import {
+  getAssignedClinicName,
+  getAssignedSpecialist,
+  scopedBookingsQuery,
+} from "@/lib/admin-scope";
+import {
   getBookingStatusKey,
   isPendingBookingStatus,
 } from "@/lib/booking-status";
@@ -45,13 +50,30 @@ export default async function AdminReportePage() {
     redirect("/admin");
   }
 
-  const { data: bookings } =
-    await supabase
+  const adminScope = {
+    role: adminUser.role,
+    clinicId: adminUser.clinic_id,
+    specialistId: adminUser.specialist_id,
+    accessRole: adminUser.access_role,
+  };
+  const assignedClinicName = await getAssignedClinicName(adminScope);
+  const assignedSpecialist = await getAssignedSpecialist(adminScope);
+
+  let bookingsQuery =
+    supabase
       .from("bookings")
       .select("*")
       .order("created_at", {
         ascending: false,
       });
+
+  bookingsQuery = scopedBookingsQuery(
+    bookingsQuery,
+    assignedClinicName,
+    assignedSpecialist?.name || null
+  );
+
+  const { data: bookings } = await bookingsQuery;
 
   const totalBookings =
     bookings?.length || 0;

@@ -5,6 +5,11 @@ import AdminShell from "@/components/AdminShell";
 import MarkAdminNotificationReadButton from "@/components/MarkAdminNotificationReadButton";
 import ResendNotificationButton from "@/components/ResendNotificationButton";
 import { hasAdminPermission } from "@/lib/admin-access";
+import {
+  getAssignedClinicName,
+  getAssignedSpecialist,
+  scopedBookingsQuery,
+} from "@/lib/admin-scope";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -172,24 +177,57 @@ export default async function AdminNotificationsPage({
       .limit(30),
   ]);
 
-  const typedDeliveries = (deliveries || []) as NotificationDelivery[];
+  const adminScope = {
+    role: adminUser.role,
+    clinicId: adminUser.clinic_id,
+    specialistId: adminUser.specialist_id,
+    accessRole: adminUser.access_role,
+  };
+  const assignedClinicName = await getAssignedClinicName(adminScope);
+  const assignedSpecialist = await getAssignedSpecialist(adminScope);
+  const candidateDeliveries = (deliveries || []) as NotificationDelivery[];
   const bookingIds = Array.from(
     new Set(
-      typedDeliveries
+      candidateDeliveries
         .map((delivery) => delivery.related_booking_id)
         .filter(Boolean)
     )
   );
 
-  const { data: relatedBookings } =
+  let relatedBookingsQuery =
     bookingIds.length > 0
-      ? await supabase
+      ? supabase
           .from("bookings")
           .select(
             "id,full_name,clinic_name,specialist_name,booking_date,booking_time,status"
           )
           .in("id", bookingIds)
-      : { data: [] };
+      : null;
+
+  if (relatedBookingsQuery) {
+    relatedBookingsQuery = scopedBookingsQuery(
+      relatedBookingsQuery,
+      assignedClinicName,
+      assignedSpecialist?.name || null
+    );
+  }
+
+  const { data: relatedBookings } = relatedBookingsQuery
+    ? await relatedBookingsQuery
+    : { data: [] };
+
+  const visibleBookingIds = new Set(
+    ((relatedBookings || []) as BookingSummary[]).map((booking) =>
+      String(booking.id)
+    )
+  );
+  const typedDeliveries = isSuperAdmin
+    ? candidateDeliveries
+    : candidateDeliveries.filter(
+        (delivery) =>
+          delivery.related_booking_id &&
+          visibleBookingIds.has(String(delivery.related_booking_id))
+      );
 
   const bookingsById = new Map(
     ((relatedBookings || []) as BookingSummary[]).map((booking) => [
@@ -202,7 +240,14 @@ export default async function AdminNotificationsPage({
   const sent = typedDeliveries.filter((delivery) => delivery.status === "sent").length;
   const failed = typedDeliveries.filter((delivery) => delivery.status === "failed").length;
   const skipped = typedDeliveries.filter((delivery) => delivery.status === "skipped").length;
-  const unread = ((adminNotifications || []) as AdminNotification[]).filter(
+  const visibleAdminNotifications = isSuperAdmin
+    ? ((adminNotifications || []) as AdminNotification[])
+    : ((adminNotifications || []) as AdminNotification[]).filter(
+        (item) =>
+          item.related_booking_id &&
+          visibleBookingIds.has(String(item.related_booking_id))
+      );
+  const unread = visibleAdminNotifications.filter(
     (item) => !item.read_at
   ).length;
 
@@ -452,12 +497,12 @@ export default async function AdminNotificationsPage({
             <h2 className="mt-3 text-3xl font-semibold">Alertas admin</h2>
 
             <div className="mt-6 grid gap-3">
-              {((adminNotifications || []) as AdminNotification[]).length === 0 ? (
+              {visibleAdminNotifications.length === 0 ? (
                 <div className="rounded-[24px] bg-white/10 p-5 text-sm text-white/60">
                   No hay alertas internas todavia.
                 </div>
               ) : (
-                ((adminNotifications || []) as AdminNotification[]).map((item) => (
+                visibleAdminNotifications.map((item) => (
                   <div
                     key={item.id}
                     className="rounded-[24px] bg-white/10 p-5 text-sm"

@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { hasAdminPermission } from "@/lib/admin-access";
-import { getAssignedClinicName } from "@/lib/admin-scope";
+import {
+  getAssignedClinicName,
+  getAssignedSpecialist,
+  scopedBookingsQuery,
+} from "@/lib/admin-scope";
 
 function escapeCsvValue(value: unknown) {
   const text = String(value ?? "");
@@ -70,10 +74,15 @@ export async function GET() {
       );
     }
 
-    const assignedClinicName = await getAssignedClinicName({
+    const adminScope = {
       role: adminUser.role,
       clinicId: adminUser.clinic_id,
-    });
+      specialistId: adminUser.specialist_id,
+      accessRole: adminUser.access_role,
+    };
+
+    const assignedClinicName = await getAssignedClinicName(adminScope);
+    const assignedSpecialist = await getAssignedSpecialist(adminScope);
 
     let bookingsQuery = supabase
       .from("bookings")
@@ -82,9 +91,11 @@ export async function GET() {
         ascending: false,
       });
 
-    if (assignedClinicName) {
-      bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinicName);
-    }
+    bookingsQuery = scopedBookingsQuery(
+      bookingsQuery,
+      assignedClinicName,
+      assignedSpecialist?.name || null
+    );
 
     const { data: bookings } = await bookingsQuery;
 

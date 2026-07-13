@@ -131,21 +131,24 @@ export default async function PatientDetailPage({
     redirect("/admin/pacientes");
   }
 
-  const { data: notes } = await supabase
-    .from("patient_notes")
-    .select("*")
-    .eq("patient_name", patientName)
-    .order("created_at", {
-      ascending: false,
-    });
-
-  const { data: activity } = await supabase
-    .from("patient_activity")
-    .select("*")
-    .eq("patient_name", patientName)
-    .order("created_at", {
-      ascending: false,
-    });
+  const [{ data: notes }, { data: activity }] = isSuperAdmin
+    ? await Promise.all([
+        supabase
+          .from("patient_notes")
+          .select("*")
+          .eq("patient_name", patientName)
+          .order("created_at", {
+            ascending: false,
+          }),
+        supabase
+          .from("patient_activity")
+          .select("*")
+          .eq("patient_name", patientName)
+          .order("created_at", {
+            ascending: false,
+          }),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const totalBookings = bookings?.length || 0;
 
@@ -372,9 +375,16 @@ export default async function PatientDetailPage({
                 Observaciones internas
               </h2>
 
-              <div className="mt-8">
-                <AddPatientNote patientName={patientName} />
-              </div>
+              {isSuperAdmin ? (
+                <div className="mt-8">
+                  <AddPatientNote patientName={patientName} />
+                </div>
+              ) : (
+                <div className="mt-8 rounded-[28px] bg-[#F7F5F2] p-6 text-sm leading-6 text-neutral-500">
+                  Las notas privadas globales solo estan disponibles para
+                  superadmin hasta activar notas separadas por clinica.
+                </div>
+              )}
 
               <div className="mt-8 space-y-4">
                 {!notes || notes.length === 0 ? (

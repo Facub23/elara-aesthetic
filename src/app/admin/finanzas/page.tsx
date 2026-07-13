@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
 import { hasAdminPermission } from "@/lib/admin-access";
+import {
+  getAssignedClinicName,
+  getAssignedSpecialist,
+  scopedBookingsQuery,
+} from "@/lib/admin-scope";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -79,10 +84,14 @@ export default async function AdminFinanzasPage() {
     redirect("/admin");
   }
 
-  const { data: clinics } = await supabase.from("clinics").select("id,name");
-  const assignedClinic = adminUser.clinic_id
-    ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
-    : null;
+  const adminScope = {
+    role: adminUser.role,
+    clinicId: adminUser.clinic_id,
+    specialistId: adminUser.specialist_id,
+    accessRole: adminUser.access_role,
+  };
+  const assignedClinicName = await getAssignedClinicName(adminScope);
+  const assignedSpecialist = await getAssignedSpecialist(adminScope);
 
   let bookingsQuery = supabase
     .from("bookings")
@@ -92,9 +101,11 @@ export default async function AdminFinanzasPage() {
     .order("booking_date", { ascending: false })
     .limit(300);
 
-  if (!isSuperAdmin && assignedClinic?.name) {
-    bookingsQuery = bookingsQuery.eq("clinic_name", assignedClinic.name);
-  }
+  bookingsQuery = scopedBookingsQuery(
+    bookingsQuery,
+    assignedClinicName,
+    assignedSpecialist?.name || null
+  );
 
   const { data: bookings } = await bookingsQuery;
 
