@@ -133,6 +133,28 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
       "Recomendacion personalizada segun zona, tecnica y experiencia del especialista.",
       "Reserva online con confirmacion, gestion de cambios y seguimiento por email.",
     ],
+    faqs: [
+      {
+        question: `Como elegir especialista para ${treatmentName}?`,
+        answer:
+          "Compara experiencia, lugar de atencion, precio orientativo, opiniones verificadas y disponibilidad antes de reservar.",
+      },
+      {
+        question: `Cuanto dura una cita de ${treatmentName}?`,
+        answer:
+          "La duracion depende del tratamiento y del criterio profesional, pero la agenda muestra el tiempo estimado configurado para reservar.",
+      },
+      {
+        question: "Puedo reservar online?",
+        answer:
+          "Si hay disponibilidad activa, puedes entrar al perfil del especialista, elegir un hueco real y confirmar la reserva desde EncuentraTuClinica.",
+      },
+      {
+        question: "El precio es definitivo?",
+        answer:
+          "El precio mostrado es orientativo o desde. La valoracion final puede variar segun zona, tecnica, producto y necesidades del paciente.",
+      },
+    ],
   };
 
   if (normalized.includes("botox") || normalized.includes("toxina")) {
@@ -156,6 +178,28 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         "Valoracion facial y explicacion de zonas recomendadas.",
         "Sesion habitualmente breve, con indicaciones posteriores del especialista.",
         "Seguimiento segun criterio medico y respuesta individual.",
+      ],
+      faqs: [
+        {
+          question: "Cuando se notan los resultados del botox?",
+          answer:
+            "Suelen apreciarse de forma progresiva tras la sesion. El especialista indicara tiempos esperados y seguimiento segun cada caso.",
+        },
+        {
+          question: "Como elegir especialista para botox?",
+          answer:
+            "Revisa experiencia en medicina estetica facial, opiniones verificadas, precio orientativo y disponibilidad real antes de reservar.",
+        },
+        {
+          question: "Cuanto dura una cita de botox?",
+          answer:
+            "Depende de la valoracion y las zonas tratadas. La pagina muestra la duracion configurada para la reserva.",
+        },
+        {
+          question: "Puedo comparar clinicas antes de reservar?",
+          answer:
+            "Si. Puedes comparar clinicas, especialistas disponibles, precio desde y ciudades antes de elegir horario.",
+        },
       ],
     };
   }
@@ -186,6 +230,28 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         "Explicacion de producto, cantidad estimada y cuidados posteriores.",
         "Resultado dependiente de anatomia, tecnica y seguimiento profesional.",
       ],
+      faqs: [
+        {
+          question: "Para que se usa el acido hialuronico?",
+          answer:
+            "Puede utilizarse para hidratacion, definicion, soporte o armonizacion, siempre segun indicacion y valoracion profesional.",
+        },
+        {
+          question: "Como comparar especialistas para rellenos?",
+          answer:
+            "Fijate en experiencia, criterio estetico, lugar de atencion, precio orientativo y opiniones verificadas.",
+        },
+        {
+          question: "El precio cambia segun la zona?",
+          answer:
+            "Si, puede variar por zona, producto, cantidad estimada y complejidad del caso.",
+        },
+        {
+          question: "Puedo reservar directamente?",
+          answer:
+            "Puedes elegir un especialista con agenda activa y avanzar a una reserva con huecos reales.",
+        },
+      ],
     };
   }
 
@@ -205,6 +271,28 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         "Valoracion individual para confirmar si el caso es candidato.",
         "Planificacion de zonas, producto y limites del resultado.",
         "Indicaciones posteriores y seguimiento segun criterio profesional.",
+      ],
+      faqs: [
+        {
+          question: "La rinomodelacion sustituye una cirugia?",
+          answer:
+            "No necesariamente. Es una alternativa no quirurgica para ciertos casos, pero requiere valoracion profesional para confirmar indicacion.",
+        },
+        {
+          question: "Como elegir especialista para rinomodelacion?",
+          answer:
+            "Compara experiencia especifica, criterio estetico, lugar de atencion, opiniones y disponibilidad.",
+        },
+        {
+          question: "Que debo revisar antes de reservar?",
+          answer:
+            "Revisa si el profesional explica limites del tratamiento, cuidados posteriores y expectativas realistas.",
+        },
+        {
+          question: "Puedo comparar clinicas?",
+          answer:
+            "Si. La landing conecta el tratamiento con clinicas y especialistas disponibles para comparar antes de reservar.",
+        },
       ],
     };
   }
@@ -397,6 +485,19 @@ export default async function TreatmentPage({
     ["Ciudades", cityNames.length],
     ["Duracion", `${duration} min`],
   ];
+  const independentSpecialistCount = allSpecialists.filter((specialist) => {
+    const clinic =
+      (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
+      clinicsByName.get(normalize(specialist.clinic_name));
+
+    return !clinic?.name && !specialist.clinic_name;
+  }).length;
+  const comparisonRows = [
+    ["Precio desde", formattedPrice || "A consultar"],
+    ["Duracion estimada", `${duration} min`],
+    ["Especialistas disponibles", allSpecialists.length],
+    ["Lugares de atencion", clinicsForTreatment.length + independentSpecialistCount],
+  ];
   const marketplaceChecks = [
     "Compara clinicas verificadas antes de elegir.",
     "Elige especialista por perfil, reviews y disponibilidad.",
@@ -420,6 +521,23 @@ export default async function TreatmentPage({
               "@type": "Organization",
               name: "EncuentraTuClinica",
             },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: landingContent.faqs.map((faq) => ({
+              "@type": "Question",
+              name: faq.question,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: faq.answer,
+              },
+            })),
           }),
         }}
       />
@@ -586,6 +704,58 @@ export default async function TreatmentPage({
               <p className="mt-4 text-sm font-medium leading-6">{check}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-lg bg-black p-7 text-white">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Comparador marketplace
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+              Decide {treatmentName} con datos, no solo con una descripcion.
+            </h2>
+            <p className="mt-5 text-sm leading-7 text-white/65 md:text-base">
+              La landing combina explicacion editorial con comparacion real:
+              especialistas, clinicas, precio orientativo, ciudad y acceso a
+              agenda.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link
+                href={`/especialistas?treatment=${encodeURIComponent(treatmentName)}&availability=Con+horario`}
+                className="rounded-md bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90"
+              >
+                Ver especialistas con horario
+              </Link>
+              <Link
+                href={`/clinics?treatment=${encodeURIComponent(treatmentName)}`}
+                className="rounded-md border border-white/20 px-5 py-3 text-sm font-medium transition hover:bg-white hover:text-black"
+              >
+                Comparar clinicas
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] sm:grid-cols-2">
+            {comparisonRows.map(([label, value]) => (
+              <div key={label} className="rounded-md bg-[#F8F6F2] p-5">
+                <div className="text-2xl font-semibold">{value}</div>
+                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-neutral-500">
+                  {label}
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-md border border-black/10 bg-white p-5 sm:col-span-2">
+              <p className="text-sm font-semibold">Siguiente paso recomendado</p>
+              <p className="mt-2 text-sm leading-6 text-neutral-600">
+                Empieza comparando especialistas si ya sabes el tratamiento.
+                Si todavia estas eligiendo lugar, compara clinicas primero.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -803,6 +973,39 @@ export default async function TreatmentPage({
           </div>
         </section>
       )}
+
+      <section className="px-6 pb-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+              Preguntas frecuentes
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+              Dudas habituales sobre {treatmentName}
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-neutral-600">
+              Respuestas breves para decidir mejor antes de comparar
+              especialistas, clinicas y horarios disponibles.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {landingContent.faqs.map((faq) => (
+              <article
+                key={faq.question}
+                className="rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)]"
+              >
+                <h3 className="text-lg font-semibold tracking-tight">
+                  {faq.question}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-neutral-600">
+                  {faq.answer}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="px-6 pb-20">
         <div className="mx-auto max-w-7xl">
