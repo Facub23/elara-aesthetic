@@ -712,6 +712,11 @@ export default async function SpecialistsPage({
                           </div>
                         </div>
 
+                        <div className="mt-5 rounded-md border border-black/10 bg-white p-4 text-sm leading-6 text-neutral-600">
+                          Perfil preparado para revisar experiencia, tratamientos, lugar de
+                          atencion y agenda antes de confirmar una reserva.
+                        </div>
+
                         <div className="mt-5 flex flex-wrap gap-2">
                           {treatments.slice(0, 4).map((treatment) => {
                             const name = getTreatmentName(treatment);
@@ -766,7 +771,7 @@ export default async function SpecialistsPage({
                             }`}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Ver perfil
+                            {nextSlot ? "Ver agenda y reservar" : "Ver perfil completo"}
                           </Link>
 
                           {clinic?.slug ? (
@@ -774,7 +779,7 @@ export default async function SpecialistsPage({
                               href={`/clinics/${clinic.slug}`}
                               className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                             >
-                              Ver clinica
+                              Clinica y tratamientos
                             </Link>
                           ) : isIndependent ? (
                             <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">

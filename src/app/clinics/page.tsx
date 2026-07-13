@@ -647,6 +647,11 @@ function ClinicsPageContent() {
                           </div>
                         )}
 
+                        <div className="mt-5 rounded-md border border-black/10 bg-white p-4 text-sm leading-6 text-neutral-600">
+                          Compara esta clinica por tratamientos, equipo y primer hueco antes
+                          de entrar a la ficha completa.
+                        </div>
+
                         <div className="mt-5 flex flex-wrap gap-2">
                           {treatments.slice(0, 5).map((treatment) => (
                             <Link
@@ -669,21 +674,21 @@ function ClinicsPageContent() {
                             href={specialistHref}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Reservar con especialista
+                            {nextSlot ? "Reservar proximo hueco" : "Ver especialista"}
                           </Link>
 
                           <Link
                             href={`/clinics/${clinic.slug}`}
                             className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                           >
-                            Ver clinica
+                            Ver ficha completa
                           </Link>
 
                           <Link
                             href={`/tratamientos?clinic=${clinic.slug}`}
                             className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                           >
-                            Ver tratamientos
+                            Tratamientos de la clinica
                           </Link>
 
                           <Link
@@ -694,7 +699,7 @@ function ClinicsPageContent() {
                             }`}
                             className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                           >
-                            Ver especialistas
+                            Equipo y agenda
                           </Link>
                         </div>
                       </div>

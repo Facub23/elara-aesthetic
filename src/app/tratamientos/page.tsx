@@ -664,12 +664,27 @@ export default async function TreatmentsPage({
                       </div>
                     )}
 
+                    {treatment.clinicNames.length > 0 && (
+                      <div className="mt-5 rounded-md border border-black/10 bg-white p-4 text-sm leading-6 text-neutral-600">
+                        Disponible en{" "}
+                        <span className="font-medium text-black">
+                          {treatment.clinicNames.slice(0, 2).join(", ")}
+                        </span>
+                        {treatment.clinicNames.length > 2
+                          ? ` y ${treatment.clinicNames.length - 2} lugar${
+                              treatment.clinicNames.length - 2 === 1 ? "" : "es"
+                            } mas`
+                          : ""}
+                        .
+                      </div>
+                    )}
+
                     <div className="mt-auto flex flex-wrap gap-3 pt-8">
                       <Link
                         href={`/tratamientos/${treatment.slug}`}
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
-                        Ver guia del tratamiento
+                        Ver guia y detalles
                       </Link>
 
                       <Link
@@ -679,6 +694,13 @@ export default async function TreatmentsPage({
                         className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                       >
                         Elegir especialista
+                      </Link>
+
+                      <Link
+                        href={`/clinics?treatment=${encodeURIComponent(treatment.name)}`}
+                        className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
+                      >
+                        Comparar clinicas
                       </Link>
                     </div>
                   </article>
