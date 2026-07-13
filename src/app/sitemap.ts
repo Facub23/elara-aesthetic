@@ -46,6 +46,7 @@ type SpecialistRow = {
   slug?: string | null;
   clinic_id?: string | number | null;
   clinic_name?: string | null;
+  consultation_address?: string | null;
   treatments?: TreatmentOption[] | null;
 };
 
@@ -57,6 +58,14 @@ function getSpecialistClinic(
   return (
     (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
     clinicsByName.get(normalize(specialist.clinic_name))
+  );
+}
+
+function getSpecialistCity(specialist: SpecialistRow, clinic?: ClinicRow) {
+  return (
+    getClinicCity(clinic) ||
+    specialist.consultation_address?.split(",").at(-1)?.trim() ||
+    ""
   );
 }
 
@@ -120,7 +129,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (!Array.isArray(specialist.treatments)) return;
 
     const clinic = getSpecialistClinic(specialist, clinicsById, clinicsByName);
-    const city = slugify(getClinicCity(clinic));
+    const city = slugify(getSpecialistCity(specialist, clinic));
 
     specialist.treatments.forEach((treatment) => {
       const treatmentName = getTreatmentName(treatment);

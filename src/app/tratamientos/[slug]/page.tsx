@@ -343,9 +343,13 @@ export async function generateMetadata({
   return {
     title: `${treatmentName} | Compara clinicas y especialistas`,
     description: `Compara clinicas verificadas y especialistas premium para ${treatmentName}. Reserva en EncuentraTuClinica con disponibilidad real.`,
+    alternates: {
+      canonical: `/tratamientos/${slug}`,
+    },
     openGraph: {
       title: `${treatmentName} | Compara clinicas y especialistas`,
       description: `Clinicas, especialistas y disponibilidad para ${treatmentName}.`,
+      url: `/tratamientos/${slug}`,
     },
   };
 }

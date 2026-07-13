@@ -143,9 +143,13 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `/especialistas/${specialist.slug}`,
+    },
     openGraph: {
       title,
       description,
+      url: `/especialistas/${specialist.slug}`,
       images: [
         {
           url: specialist.image || "/og-image.jpg",

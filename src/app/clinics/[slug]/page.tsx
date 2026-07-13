@@ -127,11 +127,49 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
     notFound();
   }
 
+  const location = getClinicLocation(data.clinic);
+  const rating =
+    data.reviews.length > 0
+      ? (
+          data.reviews.reduce(
+            (sum: number, review: any) => sum + Number(review.rating || 0),
+            0
+          ) / data.reviews.length
+        ).toFixed(1)
+      : data.clinic.rating;
+
   return (
-    <ClinicProfilePageClient
-      clinic={data.clinic}
-      specialists={data.specialists}
-      reviews={data.reviews}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "MedicalBusiness",
+            name: data.clinic.name,
+            description: getClinicDescription(data.clinic),
+            image: data.clinic.heroImage || data.clinic.image || "/og-image.jpg",
+            url: `/clinics/${data.clinic.slug}`,
+            address: location,
+            medicalSpecialty: "AestheticMedicine",
+            ...(rating
+              ? {
+                  aggregateRating: {
+                    "@type": "AggregateRating",
+                    ratingValue: rating,
+                    reviewCount: data.reviews.length || Number(data.clinic.reviews_count || 1),
+                  },
+                }
+              : {}),
+          }),
+        }}
+      />
+
+      <ClinicProfilePageClient
+        clinic={data.clinic}
+        specialists={data.specialists}
+        reviews={data.reviews}
+      />
+    </>
   );
 }

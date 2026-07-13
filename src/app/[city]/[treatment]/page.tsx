@@ -96,6 +96,14 @@ function getClinicCity(clinic?: ClinicRow | null) {
   return clinic?.city || clinic?.location?.split(",")[0]?.trim() || "";
 }
 
+function getSpecialistCity(specialist: SpecialistRow, clinic?: ClinicRow | null) {
+  return (
+    getClinicCity(clinic) ||
+    specialist.consultation_address?.split(",").at(-1)?.trim() ||
+    ""
+  );
+}
+
 function specialistHasTreatment(specialist: SpecialistRow, treatmentSlug: string) {
   return Boolean(
     specialist.treatments?.some(
@@ -125,7 +133,7 @@ function formatSlotLabel(slot?: { date: string; time: string } | null) {
 
 export async function generateStaticParams() {
   const [{ data: specialists }, { data: clinics }] = await Promise.all([
-    supabase.from("specialists").select("clinic_id,clinic_name,treatments"),
+    supabase.from("specialists").select("clinic_id,clinic_name,consultation_address,treatments"),
     supabase.from("clinics").select("id,name,city,location"),
   ]);
 
@@ -145,7 +153,7 @@ export async function generateStaticParams() {
     const clinic =
       (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
       clinicsByName.get(normalize(specialist.clinic_name));
-    const city = getClinicCity(clinic);
+    const city = getSpecialistCity(specialist, clinic);
 
     if (!city || !Array.isArray(specialist.treatments)) return;
 
@@ -189,9 +197,13 @@ export async function generateMetadata({
   return {
     title: `${treatmentName} en ${cityName} | Clinicas y especialistas`,
     description: `Compara clinicas verificadas y especialistas para ${treatmentName} en ${cityName}. Reserva con disponibilidad real en EncuentraTuClinica.`,
+    alternates: {
+      canonical: `/${city}/${treatment}`,
+    },
     openGraph: {
       title: `${treatmentName} en ${cityName} | Clinicas y especialistas`,
       description: `Clinicas, especialistas y disponibilidad para ${treatmentName} en ${cityName}.`,
+      url: `/${city}/${treatment}`,
     },
   };
 }
