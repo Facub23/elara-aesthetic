@@ -9,6 +9,7 @@ import {
 import { patientReschedulableStatuses } from "@/lib/booking-lifecycle";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingUpdated } from "@/lib/booking-notifications";
+import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 function cleanText(value: unknown) {
@@ -125,6 +126,8 @@ export async function POST(req: Request) {
       previousTime,
       updatedBy: "patient",
     });
+
+    await syncBookingToGoogleCalendar(updated);
 
     return NextResponse.json({ success: true, booking: updated });
   } catch (error: unknown) {
