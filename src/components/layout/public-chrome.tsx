@@ -20,7 +20,7 @@ export function PublicChrome() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contactar por WhatsApp"
-        className="fixed bottom-6 right-6 z-[999] flex h-16 w-16 items-center justify-center rounded-full bg-black text-sm font-semibold text-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-6 z-[999] hidden h-16 w-16 items-center justify-center rounded-full bg-black text-sm font-semibold text-white shadow-[0_20px_60px_rgba(0,0,0,0.25)] transition-all duration-300 hover:scale-110 md:flex"
       >
         WA
       </a>

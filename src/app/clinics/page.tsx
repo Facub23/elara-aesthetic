@@ -721,6 +721,26 @@ export default function ClinicsPage() {
       fallback={
         <main className="min-h-screen overflow-x-hidden bg-[#F6F3EE] text-black">
           <Navbar />
+          <section className="px-6 pt-36">
+            <div className="mx-auto max-w-7xl">
+              <div className="max-w-3xl">
+                <p className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+                  Marketplace de clinicas
+                </p>
+                <h1 className="mt-6 text-4xl font-semibold tracking-tight md:text-7xl">
+                  Preparando clinicas verificadas.
+                </h1>
+              </div>
+              <div className="mt-12 grid gap-5 md:grid-cols-2">
+                {[0, 1].map((item) => (
+                  <div
+                    key={item}
+                    className="min-h-[420px] animate-pulse rounded-lg border border-black/10 bg-white/70"
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
         </main>
       }
     >
