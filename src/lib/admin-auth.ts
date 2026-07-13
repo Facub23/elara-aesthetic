@@ -24,6 +24,7 @@ export async function getAdminRequestContext() {
     .maybeSingle();
 
   if (!adminUser) return null;
+  if (adminUser.status !== "active") return null;
 
   return {
     id: adminUser.id,

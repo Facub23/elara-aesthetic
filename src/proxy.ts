@@ -66,8 +66,9 @@ export async function proxy(request: NextRequest) {
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("id")
+    .select("id,status")
     .eq("user_id", user.id)
+    .eq("status", "active")
     .maybeSingle();
 
   if (!adminUser) {
