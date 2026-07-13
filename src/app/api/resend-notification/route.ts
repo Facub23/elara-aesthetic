@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isBookingInAdminScope } from "@/lib/admin-scope";
 import { sendNotificationChannel } from "@/lib/notification-channels";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -34,7 +35,7 @@ async function ensureAdmin() {
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("id")
+    .select("id,role,clinic_id,specialist_id,access_role")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -50,6 +51,7 @@ async function ensureAdmin() {
     ok: true,
     status: 200,
     error: null,
+    adminUser,
   };
 }
 
@@ -117,6 +119,44 @@ export async function POST(req: Request) {
     }
 
     const typedDelivery = delivery as NotificationDelivery;
+
+    if (typedDelivery.related_booking_id) {
+      const { data: booking } = await supabase
+        .from("bookings")
+        .select("clinic_name,specialist_name")
+        .eq("id", typedDelivery.related_booking_id)
+        .maybeSingle();
+
+      if (
+        !booking ||
+        !(await isBookingInAdminScope({
+          role: admin.adminUser?.role,
+          clinicId: admin.adminUser?.clinic_id,
+          specialistId: admin.adminUser?.specialist_id,
+          accessRole: admin.adminUser?.access_role,
+        }, booking))
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Entrega no encontrada",
+          },
+          {
+            status: 404,
+          }
+        );
+      }
+    } else if (admin.adminUser?.role !== "super_admin") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Entrega no encontrada",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
 
     if (!allowedChannels.includes(typedDelivery.channel)) {
       return NextResponse.json(

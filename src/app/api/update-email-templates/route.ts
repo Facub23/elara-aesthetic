@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     .eq("user_id", user.id)
     .single();
 
-  if (!adminUser) {
+  if (!adminUser || adminUser.role !== "super_admin") {
     return NextResponse.json(
       {
         success: false,

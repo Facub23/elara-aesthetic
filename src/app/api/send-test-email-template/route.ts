@@ -39,11 +39,11 @@ async function ensureAdmin() {
 
   const { data: adminUser } = await supabase
     .from("admin_users")
-    .select("id")
+    .select("id,role")
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!adminUser) {
+  if (!adminUser || adminUser.role !== "super_admin") {
     return {
       ok: false,
       status: 403,

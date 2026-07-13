@@ -56,6 +56,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (role !== "super_admin" && normalizedAccessRole !== "specialist" && !clinicId) {
+      return NextResponse.json(
+        { success: false, error: "Selecciona la clinica asociada" },
+        { status: 400 }
+      );
+    }
+
     const normalizedSpecialistId =
       role === "super_admin" || normalizedAccessRole !== "specialist"
         ? null

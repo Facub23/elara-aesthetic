@@ -50,6 +50,33 @@ export async function POST(req: Request) {
       .eq("id", adminId)
       .single();
 
+    if (!adminToDelete) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Administrador no encontrado",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (adminToDelete.role === "super_admin") {
+      const { count } = await supabase
+        .from("admin_users")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "super_admin");
+
+      if ((count || 0) <= 1) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Debe existir al menos un superadmin",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const { error } = await supabase
       .from("admin_users")
       .delete()

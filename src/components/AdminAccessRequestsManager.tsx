@@ -132,6 +132,18 @@ function AccessRequestCard({
       return;
     }
 
+    if (action === "approved" && systemRole !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+      window.dispatchEvent(
+        new CustomEvent("admin-toast", {
+          detail: {
+            message: "Selecciona la clinica asociada",
+            type: "error",
+          },
+        })
+      );
+      return;
+    }
+
     if (action === "approved" && accessRole === "specialist" && !specialistId) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
@@ -245,7 +257,7 @@ function AccessRequestCard({
           }}
           className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
         >
-          <option value="">Sin clinica asignada</option>
+          <option value="">Seleccionar clinica</option>
           {clinics.map((clinic) => (
             <option key={clinic.id} value={clinic.id}>
               {clinic.name}

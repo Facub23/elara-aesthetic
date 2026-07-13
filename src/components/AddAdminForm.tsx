@@ -103,6 +103,32 @@ export default function AddAdminForm() {
       return;
     }
 
+    if (role !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+      window.dispatchEvent(
+        new CustomEvent("admin-toast", {
+          detail: {
+            message: "Selecciona la clinica asociada",
+            type: "error",
+          },
+        })
+      );
+
+      return;
+    }
+
+    if (role !== "super_admin" && accessRole === "specialist" && !specialistId) {
+      window.dispatchEvent(
+        new CustomEvent("admin-toast", {
+          detail: {
+            message: "Selecciona el especialista asociado",
+            type: "error",
+          },
+        })
+      );
+
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch(
@@ -250,7 +276,7 @@ export default function AddAdminForm() {
                 className="rounded-2xl border border-black/10 bg-white p-4 outline-none"
               >
                 <option value="">
-                  Sin clinica asignada
+                  Seleccionar clinica
                 </option>
 
                 {clinics.map((clinic) => (

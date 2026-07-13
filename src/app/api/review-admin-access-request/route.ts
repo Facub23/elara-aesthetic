@@ -95,6 +95,13 @@ export async function POST(req: Request) {
       );
     }
 
+    if (systemRole !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+      return NextResponse.json(
+        { success: false, error: "Selecciona la clinica asociada." },
+        { status: 400 }
+      );
+    }
+
     if (systemRole !== "super_admin" && accessRole === "specialist" && !specialistId) {
       return NextResponse.json(
         { success: false, error: "Selecciona el especialista asociado." },
