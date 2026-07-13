@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
 import { hasAdminPermission } from "@/lib/admin-access";
+import {
+  getAssignedClinicName,
+  getAssignedSpecialist,
+  isBookingInAdminScope,
+  scopedBookingsQuery,
+} from "@/lib/admin-scope";
 import { getBookingStatusKey } from "@/lib/booking-status";
 import { sendReviewRequest } from "@/lib/review-notifications";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -106,11 +112,69 @@ async function checkAdmin() {
   return { supabaseAuth, adminUser };
 }
 
+async function getReviewScope(adminUser: any) {
+  const adminScope = {
+    role: adminUser.role,
+    clinicId: adminUser.clinic_id,
+    specialistId: adminUser.specialist_id,
+    accessRole: adminUser.access_role,
+  };
+
+  const [clinicName, specialist] = await Promise.all([
+    getAssignedClinicName(adminScope),
+    getAssignedSpecialist(adminScope),
+  ]);
+
+  return {
+    adminScope,
+    clinicName,
+    specialistName: specialist?.name || null,
+  };
+}
+
+function scopedReviewsQuery<T extends { eq: (column: string, value: string) => T }>(
+  query: T,
+  clinicName: string | null,
+  specialistName?: string | null
+) {
+  if (specialistName) return query.eq("specialist_name", specialistName);
+  return clinicName ? query.eq("clinic_name", clinicName) : query;
+}
+
+async function isReviewInAdminScope(adminUser: any, review?: {
+  booking_id?: string | number | null;
+  clinic_name?: string | null;
+  specialist_name?: string | null;
+}) {
+  if (!review) return false;
+  if (adminUser.role === "super_admin") return true;
+
+  const { adminScope, clinicName, specialistName } =
+    await getReviewScope(adminUser);
+
+  if (review.booking_id) {
+    const { data: booking } = await supabase
+      .from("bookings")
+      .select("clinic_name,specialist_name")
+      .eq("id", review.booking_id)
+      .maybeSingle();
+
+    return Boolean(
+      booking && (await isBookingInAdminScope(adminScope, booking))
+    );
+  }
+
+  if (specialistName) return review.specialist_name === specialistName;
+  if (clinicName) return review.clinic_name === clinicName;
+
+  return false;
+}
+
 async function approveReview(formData: FormData) {
   "use server";
 
   const reviewId = formData.get("reviewId") as string;
-  await checkAdmin();
+  const { adminUser } = await checkAdmin();
   const { data: review } = await supabase
     .from("reviews")
     .select("booking_id,clinic_name,specialist_name,treatment")
@@ -124,7 +188,11 @@ async function approveReview(formData: FormData) {
         .maybeSingle()
     : { data: null };
 
-  if (!review || getBookingStatusKey(booking?.status) !== "completed") {
+  if (
+    !review ||
+    !(await isReviewInAdminScope(adminUser, review)) ||
+    getBookingStatusKey(booking?.status) !== "completed"
+  ) {
     redirect("/admin/reviews?moderation=unverified");
   }
 
@@ -145,12 +213,16 @@ async function rejectReview(formData: FormData) {
   "use server";
 
   const reviewId = formData.get("reviewId") as string;
-  await checkAdmin();
+  const { adminUser } = await checkAdmin();
   const { data: review } = await supabase
     .from("reviews")
-    .select("clinic_name,specialist_name,treatment")
+    .select("booking_id,clinic_name,specialist_name,treatment")
     .eq("id", reviewId)
     .maybeSingle();
+
+  if (!(await isReviewInAdminScope(adminUser, review || undefined))) {
+    redirect("/admin/reviews?moderation=unverified");
+  }
 
   const { error } = await supabase
     .from("reviews")
@@ -170,12 +242,16 @@ async function toggleFeaturedReview(formData: FormData) {
 
   const reviewId = formData.get("reviewId") as string;
   const featured = formData.get("featured") === "true";
-  await checkAdmin();
+  const { adminUser } = await checkAdmin();
   const { data: review } = await supabase
     .from("reviews")
-    .select("status,clinic_name,specialist_name,treatment")
+    .select("booking_id,status,clinic_name,specialist_name,treatment")
     .eq("id", reviewId)
     .maybeSingle();
+
+  if (!(await isReviewInAdminScope(adminUser, review || undefined))) {
+    redirect("/admin/reviews?moderation=unverified");
+  }
 
   if (!featured && review?.status !== "Aprobada") {
     redirect("/admin/reviews?status=Pendiente");
@@ -198,12 +274,16 @@ async function deleteReview(formData: FormData) {
   "use server";
 
   const reviewId = formData.get("reviewId") as string;
-  await checkAdmin();
+  const { adminUser } = await checkAdmin();
   const { data: review } = await supabase
     .from("reviews")
-    .select("clinic_name,specialist_name,treatment")
+    .select("booking_id,clinic_name,specialist_name,treatment")
     .eq("id", reviewId)
     .maybeSingle();
+
+  if (!(await isReviewInAdminScope(adminUser, review || undefined))) {
+    redirect("/admin/reviews?moderation=unverified");
+  }
 
   const { error } = await supabase.from("reviews").delete().eq("id", reviewId);
 
@@ -218,7 +298,7 @@ async function deleteReview(formData: FormData) {
 async function requestReviewEmail(formData: FormData) {
   "use server";
 
-  await checkAdmin();
+  const { adminUser } = await checkAdmin();
   const bookingId = String(formData.get("bookingId") || "");
   const { data: booking } = await supabase
     .from("bookings")
@@ -231,7 +311,17 @@ async function requestReviewEmail(formData: FormData) {
     .eq("booking_id", bookingId)
     .maybeSingle();
 
-  if (!booking || getBookingStatusKey(booking.status) !== "completed" || review) {
+  if (
+    !booking ||
+    !(await isBookingInAdminScope({
+      role: adminUser.role,
+      clinicId: adminUser.clinic_id,
+      specialistId: adminUser.specialist_id,
+      accessRole: adminUser.access_role,
+    }, booking)) ||
+    getBookingStatusKey(booking.status) !== "completed" ||
+    review
+  ) {
     redirect("/admin/reviews?request=invalid");
   }
 
@@ -263,10 +353,23 @@ export default async function AdminReviewsPage({
 }) {
   const { adminUser } = await checkAdmin();
   const isSuperAdmin = adminUser.role === "super_admin";
+  const { clinicName, specialistName } = await getReviewScope(adminUser);
   const params = await searchParams;
   const selectedStatus = params.status || "Todas";
   const search = (params.search || "").trim().toLowerCase();
   const featuredOnly = params.featured === "1";
+
+  let reviewsQuery = supabase
+    .from("reviews")
+    .select("*")
+    .order("created_at", { ascending: false });
+  let bookingsQuery = supabase
+    .from("bookings")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  reviewsQuery = scopedReviewsQuery(reviewsQuery, clinicName, specialistName);
+  bookingsQuery = scopedBookingsQuery(bookingsQuery, clinicName, specialistName);
 
   const [
     { data: reviews },
@@ -275,8 +378,8 @@ export default async function AdminReviewsPage({
     { data: specialists },
     { data: treatments },
   ] = await Promise.all([
-    supabase.from("reviews").select("*").order("created_at", { ascending: false }),
-    supabase.from("bookings").select("*").order("created_at", { ascending: false }),
+    reviewsQuery,
+    bookingsQuery,
     supabase.from("clinics").select("name,slug"),
     supabase.from("specialists").select("name,slug"),
     supabase.from("treatments").select("name,slug"),

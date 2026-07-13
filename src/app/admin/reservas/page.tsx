@@ -386,7 +386,15 @@ export default async function AdminReservasPage({
                 </p>
               </div>
             ) : (
-              <AdminLiveBookings initialBookings={sortedBookings} />
+              <AdminLiveBookings
+                initialBookings={sortedBookings}
+                scopeClinicName={
+                  !isSuperAdmin && !assignedSpecialist?.name
+                    ? assignedClinic?.name || null
+                    : null
+                }
+                scopeSpecialistName={assignedSpecialist?.name || null}
+              />
             )}
           </div>
         </div>

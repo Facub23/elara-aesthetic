@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { showAdminToast } from "@/components/AdminToast";
 import { getTreatmentName } from "@/lib/treatment-utils";
+
+type SlotAvailability = {
+  availableSlots: string[];
+  blocked: boolean;
+  reason?: string;
+  error?: string;
+};
 
 export default function CreateManualBookingButton({
   clinics,
@@ -16,6 +23,9 @@ export default function CreateManualBookingButton({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [slots, setSlots] = useState<string[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotReason, setSlotReason] = useState("");
 
   const [form, setForm] = useState({
     clinic_name: "",
@@ -31,7 +41,7 @@ export default function CreateManualBookingButton({
     ? specialists.filter(
         (specialist) =>
           form.clinic_name === "__independent__"
-            ? !specialist.clinic_name
+            ? !specialist.clinic_id && !specialist.clinic_name
             : specialist.clinic_name === form.clinic_name
       )
     : specialists;
@@ -47,8 +57,78 @@ export default function CreateManualBookingButton({
         }))
       : treatments;
 
+  useEffect(() => {
+    if (
+      !open ||
+      !form.specialist_name ||
+      !form.booking_date ||
+      !form.treatment
+    ) {
+      setSlots([]);
+      setSlotReason("");
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadSlots() {
+      setSlotsLoading(true);
+      setSlotReason("");
+
+      const params = new URLSearchParams({
+        specialist: form.specialist_name,
+        date: form.booking_date,
+        treatment: form.treatment,
+      });
+
+      try {
+        const res = await fetch(`/api/booked-slots?${params}`, {
+          signal: controller.signal,
+        });
+        const data = (await res.json()) as SlotAvailability;
+
+        if (!res.ok || data.error) {
+          setSlots([]);
+          setSlotReason(data.error || "No se pudo cargar la disponibilidad");
+          return;
+        }
+
+        const nextSlots = data.availableSlots || [];
+        setSlots(nextSlots);
+        setSlotReason(data.reason || "");
+
+        setForm((current) =>
+          current.booking_time && !nextSlots.includes(current.booking_time)
+            ? { ...current, booking_time: "" }
+            : current
+        );
+      } catch (error: unknown) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+
+        setSlots([]);
+        setSlotReason("No se pudo cargar la disponibilidad");
+      } finally {
+        setSlotsLoading(false);
+      }
+    }
+
+    loadSlots();
+
+    return () => controller.abort();
+  }, [form.booking_date, form.specialist_name, form.treatment, open]);
+
   async function createBooking(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!slots.includes(form.booking_time)) {
+      showAdminToast(
+        slotReason || "Selecciona un hueco disponible para este especialista",
+        "error"
+      );
+      return;
+    }
 
     setLoading(true);
 
@@ -117,7 +197,12 @@ export default function CreateManualBookingButton({
                   <button
                     form="manual-booking-form"
                     type="submit"
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      slotsLoading ||
+                      !form.booking_time ||
+                      !slots.includes(form.booking_time)
+                    }
                     className="rounded-full bg-black px-7 py-3 text-sm text-white disabled:opacity-50"
                   >
                     {loading ? "Creando..." : "Crear reserva"}
@@ -142,6 +227,7 @@ export default function CreateManualBookingButton({
 
                 <div className="mt-10 grid gap-5">
                   <input
+                    required
                     placeholder="Nombre del paciente"
                     value={form.full_name}
                     onChange={(e) =>
@@ -166,6 +252,7 @@ export default function CreateManualBookingButton({
                   />
 
                   <select
+                    required
                     value={form.clinic_name}
                     onChange={(e) =>
                       setForm({
@@ -173,6 +260,7 @@ export default function CreateManualBookingButton({
                         clinic_name: e.target.value,
                         specialist_name: "",
                         treatment: "",
+                        booking_time: "",
                       })
                     }
                     className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
@@ -188,12 +276,14 @@ export default function CreateManualBookingButton({
                   </select>
 
                   <select
+                    required
                     value={form.specialist_name}
                     onChange={(e) =>
                       setForm({
                         ...form,
                         specialist_name: e.target.value,
                         treatment: "",
+                        booking_time: "",
                       })
                     }
                     className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
@@ -208,11 +298,13 @@ export default function CreateManualBookingButton({
                   </select>
 
                   <select
+                    required
                     value={form.treatment}
                     onChange={(e) =>
                       setForm({
                         ...form,
                         treatment: e.target.value,
+                        booking_time: "",
                       })
                     }
                     className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
@@ -228,18 +320,21 @@ export default function CreateManualBookingButton({
 
                   <div className="grid gap-5 md:grid-cols-2">
                     <input
+                      required
                       type="date"
                       value={form.booking_date}
                       onChange={(e) =>
                         setForm({
                           ...form,
                           booking_date: e.target.value,
+                          booking_time: "",
                         })
                       }
                       className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                     />
 
                     <select
+                      required
                       value={form.booking_time}
                       onChange={(e) =>
                         setForm({
@@ -247,21 +342,43 @@ export default function CreateManualBookingButton({
                           booking_time: e.target.value,
                         })
                       }
+                      disabled={
+                        slotsLoading ||
+                        !form.specialist_name ||
+                        !form.booking_date ||
+                        !form.treatment
+                      }
                       className="h-14 rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
                     >
-                      <option value="">Hora</option>
-                      <option value="08:00">08:00</option>
-                      <option value="09:00">09:00</option>
-                      <option value="10:00">10:00</option>
-                      <option value="11:00">11:00</option>
-                      <option value="12:00">12:00</option>
-                      <option value="13:00">13:00</option>
-                      <option value="14:00">14:00</option>
-                      <option value="15:00">15:00</option>
-                      <option value="16:00">16:00</option>
-                      <option value="17:00">17:00</option>
+                      <option value="">
+                        {slotsLoading
+                          ? "Consultando huecos..."
+                          : "Hora disponible"}
+                      </option>
+                      {slots.map((slot) => (
+                        <option key={slot} value={slot}>
+                          {slot}
+                        </option>
+                      ))}
                     </select>
                   </div>
+
+                  {form.booking_date ? (
+                    <div
+                      className={`rounded-2xl p-4 text-sm ${
+                        slots.length > 0
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {slotsLoading
+                        ? "Consultando disponibilidad real..."
+                        : slots.length > 0
+                          ? `${slots.length} huecos disponibles para ese dia.`
+                          : slotReason ||
+                            "No hay huecos disponibles para ese dia."}
+                    </div>
+                  ) : null}
                 </div>
               </div>
 

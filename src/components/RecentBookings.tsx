@@ -7,21 +7,38 @@ import { getBookingStatusClass } from "@/lib/booking-status";
 type Booking = {
   id: number;
   full_name: string;
+  clinic_name?: string | null;
   treatment: string;
-  specialist_name: string;
+  specialist_name?: string | null;
   status: string;
   booking_date: string;
 };
 
 export default function RecentBookings({
   initialBookings,
+  scopeClinicName,
+  scopeSpecialistName,
 }: {
   initialBookings: Booking[];
+  scopeClinicName?: string | null;
+  scopeSpecialistName?: string | null;
 }) {
   const [bookings, setBookings] =
     useState(initialBookings);
 
   useEffect(() => {
+    function isBookingInScope(booking: Booking) {
+      if (scopeSpecialistName) {
+        return booking.specialist_name === scopeSpecialistName;
+      }
+
+      if (scopeClinicName) {
+        return booking.clinic_name === scopeClinicName;
+      }
+
+      return true;
+    }
+
     const channel = supabase
       .channel("recent-bookings")
       .on(
@@ -32,8 +49,12 @@ export default function RecentBookings({
           table: "bookings",
         },
         (payload) => {
+          const booking = payload.new as Booking;
+
+          if (!isBookingInScope(booking)) return;
+
           setBookings((prev) => [
-            payload.new as Booking,
+            booking,
             ...prev,
           ]);
         }
@@ -43,7 +64,7 @@ export default function RecentBookings({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [scopeClinicName, scopeSpecialistName]);
 
   return (
     <div className="rounded-[40px] border border-white/40 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">

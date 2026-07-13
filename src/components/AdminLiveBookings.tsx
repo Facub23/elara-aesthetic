@@ -206,8 +206,12 @@ function getGoogleSyncBadge(booking: Booking) {
 
 export default function AdminLiveBookings({
   initialBookings,
+  scopeClinicName,
+  scopeSpecialistName,
 }: {
   initialBookings: Booking[];
+  scopeClinicName?: string | null;
+  scopeSpecialistName?: string | null;
 }) {
   const [bookings, setBookings] = useState<Booking[]>(initialBookings);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -444,6 +448,18 @@ export default function AdminLiveBookings({
   }, [newDate, newTime, reprogrammingBooking]);
 
   useEffect(() => {
+    function isBookingInScope(booking: Booking) {
+      if (scopeSpecialistName) {
+        return booking.specialist_name === scopeSpecialistName;
+      }
+
+      if (scopeClinicName) {
+        return booking.clinic_name === scopeClinicName;
+      }
+
+      return true;
+    }
+
     const channel = supabaseBrowser
       .channel("admin-live-bookings")
       .on(
@@ -455,6 +471,8 @@ export default function AdminLiveBookings({
         },
         (payload) => {
           const newBooking = payload.new as Booking;
+
+          if (!isBookingInScope(newBooking)) return;
 
           setBookings((prev) => {
             const exists = prev.some(
@@ -484,15 +502,20 @@ export default function AdminLiveBookings({
           const updatedBooking = payload.new as Booking;
 
           setBookings((prev) =>
-            prev.map((booking) =>
-              String(booking.id) === String(updatedBooking.id)
-                ? {
-                    ...booking,
-                    ...updatedBooking,
-                    id: String(updatedBooking.id),
-                  }
-                : booking
-            )
+            isBookingInScope(updatedBooking)
+              ? prev.map((booking) =>
+                  String(booking.id) === String(updatedBooking.id)
+                    ? {
+                        ...booking,
+                        ...updatedBooking,
+                        id: String(updatedBooking.id),
+                      }
+                    : booking
+                )
+              : prev.filter(
+                  (booking) =>
+                    String(booking.id) !== String(updatedBooking.id)
+                )
           );
         }
       )
@@ -518,7 +541,7 @@ export default function AdminLiveBookings({
     return () => {
       supabaseBrowser.removeChannel(channel);
     };
-  }, []);
+  }, [scopeClinicName, scopeSpecialistName]);
 
   return (
     <>

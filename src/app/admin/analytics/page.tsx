@@ -268,6 +268,8 @@ export default async function AdminAnalyticsPage() {
 <div className="mt-10">
   <RecentBookings
     initialBookings={bookings || []}
+    scopeClinicName={assignedClinicName}
+    scopeSpecialistName={assignedSpecialist?.name || null}
   />
 </div>
       </div>
