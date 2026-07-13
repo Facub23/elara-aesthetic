@@ -337,7 +337,7 @@ export default function AdminLiveBookings({
       },
       body: JSON.stringify({
         booking_id: reprogrammingBooking.id,
-        booking_date: formattedDate,
+        booking_date: newDate,
         booking_time: newTime,
         status: "Reprogramada",
       }),
@@ -358,7 +358,7 @@ export default function AdminLiveBookings({
           ? {
               ...booking,
               ...(data.booking || {}),
-              booking_date: formattedDate,
+              booking_date: data.booking?.booking_date || formattedDate,
               booking_time: newTime,
               status: "Reprogramada",
               rescheduled_at: new Date().toISOString(),

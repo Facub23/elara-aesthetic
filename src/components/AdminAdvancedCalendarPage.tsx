@@ -4,7 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { supabaseBrowser as supabase } from "@/lib/supabase/client";
-import { normalizeBookingStatus } from "@/lib/booking-status";
+import {
+  adminBookingStatusOptions,
+  normalizeBookingStatus,
+} from "@/lib/booking-status";
 import AdminShell from "@/components/AdminShell";
 import BookingTimeline from "@/components/BookingTimeline";
 
@@ -530,6 +533,21 @@ export default function AdminAdvancedCalendarPage({
     treatment: "",
   });
 
+  const [
+    manualBookingSlots,
+    setManualBookingSlots,
+  ] = useState<string[]>([]);
+
+  const [
+    manualBookingSlotReason,
+    setManualBookingSlotReason,
+  ] = useState("");
+
+  const [
+    manualBookingSlotsLoading,
+    setManualBookingSlotsLoading,
+  ] = useState(false);
+
   const [feedback, setFeedback] =
     useState<Feedback>(null);
 
@@ -677,7 +695,7 @@ export default function AdminAdvancedCalendarPage({
 
     if (specialist) {
       setSelectedSpecialist(specialist.name);
-      setSelectedClinic(specialist.clinic_name || "");
+      setSelectedClinic(specialist.clinic_name || "__independent__");
     }
   }, [
     specialistFromUrl,
@@ -786,6 +804,14 @@ export default function AdminAdvancedCalendarPage({
         return specialists;
       }
 
+      if (selectedClinic === "__independent__") {
+        return specialists.filter(
+          (specialist) =>
+            !specialist.clinic_id &&
+            !specialist.clinic_name
+        );
+      }
+
       return specialists.filter(
         (specialist) =>
           specialist.clinic_name ===
@@ -802,11 +828,23 @@ export default function AdminAdvancedCalendarPage({
     [selectedSpecialist, specialists]
   );
 
-  useEffect(() => {
-    if (!isSpecialistAccess || !selectedSpecialistProfile?.clinic_name) return;
+  const hasIndependentSpecialists = useMemo(
+    () =>
+      specialists.some(
+        (specialist) =>
+          !specialist.clinic_id &&
+          !specialist.clinic_name
+      ),
+    [specialists]
+  );
 
-    setSelectedClinic(selectedSpecialistProfile.clinic_name);
-  }, [isSpecialistAccess, selectedSpecialistProfile?.clinic_name]);
+  useEffect(() => {
+    if (!isSpecialistAccess || !selectedSpecialistProfile) return;
+
+    setSelectedClinic(
+      selectedSpecialistProfile.clinic_name || "__independent__"
+    );
+  }, [isSpecialistAccess, selectedSpecialistProfile]);
 
   useEffect(() => {
     async function loadGoogleCalendarStatus() {
@@ -1000,8 +1038,8 @@ export default function AdminAdvancedCalendarPage({
       (item) => item.name === name
     );
 
-    if (specialist?.clinic_name) {
-      setSelectedClinic(specialist.clinic_name);
+    if (specialist) {
+      setSelectedClinic(specialist.clinic_name || "__independent__");
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -1694,6 +1732,85 @@ export default function AdminAdvancedCalendarPage({
     selectedSpecialist,
   ]);
 
+  useEffect(() => {
+    if (
+      !manualBookingOpen ||
+      !manualBookingForm.specialist_name ||
+      !manualBookingForm.booking_date ||
+      !manualBookingForm.treatment
+    ) {
+      setManualBookingSlots([]);
+      setManualBookingSlotReason("");
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadManualBookingSlots() {
+      setManualBookingSlotsLoading(true);
+      setManualBookingSlotReason("");
+
+      const params = new URLSearchParams({
+        specialist: manualBookingForm.specialist_name,
+        date: manualBookingForm.booking_date,
+        treatment: manualBookingForm.treatment,
+      });
+
+      try {
+        const res = await fetch(`/api/booked-slots?${params}`, {
+          signal: controller.signal,
+        });
+        const data = (await res.json()) as SlotAvailability;
+
+        if (!res.ok || data.error) {
+          setManualBookingSlots([]);
+          setManualBookingSlotReason(
+            data.error || "No se pudo cargar la disponibilidad"
+          );
+          return;
+        }
+
+        const slots = data.availableSlots || [];
+
+        setManualBookingSlots(slots);
+        setManualBookingSlotReason(data.reason || "");
+
+        setManualBookingForm((current) =>
+          current.booking_time &&
+          !slots.includes(current.booking_time)
+            ? {
+                ...current,
+                booking_time: "",
+              }
+            : current
+        );
+      } catch (error: unknown) {
+        if (
+          error instanceof DOMException &&
+          error.name === "AbortError"
+        ) {
+          return;
+        }
+
+        setManualBookingSlots([]);
+        setManualBookingSlotReason(
+          "No se pudo cargar la disponibilidad"
+        );
+      } finally {
+        setManualBookingSlotsLoading(false);
+      }
+    }
+
+    loadManualBookingSlots();
+
+    return () => controller.abort();
+  }, [
+    manualBookingForm.booking_date,
+    manualBookingForm.specialist_name,
+    manualBookingForm.treatment,
+    manualBookingOpen,
+  ]);
+
   async function handleUpdateBooking() {
     if (!selectedBooking) return;
 
@@ -1853,6 +1970,7 @@ export default function AdminAdvancedCalendarPage({
       clinic_name:
         selectedClinic ||
         specialist?.clinic_name ||
+        (specialist ? "__independent__" : "") ||
         "",
       specialist_name:
         selectedSpecialist,
@@ -1872,6 +1990,19 @@ export default function AdminAdvancedCalendarPage({
     event: React.FormEvent
   ) {
     event.preventDefault();
+
+    if (
+      !manualBookingSlots.includes(
+        manualBookingForm.booking_time
+      )
+    ) {
+      showFeedback(
+        "error",
+        manualBookingSlotReason ||
+          "Selecciona un hueco disponible para este especialista"
+      );
+      return;
+    }
 
     setManualBookingLoading(true);
 
@@ -2024,7 +2155,7 @@ export default function AdminAdvancedCalendarPage({
           className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none disabled:bg-neutral-100 disabled:text-neutral-500"
         >
           <option value="">
-            Seleccionar clínica
+            Seleccionar lugar
           </option>
 
           {clinics.map((clinic) => (
@@ -2035,6 +2166,12 @@ export default function AdminAdvancedCalendarPage({
               {clinic.name}
             </option>
           ))}
+
+          {hasIndependentSpecialists && isSuperAdmin && (
+            <option value="__independent__">
+              Consulta independiente
+            </option>
+          )}
         </select>
 
         <select
@@ -2082,7 +2219,7 @@ export default function AdminAdvancedCalendarPage({
 
               <p className="mt-2 text-sm text-neutral-500">
                 {selectedSpecialistProfile?.clinic_name ||
-                  "Clinica sin asignar"}
+                  "Consulta independiente"}
               </p>
             </div>
 
@@ -3993,12 +4130,13 @@ export default function AdminAdvancedCalendarPage({
                       clinic_name:
                         event.target.value,
                       specialist_name: "",
+                      booking_time: "",
                     })
                   }
                   className="h-14 rounded-2xl border border-black/10 bg-white px-4 outline-none"
                 >
                   <option value="">
-                    Seleccionar clínica
+                    Seleccionar lugar
                   </option>
 
                   {clinics.map((clinic) => (
@@ -4009,6 +4147,12 @@ export default function AdminAdvancedCalendarPage({
                       {clinic.name}
                     </option>
                   ))}
+
+                  {hasIndependentSpecialists && isSuperAdmin && (
+                    <option value="__independent__">
+                      Consulta independiente
+                    </option>
+                  )}
                 </select>
 
                 <select
@@ -4021,6 +4165,7 @@ export default function AdminAdvancedCalendarPage({
                       ...manualBookingForm,
                       specialist_name:
                         event.target.value,
+                      booking_time: "",
                     })
                   }
                   className="h-14 rounded-2xl border border-black/10 bg-white px-4 outline-none"
@@ -4033,6 +4178,10 @@ export default function AdminAdvancedCalendarPage({
                     .filter(
                       (specialist) =>
                         !manualBookingForm.clinic_name ||
+                        (manualBookingForm.clinic_name ===
+                          "__independent__" &&
+                          !specialist.clinic_id &&
+                          !specialist.clinic_name) ||
                         specialist.clinic_name ===
                           manualBookingForm.clinic_name
                     )
@@ -4053,8 +4202,9 @@ export default function AdminAdvancedCalendarPage({
                 onChange={(event) =>
                   setManualBookingForm({
                     ...manualBookingForm,
-                    treatment:
-                      event.target.value,
+                      treatment:
+                        event.target.value,
+                      booking_time: "",
                   })
                 }
                 className="h-14 rounded-2xl border border-black/10 bg-white px-4 outline-none"
@@ -4083,14 +4233,14 @@ export default function AdminAdvancedCalendarPage({
                       ...manualBookingForm,
                       booking_date:
                         event.target.value,
+                      booking_time: "",
                     })
                   }
                   className="h-14 rounded-2xl border border-black/10 px-4 outline-none"
                 />
 
-                <input
+                <select
                   required
-                  type="time"
                   value={manualBookingForm.booking_time}
                   onChange={(event) =>
                     setManualBookingForm({
@@ -4099,12 +4249,47 @@ export default function AdminAdvancedCalendarPage({
                         event.target.value,
                     })
                   }
-                  className="h-14 rounded-2xl border border-black/10 px-4 outline-none"
-                />
+                  disabled={
+                    manualBookingSlotsLoading ||
+                    !manualBookingForm.specialist_name ||
+                    !manualBookingForm.booking_date ||
+                    !manualBookingForm.treatment
+                  }
+                  className="h-14 rounded-2xl border border-black/10 bg-white px-4 outline-none disabled:bg-neutral-100 disabled:text-neutral-500"
+                >
+                  <option value="">
+                    {manualBookingSlotsLoading
+                      ? "Consultando huecos..."
+                      : "Seleccionar hora disponible"}
+                  </option>
+
+                  {manualBookingSlots.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
+                  ))}
+                </select>
               </div>
 
+              {manualBookingForm.booking_date ? (
+                <div
+                  className={`rounded-2xl p-4 text-sm ${
+                    manualBookingSlots.length > 0
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "bg-amber-50 text-amber-700"
+                  }`}
+                >
+                  {manualBookingSlotsLoading
+                    ? "Consultando disponibilidad real..."
+                    : manualBookingSlots.length > 0
+                      ? `${manualBookingSlots.length} huecos disponibles para ese dia.`
+                      : manualBookingSlotReason ||
+                        "No hay huecos disponibles para ese dia."}
+                </div>
+              ) : null}
+
               <div className="rounded-2xl bg-[#F6F3EE] p-5 text-sm text-neutral-600">
-                Se creará como reserva confirmada. La franja seleccionada ya fue marcada como disponible en la agenda.
+                Se creara como reserva confirmada solo si el hueco sigue disponible en la agenda real.
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -4120,7 +4305,14 @@ export default function AdminAdvancedCalendarPage({
 
                 <button
                   type="submit"
-                  disabled={manualBookingLoading}
+                  disabled={
+                    manualBookingLoading ||
+                    manualBookingSlotsLoading ||
+                    !manualBookingForm.booking_time ||
+                    !manualBookingSlots.includes(
+                      manualBookingForm.booking_time
+                    )
+                  }
                   className="h-14 rounded-2xl bg-black text-white disabled:opacity-50"
                 >
                   {manualBookingLoading
@@ -4231,21 +4423,11 @@ export default function AdminAdvancedCalendarPage({
                 }
                 className="h-14 rounded-2xl border border-black/10 bg-white px-4 outline-none"
               >
-                <option value="Pendiente">
-                  Pendiente
-                </option>
-
-                <option value="Confirmada">
-                  Confirmada
-                </option>
-
-                <option value="Cancelada">
-                  Cancelada
-                </option>
-
-                <option value="Reprogramada">
-                  Reprogramada
-                </option>
+                {adminBookingStatusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
 
               <div className="grid grid-cols-2 gap-3">

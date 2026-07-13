@@ -129,10 +129,11 @@ export async function POST(req: Request) {
 
     const nextBooking = currentBooking as Booking;
     const nextDate =
-      booking_date ||
-      normalizeBookingDate(
-        nextBooking.booking_date || ""
-      );
+      booking_date
+        ? normalizeBookingDate(String(booking_date))
+        : normalizeBookingDate(
+            nextBooking.booking_date || ""
+          );
     const nextTime =
       booking_time || getBookingTime(nextBooking);
     const nextStatus =

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getAvailableBookingSlots } from "@/lib/booking-availability";
+import {
+  getAvailableBookingSlots,
+  getTreatmentDuration,
+} from "@/lib/booking-availability";
 
 export async function GET(req: Request) {
   try {
@@ -9,6 +12,7 @@ export async function GET(req: Request) {
     const specialist = searchParams.get("specialist");
     const date = searchParams.get("date");
     const bookingId = searchParams.get("bookingId");
+    const treatment = searchParams.get("treatment");
     const duration = Number(
       searchParams.get("duration") || 60
     );
@@ -25,7 +29,9 @@ export async function GET(req: Request) {
     const availability = await getAvailableBookingSlots({
       specialistName: specialist,
       bookingDate: date,
-      durationMinutes: duration,
+      durationMinutes: treatment
+        ? await getTreatmentDuration(treatment)
+        : duration,
       bookingId,
     });
 
