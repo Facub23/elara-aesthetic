@@ -218,6 +218,7 @@ export default async function SpecialistsPage({
     q?: string;
     price?: string;
     availability?: string;
+    practice?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -227,6 +228,7 @@ export default async function SpecialistsPage({
   const search = params.q || "";
   const selectedPrice = params.price || "Todos";
   const selectedAvailability = params.availability || "Todos";
+  const selectedPractice = params.practice || "Todos";
 
   const [
     { data: specialists },
@@ -289,6 +291,7 @@ export default async function SpecialistsPage({
       };
     })
     .filter(({ specialist, clinic, clinicCity, availability }) => {
+      const isIndependent = !clinic?.name && !specialist.clinic_name;
       const sameClinic =
         !selectedClinic ||
         (selectedClinic.id &&
@@ -309,6 +312,10 @@ export default async function SpecialistsPage({
         selectedAvailability === "Todos" ||
         (selectedAvailability === "Con horario" && activeAvailability) ||
         (selectedAvailability === "Sin horario" && !activeAvailability);
+      const samePractice =
+        selectedPractice === "Todos" ||
+        (selectedPractice === "Clinica" && !isIndependent) ||
+        (selectedPractice === "Consulta independiente" && isIndependent);
       const searchValue = normalize(search);
       const sameSearch =
         !searchValue ||
@@ -324,6 +331,7 @@ export default async function SpecialistsPage({
         sameCity &&
         samePrice &&
         sameAvailability &&
+        samePractice &&
         sameSearch
       );
     });
@@ -484,7 +492,7 @@ export default async function SpecialistsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/especialistas"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.9fr_0.8fr_auto]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -539,6 +547,16 @@ export default async function SpecialistsPage({
               <option value="Todos">Toda disponibilidad</option>
               <option value="Con horario">Con horario</option>
               <option value="Sin horario">Sin horario</option>
+            </select>
+
+            <select
+              name="practice"
+              defaultValue={selectedPractice}
+              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+            >
+              <option value="Todos">Clinica o consulta</option>
+              <option value="Clinica">Solo clinicas</option>
+              <option value="Consulta independiente">Consultas independientes</option>
             </select>
 
             <button
@@ -597,6 +615,7 @@ export default async function SpecialistsPage({
               selectedCity !== "Todas" ||
               selectedPrice !== "Todos" ||
               selectedAvailability !== "Todos" ||
+              selectedPractice !== "Todos" ||
               search ||
               clinicSlug) && (
               <Link

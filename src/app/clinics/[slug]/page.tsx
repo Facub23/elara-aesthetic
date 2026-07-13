@@ -41,11 +41,7 @@ async function getClinicPageData(slug: string) {
   }
 
   const [{ data: specialists }, { data: reviews }] = await Promise.all([
-    supabase
-      .from("specialists")
-      .select("*")
-      .eq("clinic_name", clinic.name)
-      .order("name", { ascending: true }),
+    supabase.from("specialists").select("*").order("name", { ascending: true }),
     supabase
       .from("reviews")
       .select("*")
@@ -58,7 +54,19 @@ async function getClinicPageData(slug: string) {
 
   return {
     clinic,
-    specialists: filterPublicRecords(specialists || []),
+    specialists: filterPublicRecords(specialists || []).filter((specialist: any) => {
+      const sameId =
+        clinic.id &&
+        specialist.clinic_id &&
+        String(clinic.id) === String(specialist.clinic_id);
+      const sameName =
+        clinic.name &&
+        specialist.clinic_name &&
+        String(clinic.name).toLowerCase() ===
+          String(specialist.clinic_name).toLowerCase();
+
+      return sameId || sameName;
+    }),
     reviews: filterPublicRecords(reviews || []),
   };
 }

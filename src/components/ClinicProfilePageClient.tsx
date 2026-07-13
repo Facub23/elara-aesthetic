@@ -143,6 +143,17 @@ export default function ClinicProfilePageClient({
       text: "Reviews, rating y datos de clinica quedan juntos antes de reservar.",
     },
   ];
+  const marketplaceRows = [
+    ["Tratamientos disponibles", clinicTreatments.length],
+    ["Equipo conectado", specialists.length],
+    ["Precio desde", lowestTreatmentPrice || "A consultar"],
+    ["Ubicacion", clinicLocation || "A confirmar"],
+  ];
+  const trustChecklist = [
+    "Tratamientos vinculados a especialistas reales de la clinica.",
+    "Perfil de cada profesional antes de abrir la reserva.",
+    "Reviews verificadas cuando existen reservas completadas.",
+  ];
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#F6F3EE] text-black">
@@ -195,14 +206,14 @@ export default function ClinicProfilePageClient({
                 onClick={() => setBookingOpen(true)}
                 className="w-full rounded-full bg-black px-8 py-5 text-white transition-all duration-300 hover:scale-[1.03] sm:w-auto sm:px-10"
               >
-                Reservar consulta
+                Reservar con un especialista
               </button>
 
               <Link
                 href={`/tratamientos?clinic=${clinic.slug}`}
                 className="w-full rounded-full border border-black/5 bg-white/70 px-8 py-5 text-center backdrop-blur-xl transition-all duration-300 hover:bg-black hover:text-white sm:w-auto sm:px-10"
               >
-                Comparar tratamientos
+                Ver tratamientos de la clinica
               </Link>
 
               {clinic.whatsapp && (
@@ -288,6 +299,49 @@ export default function ClinicProfilePageClient({
               <p className="mt-3 text-sm leading-6 text-neutral-600">{item.text}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="mt-8 px-6">
+        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+          <div className="rounded-lg bg-black p-7 text-white">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Comparador de clinica
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+              Decide si {clinic.name} encaja por equipo, tratamientos y contexto.
+            </h2>
+            <div className="mt-6 grid gap-3">
+              {trustChecklist.map((item, index) => (
+                <div key={item} className="flex gap-3 rounded-md bg-white/10 p-4 text-sm leading-6">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs text-black">
+                    {index + 1}
+                  </span>
+                  <span className="text-white/75">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] sm:grid-cols-2">
+            {marketplaceRows.map(([label, value]) => (
+              <div key={label} className="rounded-md bg-[#F8F6F2] p-5">
+                <div className="text-lg font-semibold">{value}</div>
+                <div className="mt-2 text-xs uppercase tracking-[0.18em] text-neutral-500">
+                  {label}
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-md border border-black/10 bg-white p-5 sm:col-span-2">
+              <p className="text-sm font-semibold">Camino recomendado</p>
+              <p className="mt-2 text-sm leading-6 text-neutral-600">
+                Empieza por el tratamiento que buscas, revisa los especialistas
+                disponibles dentro de la clinica y entra a la agenda del perfil
+                que mejor encaje.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -401,7 +455,7 @@ export default function ClinicProfilePageClient({
                           )}`}
                           className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                         >
-                          Reservar primera cita
+                          Ver agenda sugerida
                         </Link>
                       )}
                     </div>
@@ -497,7 +551,7 @@ export default function ClinicProfilePageClient({
                             }`}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Reservar consulta
+                            Ver agenda
                           </Link>
                         )}
 
