@@ -93,6 +93,10 @@ export default async function AdminPacientesPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+    redirect("/admin/sin-permiso");
+  }
+
   if (!hasAdminPermission({
     role: adminUser.role,
     accessRole: adminUser.access_role,

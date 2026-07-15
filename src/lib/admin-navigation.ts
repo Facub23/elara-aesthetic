@@ -123,7 +123,7 @@ export function getAdminNavItems(context: AdminNavContext) {
     {
       name: "Notificaciones",
       href: "/admin/notificaciones",
-      visible: isSuperAdmin || can("bookings"),
+      visible: !isSpecialistAccess && (isSuperAdmin || can("bookings")),
     },
     {
       name: "Configuracion",
