@@ -118,7 +118,7 @@ function getWeekday(date: string) {
   return new Date(`${date}T00:00:00`).getDay();
 }
 
-function getTodayDate() {
+export function getTodayDate() {
   return new Intl.DateTimeFormat("sv-SE", {
     timeZone: "Europe/Madrid",
   }).format(new Date());

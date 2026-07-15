@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   getAvailableBookingSlots,
+  getTodayDate,
   getTreatmentDuration,
 } from "@/lib/booking-availability";
 import { patientReschedulableStatuses } from "@/lib/booking-lifecycle";
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Datos no validos" }, { status: 400 });
     }
 
-    if (date < new Date().toISOString().slice(0, 10)) {
+    if (date < getTodayDate()) {
       return NextResponse.json({ error: "Selecciona una fecha futura" }, { status: 400 });
     }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   getBookingTime,
+  getTodayDate,
   getTreatmentDuration,
   normalizeBookingDate,
   validateBookingSlot,
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Datos no validos" }, { status: 400 });
     }
 
-    if (date < new Date().toISOString().slice(0, 10)) {
+    if (date < getTodayDate()) {
       return NextResponse.json({ error: "Selecciona una fecha futura" }, { status: 400 });
     }
 
