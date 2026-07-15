@@ -7,6 +7,7 @@ import { filterPublicRecords, isPublicPlaceholderRecord } from "@/lib/public-rec
 import { supabase } from "@/lib/supabase";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
+  getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -18,6 +19,8 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
       description?: string | null;
       category?: string | null;
     };
@@ -85,6 +88,10 @@ function getTreatmentPrice(treatment?: TreatmentOption | TreatmentRecord | null)
   return getTreatmentPriceValue(treatment) || undefined;
 }
 
+function getSpecialistTreatmentDuration(treatment?: TreatmentOption | null) {
+  return getTreatmentDurationValue(treatment) || undefined;
+}
+
 function formatPrice(value?: number) {
   if (!value) {
     return null;
@@ -95,6 +102,10 @@ function formatPrice(value?: number) {
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatDuration(value?: number | null) {
+  return value ? `${value} min` : "Duracion a confirmar";
 }
 
 function getClinicLocation(clinic: ClinicRow) {
@@ -460,6 +471,14 @@ export default async function TreatmentPage({
     new Set([heroImage, ...landingContent.gallery])
   ).slice(0, 3);
   const featuredSpecialists = allSpecialists.slice(0, 3);
+  const sortedSpecialists = [...allSpecialists].sort((a, b) => {
+    const aTreatment = findSpecialistTreatment(a, slug);
+    const bTreatment = findSpecialistTreatment(b, slug);
+    const aPrice = getTreatmentPrice(aTreatment) || Number.MAX_SAFE_INTEGER;
+    const bPrice = getTreatmentPrice(bTreatment) || Number.MAX_SAFE_INTEGER;
+
+    return aPrice - bPrice;
+  });
   const featuredClinics = clinicsForTreatment.slice(0, 3);
   const publicApprovedReviews = filterPublicRecords(approvedReviews || []);
   const treatmentReviews = publicApprovedReviews.filter(
@@ -1037,9 +1056,12 @@ export default async function TreatmentPage({
           </div>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {allSpecialists.map((specialist) => {
+            {sortedSpecialists.map((specialist) => {
               const specialistTreatment = findSpecialistTreatment(specialist, slug);
               const price = formatPrice(getTreatmentPrice(specialistTreatment) || priceFrom);
+              const durationLabel = formatDuration(
+                getSpecialistTreatmentDuration(specialistTreatment) || duration
+              );
               const clinic =
                 (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
                 clinicsByName.get(normalize(specialist.clinic_name));
@@ -1070,7 +1092,7 @@ export default async function TreatmentPage({
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="mt-5 grid grid-cols-3 gap-3">
                     <div className="rounded-md bg-[#F8F6F2] p-3">
                       <div className="text-lg font-semibold">
                         {reviewSummary?.rating || "-"}
@@ -1085,6 +1107,12 @@ export default async function TreatmentPage({
                       </div>
                       <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
                         Reviews
+                      </div>
+                    </div>
+                    <div className="rounded-md bg-[#F8F6F2] p-3">
+                      <div className="text-lg font-semibold">{durationLabel}</div>
+                      <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+                        Duracion
                       </div>
                     </div>
                   </div>
@@ -1107,11 +1135,20 @@ export default async function TreatmentPage({
                     </div>
                   </div>
 
-                  {price && (
-                    <div className="mt-4 text-sm text-neutral-500">
-                      Desde <span className="font-semibold text-black">{price}</span>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-md border border-black/10 bg-white p-3 text-neutral-500">
+                      Desde
+                      <div className="mt-1 font-semibold text-black">
+                        {price || "A consultar"}
+                      </div>
                     </div>
-                  )}
+                    <div className="rounded-md border border-black/10 bg-white p-3 text-neutral-500">
+                      Duracion
+                      <div className="mt-1 font-semibold text-black">
+                        {durationLabel}
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="mt-auto flex flex-wrap gap-3 pt-7">
                     <Link

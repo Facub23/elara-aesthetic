@@ -9,6 +9,7 @@ import {
   isPublicPlaceholderRecord,
 } from "@/lib/public-records";
 import {
+  getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -22,6 +23,8 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
       description?: string | null;
     };
 
@@ -58,6 +61,10 @@ function getTreatmentPrice(treatment: TreatmentOption) {
   return getTreatmentPriceValue(treatment) || undefined;
 }
 
+function getTreatmentDuration(treatment?: TreatmentOption | null) {
+  return getTreatmentDurationValue(treatment) || undefined;
+}
+
 function formatPrice(value?: number) {
   if (!value) {
     return null;
@@ -68,6 +75,10 @@ function formatPrice(value?: number) {
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatDuration(value?: number) {
+  return value ? `${value} min` : "Duracion a confirmar";
 }
 
 function isActiveAvailability(item: AvailabilityRow) {
@@ -263,6 +274,9 @@ export default async function SpecialistDetailPage({
     (treatment) => normalize(getTreatmentName(treatment)) === normalize(selectedTreatmentName)
   );
   const selectedTreatmentPrice = getTreatmentPrice(selectedTreatment || treatments[0]);
+  const selectedTreatmentDuration = getTreatmentDuration(
+    selectedTreatment || treatments[0]
+  );
   const formattedPrice = formatPrice(selectedTreatmentPrice || priceFrom);
   const nextSlot =
     initialDate && initialTime
@@ -298,6 +312,7 @@ export default async function SpecialistDetailPage({
   const marketplaceRows = [
     ["Tratamiento seleccionado", selectedTreatmentName || "A elegir"],
     ["Precio orientativo", formattedPrice ? `Desde ${formattedPrice}` : "A confirmar"],
+    ["Duracion", formatDuration(selectedTreatmentDuration)],
     ["Lugar de atencion", clinicName],
     ["Agenda", nextSlot ? formatSlotLabel(nextSlot.date, nextSlot.time) : "Sin huecos proximos"],
   ];
@@ -434,10 +449,13 @@ export default async function SpecialistDetailPage({
 
                 <div className="rounded-md bg-[#F8F6F2] p-4">
                   <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
-                    Precio orientativo
+                    Precio y duracion
                   </div>
                   <div className="mt-2 text-lg font-semibold">
                     {formattedPrice ? `Desde ${formattedPrice}` : "A confirmar"}
+                  </div>
+                  <div className="mt-1 text-sm text-neutral-500">
+                    {formatDuration(selectedTreatmentDuration)}
                   </div>
                 </div>
               </div>
@@ -627,11 +645,12 @@ export default async function SpecialistDetailPage({
                 treatments.map((treatment) => {
                   const name = getTreatmentName(treatment);
                   const price = formatPrice(getTreatmentPrice(treatment));
+                  const duration = getTreatmentDuration(treatment);
 
                   return (
                     <article
                       key={name}
-                      className="rounded-md bg-[#F8F6F2] p-4"
+                      className="rounded-md border border-black/5 bg-[#F8F6F2] p-4"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -648,7 +667,23 @@ export default async function SpecialistDetailPage({
                           )}
                         </div>
 
-                        {price && <div className="text-sm font-semibold">{price}</div>}
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm font-semibold">
+                            {price || "A consultar"}
+                          </div>
+                          <div className="mt-1 text-xs text-neutral-500">
+                            {formatDuration(duration)}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-neutral-600">
+                        <div className="rounded-md bg-white px-3 py-2">
+                          Desde <span className="font-semibold text-black">{price || "a consultar"}</span>
+                        </div>
+                        <div className="rounded-md bg-white px-3 py-2">
+                          Tiempo <span className="font-semibold text-black">{formatDuration(duration)}</span>
+                        </div>
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-3">
