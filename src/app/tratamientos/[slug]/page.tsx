@@ -502,12 +502,6 @@ export default async function TreatmentPage({
     "clinic_name"
   );
 
-  const stats = [
-    ["Clinicas", clinicsForTreatment.length],
-    ["Especialistas", allSpecialists.length],
-    ["Ciudades", cityNames.length],
-    ["Duracion", `${duration} min`],
-  ];
   const independentSpecialistCount = allSpecialists.filter((specialist) => {
     const clinic =
       (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
@@ -515,10 +509,18 @@ export default async function TreatmentPage({
 
     return !clinic?.name && !specialist.clinic_name;
   }).length;
+  const clinicSpecialistCount = allSpecialists.length - independentSpecialistCount;
+  const stats = [
+    ["Clinicas", clinicsForTreatment.length],
+    ["Especialistas", allSpecialists.length],
+    ["Independientes", independentSpecialistCount],
+    ["Duracion", `${duration} min`],
+  ];
   const comparisonRows = [
     ["Precio desde", formattedPrice || "A consultar"],
     ["Duracion estimada", `${duration} min`],
-    ["Especialistas disponibles", allSpecialists.length],
+    ["En clinica", clinicSpecialistCount],
+    ["Independientes", independentSpecialistCount],
     ["Lugares de atencion", clinicsForTreatment.length + independentSpecialistCount],
   ];
   const marketplaceChecks = [
@@ -727,6 +729,56 @@ export default async function TreatmentPage({
               <p className="mt-4 text-sm font-medium leading-6">{check}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="px-6 py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-lg bg-black p-7 text-white">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/50">
+              Comparacion abierta
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+              Compara clinicas y consultas independientes en la misma busqueda.
+            </h2>
+            <p className="mt-5 text-sm leading-6 text-white/65 md:text-base">
+              Para {treatmentName}, EncuentraTuClinica mezcla especialistas de
+              clinicas verificadas y profesionales independientes para que elijas
+              por precio, duracion, ubicacion, rating y agenda.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link
+              href={`/especialistas?treatment=${encodeURIComponent(
+                treatmentName
+              )}&practice=Clinica`}
+              className="rounded-lg border border-black/10 bg-white p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+            >
+              <div className="text-3xl font-semibold">{clinicSpecialistCount}</div>
+              <div className="mt-2 text-sm uppercase tracking-[0.16em] text-neutral-500">
+                Especialistas en clinica
+              </div>
+              <p className="mt-4 text-sm leading-6 text-neutral-600">
+                Profesionales asociados a clinicas verificadas para este tratamiento.
+              </p>
+            </Link>
+
+            <Link
+              href={`/especialistas?treatment=${encodeURIComponent(
+                treatmentName
+              )}&practice=Consulta%20independiente`}
+              className="rounded-lg border border-black/10 bg-white p-6 transition hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(0,0,0,0.08)]"
+            >
+              <div className="text-3xl font-semibold">{independentSpecialistCount}</div>
+              <div className="mt-2 text-sm uppercase tracking-[0.16em] text-neutral-500">
+                Consultas independientes
+              </div>
+              <p className="mt-4 text-sm leading-6 text-neutral-600">
+                Profesionales verificados con direccion propia de atencion.
+              </p>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -1035,15 +1087,15 @@ export default async function TreatmentPage({
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                Especialistas disponibles
+                Especialistas y consultas disponibles
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Especialistas disponibles para este tratamiento
+                Todas las opciones para reservar {treatmentName}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-600">
-                Profesionales que ofrecen {treatmentName}, con su lugar de
-                atencion, precio orientativo cuando existe y acceso directo a
-                la reserva.
+                Compara especialistas de clinicas y consultas independientes
+                que ofrecen {treatmentName}, con ubicacion, precio, duracion y
+                acceso directo a reserva.
               </p>
             </div>
 
@@ -1066,6 +1118,14 @@ export default async function TreatmentPage({
                 (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
                 clinicsByName.get(normalize(specialist.clinic_name));
               const isIndependent = !clinic?.name && !specialist.clinic_name;
+              const practiceLabel = isIndependent
+                ? "Consulta independiente"
+                : "Especialista en clinica";
+              const placeName =
+                clinic?.name || specialist.clinic_name || "Consulta independiente";
+              const placeLocation = clinic
+                ? getClinicLocation(clinic)
+                : specialist.consultation_address || "Direccion a confirmar";
               const reviewSummary = specialistReviewSummaries.get(
                 normalizeReviewKey(specialist.name)
               );
@@ -1087,6 +1147,15 @@ export default async function TreatmentPage({
                     </div>
 
                     <div>
+                      <div
+                        className={`mb-2 w-fit rounded-full px-3 py-1 text-[10px] uppercase tracking-[0.14em] ${
+                          isIndependent
+                            ? "bg-black text-white"
+                            : "bg-[#F8F6F2] text-neutral-600"
+                        }`}
+                      >
+                        {practiceLabel}
+                      </div>
                       <h3 className="text-xl font-semibold">{specialist.name}</h3>
                       <p className="mt-1 text-sm text-neutral-500">{specialist.specialty}</p>
                     </div>
@@ -1124,14 +1193,15 @@ export default async function TreatmentPage({
 
                   <div className="mt-5 rounded-md bg-[#F8F6F2] p-3 text-sm text-neutral-600">
                     <div className="font-medium text-black">
-                      {clinic?.name ||
-                        specialist.clinic_name ||
-                        "Consulta independiente"}
+                      {placeName}
                     </div>
                     <div className="mt-1">
-                      {clinic
-                        ? getClinicLocation(clinic)
-                        : specialist.consultation_address || "Direccion a confirmar"}
+                      {placeLocation}
+                    </div>
+                    <div className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-neutral-700">
+                      {isIndependent
+                        ? "Atencion en direccion propia"
+                        : "Atencion dentro de clinica"}
                     </div>
                   </div>
 
