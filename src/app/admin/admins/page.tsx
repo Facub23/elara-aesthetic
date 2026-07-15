@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AddAdminForm from "@/components/AddAdminForm";
 import AdminAccessRequestsManager from "@/components/AdminAccessRequestsManager";
+import AdminRoleAccessMatrix from "@/components/AdminRoleAccessMatrix";
 import AdminShell from "@/components/AdminShell";
 import AdminsRealtimeList from "@/components/AdminsRealtimeList";
 
@@ -107,6 +108,8 @@ export default async function AdminUsersPage() {
             />
           </div>
         </div>
+
+        <AdminRoleAccessMatrix />
 
         <div className="mt-12 rounded-[40px] bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
           <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
