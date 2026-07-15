@@ -106,6 +106,30 @@ function slugify(value: string) {
   return normalize(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function buildSpecialistHref({
+  slug,
+  treatment,
+  slot,
+}: {
+  slug?: string | null;
+  treatment?: string | null;
+  slot?: { date: string; time: string } | null;
+}) {
+  if (!slug) return "";
+
+  const params = new URLSearchParams();
+
+  if (treatment) params.set("treatment", treatment);
+  if (slot) {
+    params.set("date", slot.date);
+    params.set("time", slot.time);
+  }
+
+  const query = params.toString();
+
+  return `/especialistas/${slug}${query ? `?${query}` : ""}`;
+}
+
 function getTreatmentName(treatment: TreatmentOption) {
   return readTreatmentName(treatment);
 }
@@ -756,6 +780,15 @@ export default async function SpecialistsPage({
                     isIndependent ? specialist.consultation_address : clinic?.location
                   );
                   const placeDetail = placeAddresses[0] || clinicCity;
+                  const reserveHref = buildSpecialistHref({
+                    slug: specialist.slug,
+                    treatment: selectedTreatment,
+                    slot: nextSlot,
+                  });
+                  const profileHref = buildSpecialistHref({
+                    slug: specialist.slug,
+                    treatment: selectedTreatment,
+                  });
 
                   return (
                     <article
@@ -879,52 +912,26 @@ export default async function SpecialistsPage({
                         </div>
 
                         <div className="mt-auto flex flex-wrap gap-3 pt-7">
-                          <Link
-                            href={`/especialistas/${specialist.slug}${
-                              new URLSearchParams({
-                                ...(selectedTreatment
-                                  ? {
-                                      treatment: selectedTreatment,
-                                    }
-                                  : {}),
-                                ...(nextSlot
-                                  ? {
-                                      date: nextSlot.date,
-                                      time: nextSlot.time,
-                                    }
-                                  : {}),
-                              }).toString()
-                                ? `?${new URLSearchParams({
-                                    ...(selectedTreatment
-                                      ? {
-                                          treatment: selectedTreatment,
-                                        }
-                                      : {}),
-                                    ...(nextSlot
-                                      ? {
-                                          date: nextSlot.date,
-                                          time: nextSlot.time,
-                                        }
-                                      : {}),
-                                  }).toString()}`
-                                : ""
-                            }`}
-                            className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
-                          >
-                            {nextSlot ? "Ver agenda y reservar" : "Ver perfil completo"}
-                          </Link>
-
-                          {clinic?.slug ? (
+                          {reserveHref ? (
                             <Link
-                              href={`/clinics/${clinic.slug}`}
+                              href={reserveHref}
+                              className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
+                            >
+                              {nextSlot ? "Ver agenda y reservar" : "Ver perfil completo"}
+                            </Link>
+                          ) : (
+                            <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">
+                              Perfil pendiente
+                            </span>
+                          )}
+
+                          {profileHref ? (
+                            <Link
+                              href={profileHref}
                               className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
                             >
-                              Clinica y tratamientos
+                              Ver perfil
                             </Link>
-                          ) : isIndependent ? (
-                            <span className="rounded-md border border-black/10 bg-[#F8F6F2] px-5 py-3 text-sm font-medium text-neutral-600">
-                              Consulta independiente
-                            </span>
                           ) : null}
                         </div>
                       </div>
