@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createActivityLog } from "@/lib/activity";
 import { getAdminRequestContext } from "@/lib/admin-auth";
 import { hasAdminPermission } from "@/lib/admin-access";
-import { getAssignedClinicName } from "@/lib/admin-scope";
+import { getAssignedClinicName, isSpecialistAdmin } from "@/lib/admin-scope";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
@@ -95,10 +95,54 @@ export async function POST(req: Request) {
       );
     }
 
+    const { data: currentSpecialist, error: currentSpecialistError } =
+      await supabase
+        .from("specialists")
+        .select("id,name,clinic_id,clinic_name")
+        .eq("id", id)
+        .maybeSingle();
+
+    if (currentSpecialistError) {
+      return NextResponse.json(
+        { success: false, error: currentSpecialistError.message },
+        { status: 500 }
+      );
+    }
+
+    if (!currentSpecialist) {
+      return NextResponse.json(
+        { success: false, error: "Especialista no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (
+      isSpecialistAdmin(admin) &&
+      String(admin.specialistId || "") !== String(currentSpecialist.id)
+    ) {
+      return NextResponse.json(
+        { success: false, error: "No puedes editar otro especialista" },
+        { status: 403 }
+      );
+    }
+
     const assignedClinicName = await getAssignedClinicName({
       role: admin.role,
       clinicId: admin.clinicId,
     });
+    const currentSpecialistClinicMatches = Boolean(
+      (admin.clinicId &&
+        currentSpecialist.clinic_id &&
+        String(currentSpecialist.clinic_id) === String(admin.clinicId)) ||
+        currentSpecialist.clinic_name === assignedClinicName
+    );
+
+    if (assignedClinicName && !currentSpecialistClinicMatches) {
+      return NextResponse.json(
+        { success: false, error: "No puedes editar especialistas de otra clinica" },
+        { status: 403 }
+      );
+    }
 
     if (assignedClinicName && assignedClinicName !== clinic_name) {
       return NextResponse.json(

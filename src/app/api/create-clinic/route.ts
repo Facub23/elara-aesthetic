@@ -6,12 +6,16 @@ import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 import { createActivityLog } from "@/lib/activity";
 
+function canManageGlobalContent(admin: Awaited<ReturnType<typeof getAdminRequestContext>>) {
+  return admin?.role === "super_admin" || admin?.accessRole === "content_editor";
+}
+
 export async function POST(
   req: Request
 ) {
   const admin = await getAdminRequestContext();
 
-  if (!hasAdminPermission(admin, "content")) {
+  if (!hasAdminPermission(admin, "content") || !canManageGlobalContent(admin)) {
     return NextResponse.json(
       { success: false, error: "Forbidden" },
       { status: 403 }

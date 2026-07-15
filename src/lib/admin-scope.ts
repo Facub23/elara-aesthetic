@@ -68,11 +68,17 @@ export async function isSpecialistInAdminScope(
 
   const { data: specialist } = await supabase
     .from("specialists")
-    .select("clinic_name")
+    .select("clinic_id,clinic_name")
     .eq("name", specialistName)
     .maybeSingle();
 
-  return specialist?.clinic_name === clinicName;
+  return Boolean(
+    specialist &&
+      ((admin.clinicId &&
+        specialist.clinic_id &&
+        String(specialist.clinic_id) === String(admin.clinicId)) ||
+        specialist.clinic_name === clinicName)
+  );
 }
 
 export function scopedBookingsQuery<T extends { eq: (column: string, value: string) => T }>(
