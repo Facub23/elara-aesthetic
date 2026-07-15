@@ -55,7 +55,7 @@ export default function ImageUpload({
           <img
             src={value}
             alt="Preview"
-            className="h-full w-full object-cover"
+            className="h-full w-full object-contain bg-[#F8F5F1]"
           />
         ) : (
           <div className="text-center">

@@ -23,7 +23,7 @@ export function DoctorCard({
         <img
           src={image}
           alt={name}
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+          className="h-full w-full object-contain bg-[#F8F5F1] transition duration-700"
         />
 
         <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs font-medium backdrop-blur-md">

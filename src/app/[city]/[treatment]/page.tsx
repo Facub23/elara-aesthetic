@@ -471,7 +471,7 @@ export default async function CityTreatmentPage({
                       alt={clinic.name || "Clinica EncuentraTuClinica"}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition duration-500 group-hover:scale-105"
+                      className="object-contain bg-[#F8F5F1] transition duration-500"
                     />
                   </Link>
 
@@ -571,7 +571,7 @@ export default async function CityTreatmentPage({
                         alt={specialist.name || "Especialista EncuentraTuClinica"}
                         fill
                         sizes="80px"
-                        className="object-cover"
+                        className="object-contain bg-[#F8F5F1]"
                       />
                     </div>
 

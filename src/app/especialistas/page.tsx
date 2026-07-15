@@ -741,7 +741,7 @@ export default async function SpecialistsPage({
                           alt={specialist.name || "Especialista EncuentraTuClinica"}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                          className="object-cover"
+                          className="object-contain bg-[#F8F5F1]"
                         />
                         <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-sm font-medium">
                           {reviewSummary

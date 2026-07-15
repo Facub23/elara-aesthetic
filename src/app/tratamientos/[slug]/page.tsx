@@ -618,7 +618,7 @@ export default async function TreatmentPage({
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 46vw"
-                className="object-cover"
+                className="object-contain bg-[#F8F5F1]"
               />
               <div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 text-xs uppercase tracking-[0.18em] backdrop-blur">
                 Guia del tratamiento
@@ -708,7 +708,7 @@ export default async function TreatmentPage({
                   alt={`${treatmentName} ${index + 1}`}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
+                  className="object-contain bg-[#F8F5F1]"
                 />
               </div>
             ))}
@@ -999,7 +999,7 @@ export default async function TreatmentPage({
               alt={treatmentName}
               fill
               sizes="(max-width: 1024px) 100vw, 52vw"
-              className="object-cover"
+              className="object-contain bg-[#F8F5F1]"
             />
           </div>
         </div>
@@ -1142,7 +1142,7 @@ export default async function TreatmentPage({
                         alt={specialist.name || "Especialista EncuentraTuClinica"}
                         fill
                         sizes="80px"
-                        className="object-cover"
+                        className="object-contain bg-[#F8F5F1]"
                       />
                     </div>
 
@@ -1300,7 +1300,7 @@ export default async function TreatmentPage({
                       alt={clinic.name || "Clinica EncuentraTuClinica"}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition duration-500 group-hover:scale-105"
+                      className="object-contain bg-[#F8F5F1] transition duration-500"
                     />
                   </Link>
 

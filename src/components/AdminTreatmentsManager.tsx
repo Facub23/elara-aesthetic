@@ -343,7 +343,7 @@ export default function AdminTreatmentsManager({
                   <img
                     src={form.image || "https://placehold.co/1200x800?text=EncuentraTuClinica"}
                     alt={form.name || "Nuevo tratamiento"}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain bg-[#F8F5F1]"
                   />
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
@@ -390,7 +390,7 @@ export default function AdminTreatmentsManager({
                   "https://placehold.co/1200x800?text=EncuentraTuClinica"
                 }
                 alt={treatment.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain bg-[#F8F5F1]"
               />
             </div>
 

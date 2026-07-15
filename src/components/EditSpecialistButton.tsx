@@ -414,7 +414,7 @@ export default function EditSpecialistButton({
                   <img
                     src={form.image || "https://placehold.co/1200x900?text=EncuentraTuClinica"}
                     alt={form.name}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-contain bg-[#F8F5F1]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-8 text-white">

@@ -24,7 +24,7 @@ export function ClinicCard({
         <img
           src={image}
           alt={name}
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+          className="h-full w-full object-contain bg-[#F8F5F1] transition duration-700"
         />
 
         <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-medium shadow-sm">

@@ -212,7 +212,7 @@ export default async function AdminClinicasPage() {
                         "https://placehold.co/1200x800?text=EncuentraTuClinica"
                       }
                       alt={clinic.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-contain bg-[#F8F5F1]"
                     />
                   </div>
 

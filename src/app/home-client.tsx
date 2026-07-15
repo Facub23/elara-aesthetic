@@ -175,7 +175,7 @@ export default function HomeClient() {
                 fill
                 priority
                 sizes="100vw"
-                className="object-cover"
+                className="object-contain bg-[#F8F5F1]"
               />
             </div>
 
@@ -365,7 +365,7 @@ export default function HomeClient() {
                         alt={clinic.name || "Clinica EncuentraTuClinica"}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition duration-700 group-hover:scale-105"
+                        className="object-contain bg-[#F8F5F1] transition duration-700"
                       />
                       <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-xs uppercase tracking-[0.16em]">
                         Verificada

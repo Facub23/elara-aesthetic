@@ -378,7 +378,7 @@ export default async function SpecialistDetailPage({
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 45vw"
-                  className="object-cover"
+                  className="object-contain bg-[#F8F5F1]"
                 />
               </div>
             </div>

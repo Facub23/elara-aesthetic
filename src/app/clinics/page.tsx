@@ -648,7 +648,7 @@ function ClinicsPageContent() {
                           alt={clinic.name || "Clinica EncuentraTuClinica"}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
-                          className="object-cover transition duration-700 hover:scale-105"
+                          className="object-contain bg-[#F8F5F1] transition duration-700"
                         />
 
                         <div className="absolute left-4 top-4 flex flex-wrap gap-2">

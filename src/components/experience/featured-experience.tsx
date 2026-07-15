@@ -11,7 +11,7 @@ export function FeaturedExperience() {
           <img
             src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1600&auto=format&fit=crop"
             alt="Experience"
-            className="h-[700px] w-full object-cover"
+            className="h-[700px] w-full object-contain bg-[#F8F5F1]"
           />
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />

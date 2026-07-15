@@ -312,7 +312,7 @@ export default function ClinicProfilePageClient({
                 fill
                 priority
                 sizes="(max-width: 1024px) 100vw, 50vw"
-                className="object-cover"
+                className="object-contain bg-[#F8F5F1]"
               />
             </div>
 
@@ -554,7 +554,7 @@ export default function ClinicProfilePageClient({
                         alt={specialist.name || "Especialista EncuentraTuClinica"}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
+                        className="object-contain bg-[#F8F5F1]"
                       />
                     </div>
 
