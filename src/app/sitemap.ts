@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { getAddressCities } from "@/lib/location-utils";
 import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { getSiteUrl } from "@/lib/site-url";
@@ -15,7 +16,7 @@ function slugify(value: string) {
 }
 
 function getClinicCity(clinic?: { city?: string | null; location?: string | null }) {
-  return clinic?.city || clinic?.location?.split(",")[0]?.trim() || "";
+  return clinic?.city || getAddressCities(clinic?.location)[0] || "";
 }
 
 function normalize(value?: string | null) {
@@ -66,12 +67,16 @@ function getSpecialistClinic(
   );
 }
 
-function getSpecialistCity(specialist: SpecialistRow, clinic?: ClinicRow) {
-  return (
-    getClinicCity(clinic) ||
-    specialist.consultation_address?.split(",").at(-1)?.trim() ||
-    ""
-  );
+function getSpecialistCities(specialist: SpecialistRow, clinic?: ClinicRow) {
+  return Array.from(
+    new Set(
+      [
+        getClinicCity(clinic),
+        ...getAddressCities(clinic?.location),
+        ...getAddressCities(specialist.consultation_address),
+      ].filter(Boolean)
+    )
+  ) as string[];
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -152,7 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (!Array.isArray(specialist.treatments)) return;
 
     const clinic = getSpecialistClinic(specialist, clinicsById, clinicsByName);
-    const city = slugify(getSpecialistCity(specialist, clinic));
+    const cities = getSpecialistCities(specialist, clinic);
 
     specialist.treatments.forEach((treatment) => {
       const treatmentName = getTreatmentName(treatment);
@@ -168,14 +173,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(),
       });
 
-      if (city) {
+      cities.forEach((cityName) => {
+        const city = slugify(cityName);
+
+        if (!city) return;
+
         const cityTreatmentUrl = `${baseUrl}/${city}/${treatmentSlug}`;
 
         routes.set(cityTreatmentUrl, {
           url: cityTreatmentUrl,
           lastModified: new Date(),
         });
-      }
+      });
     });
   });
 

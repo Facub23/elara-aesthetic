@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { supabase } from "@/lib/supabase";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
+import { getAddressLines, getLocationSummary } from "@/lib/location-utils";
 import {
   filterPublicRecords,
   isPublicPlaceholderRecord,
@@ -111,7 +112,11 @@ function getAvailabilityWeekday(item: AvailabilityRow) {
 }
 
 function getClinicLocation(clinic: any) {
-  return clinic?.location || [clinic?.city, clinic?.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic?.location,
+    city: clinic?.city,
+    country: clinic?.country,
+  });
 }
 
 function formatSlotLabel(date: string, time: string) {
@@ -578,8 +583,17 @@ export default async function SpecialistDetailPage({
 
             {isIndependent && clinicLocation ? (
               <div className="mt-5 rounded-md border border-black/10 bg-[#F8F6F2] p-4 text-sm leading-6 text-neutral-700">
-                <span className="font-semibold text-black">Direccion de atencion:</span>{" "}
-                {clinicLocation}
+                <span className="font-semibold text-black">
+                  Direccion de atencion:
+                </span>
+                <div className="mt-2 grid gap-1">
+                  {(getAddressLines(specialist.consultation_address).length > 0
+                    ? getAddressLines(specialist.consultation_address)
+                    : [clinicLocation]
+                  ).map((address) => (
+                    <span key={address}>{address}</span>
+                  ))}
+                </div>
               </div>
             ) : null}
 

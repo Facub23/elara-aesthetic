@@ -269,7 +269,7 @@ export default function EditSpecialistButton({
                     ))}
                   </select>
 
-                  <input
+                  <textarea
                     value={form.consultation_address}
                     onChange={(e) =>
                       setForm({
@@ -277,8 +277,9 @@ export default function EditSpecialistButton({
                         consultation_address: e.target.value,
                       })
                     }
-                    placeholder="Direccion de atencion si es consulta independiente"
-                    className="mt-4 h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    placeholder={"Direcciones de atencion si es consulta independiente, una por linea\nEj: Calle Serrano 45, Madrid\nEj: Avenida Diagonal 210, Barcelona"}
+                    rows={5}
+                    className="mt-4 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] p-6 outline-none"
                   />
                   <div className="mt-4 rounded-[24px] bg-[#F8F5F1] p-5 text-sm leading-6 text-neutral-600">
                     Si hay clinica asociada, esta direccion queda como apoyo interno. Si no hay clinica, sera el lugar visible de atencion.

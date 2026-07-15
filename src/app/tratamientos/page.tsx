@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
+import { getAddressCities } from "@/lib/location-utils";
 import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import {
@@ -161,7 +162,7 @@ function getClinicCity(clinic?: ClinicRow) {
     return "";
   }
 
-  return clinic.city || clinic.location?.split(",")[0]?.trim() || "";
+  return clinic.city || getAddressCities(clinic.location)[0] || "";
 }
 
 function getDefaultDescription(name: string, specialistCount: number, clinicCount: number) {
@@ -277,10 +278,11 @@ function buildMarketplaceTreatments({
             ? `consulta:${specialist.id || specialist.slug || specialist.name}`
             : "")
       );
-      const city =
-        getClinicCity(clinic) ||
-        specialist.consultation_address?.split(",").at(-1)?.trim() ||
-        "";
+      const allCities = [
+        clinic?.city,
+        ...getAddressCities(clinic?.location),
+        ...getAddressCities(specialist.consultation_address),
+      ].filter(Boolean) as string[];
       const price = getTreatmentPrice(treatment) || getTreatmentPrice(record || {});
 
       if (specialistKey && !item.specialistIds.has(specialistKey)) {
@@ -298,9 +300,7 @@ function buildMarketplaceTreatments({
         );
       }
 
-      if (city) {
-        item.citySet.add(city);
-      }
+      allCities.forEach((cityName) => item.citySet.add(cityName));
 
       if (price) {
         item.priceValues.push(price);

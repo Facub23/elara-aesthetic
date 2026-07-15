@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 
 import { Navbar } from "@/components/layout/navbar";
+import { getAddressCities, getLocationSummary } from "@/lib/location-utils";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
 import { filterPublicRecords } from "@/lib/public-records";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
@@ -89,19 +90,23 @@ function formatPrice(value?: number) {
 function getClinicLocation(clinic?: ClinicRow | null) {
   if (!clinic) return "";
 
-  return clinic.location || [clinic.city, clinic.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
 }
 
 function getClinicCity(clinic?: ClinicRow | null) {
-  return clinic?.city || clinic?.location?.split(",")[0]?.trim() || "";
+  return clinic?.city || getAddressCities(clinic?.location)[0] || "";
 }
 
-function getSpecialistCity(specialist: SpecialistRow, clinic?: ClinicRow | null) {
-  return (
-    getClinicCity(clinic) ||
-    specialist.consultation_address?.split(",").at(-1)?.trim() ||
-    ""
-  );
+function getSpecialistCities(specialist: SpecialistRow, clinic?: ClinicRow | null) {
+  return [
+    clinic?.city,
+    ...getAddressCities(clinic?.location),
+    ...getAddressCities(specialist.consultation_address),
+  ].filter(Boolean) as string[];
 }
 
 function specialistHasTreatment(specialist: SpecialistRow, treatmentSlug: string) {
@@ -153,18 +158,20 @@ export async function generateStaticParams() {
     const clinic =
       (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
       clinicsByName.get(normalize(specialist.clinic_name));
-    const city = getSpecialistCity(specialist, clinic);
+    const cities = getSpecialistCities(specialist, clinic);
 
-    if (!city || !Array.isArray(specialist.treatments)) return;
+    if (cities.length === 0 || !Array.isArray(specialist.treatments)) return;
 
     specialist.treatments.forEach((treatment) => {
       const name = getTreatmentName(treatment);
 
       if (!name) return;
 
-      params.set(`${city}-${name}`, {
-        city: slugify(city),
-        treatment: slugify(name),
+      cities.forEach((cityName) => {
+        params.set(`${cityName}-${name}`, {
+          city: slugify(cityName),
+          treatment: slugify(name),
+        });
       });
     });
   });
@@ -185,8 +192,10 @@ export async function generateMetadata({
     supabase.from("clinics").select("city,location"),
     supabase.from("treatments").select("name,slug"),
   ]);
-  const cityRecord = ((clinics || []) as ClinicRow[]).find(
-    (clinic) => slugify(getClinicCity(clinic)) === city
+  const cityRecord = ((clinics || []) as ClinicRow[]).find((clinic) =>
+    [clinic.city, ...getAddressCities(clinic.location)].some(
+      (cityName) => slugify(cityName || "") === city
+    )
   );
   const treatmentRecord = treatmentRecords?.find(
     (item) => item.slug === treatment || slugify(item.name || "") === treatment
@@ -231,7 +240,11 @@ export default async function CityTreatmentPage({
   const clinicsByName = new Map(
     allClinics.filter((clinic) => clinic.name).map((clinic) => [normalize(clinic.name), clinic])
   );
-  const cityRecord = allClinics.find((clinic) => slugify(getClinicCity(clinic)) === city);
+  const cityRecord = allClinics.find((clinic) =>
+    [clinic.city, ...getAddressCities(clinic.location)].some(
+      (cityName) => slugify(cityName || "") === city
+    )
+  );
   const cityName = cityRecord ? getClinicCity(cityRecord) : formatText(city);
   const cityNormalized = normalize(cityName);
   const clinicReviewSummaries = buildReviewSummaryMap(
@@ -248,20 +261,17 @@ export default async function CityTreatmentPage({
       const clinic =
         (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
         clinicsByName.get(normalize(specialist.clinic_name));
-      const clinicCity =
-        getClinicCity(clinic) ||
-        specialist.consultation_address?.split(",").at(-1)?.trim() ||
-        "";
+      const clinicCities = getSpecialistCities(specialist, clinic);
 
       return {
         specialist,
         clinic,
-        clinicCity,
+        clinicCities,
       };
     })
     .filter(
-      ({ specialist, clinicCity }) =>
-        normalize(clinicCity) === cityNormalized &&
+      ({ specialist, clinicCities }) =>
+        clinicCities.some((clinicCity) => normalize(clinicCity) === cityNormalized) &&
         specialistHasTreatment(specialist, treatment)
     );
 

@@ -6,6 +6,12 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { Navbar } from "@/components/layout/navbar";
+import {
+  getAddressCities,
+  getAddressLines,
+  getAddressSearchText,
+  getLocationSummary,
+} from "@/lib/location-utils";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
   getTreatmentDurationValue,
@@ -71,7 +77,11 @@ function getClinicImage(clinic: ClinicRow) {
 }
 
 function getClinicLocation(clinic: ClinicRow) {
-  return clinic.location || [clinic.city, clinic.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
 }
 
 function specialistBelongsToClinic(specialist: SpecialistRow, clinic: ClinicRow) {
@@ -240,7 +250,10 @@ function ClinicsPageContent() {
         return {
           clinic: {
             ...clinic,
+            rawLocation: clinic.location,
             location: getClinicLocation(clinic),
+            addressSearchText: getAddressSearchText(clinic.location),
+            addressCities: getAddressCities(clinic.location),
             rating: reviewSummary?.rating || null,
             patients: clinic.patients || "500+",
             experience: clinic.experience || "10 anos",
@@ -260,8 +273,11 @@ function ClinicsPageContent() {
     const uniqueCities = Array.from(
       new Set(
         clinicContexts
-          .map(({ clinic }) => clinic.city || clinic.location?.split(",")[0]?.trim())
-          .filter(Boolean)
+          .flatMap(({ clinic }) => [
+            clinic.city,
+            ...(clinic.addressCities || []),
+          ])
+          .filter((item): item is string => Boolean(item))
       )
     ).sort();
 
@@ -275,12 +291,14 @@ function ClinicsPageContent() {
         !searchValue ||
         normalizeText(clinic.name).includes(searchValue) ||
         normalizeText(clinic.location).includes(searchValue) ||
+        normalizeText(clinic.addressSearchText).includes(searchValue) ||
         normalizeText(clinic.city).includes(searchValue) ||
         normalizeText(clinic.description).includes(searchValue) ||
         treatments.some((treatment) => normalizeText(treatment).includes(searchValue));
       const matchesCity =
         city === "Todas" ||
         normalizeText(clinic.location).includes(normalizeText(city)) ||
+        normalizeText(clinic.addressSearchText).includes(normalizeText(city)) ||
         normalizeText(clinic.city).includes(normalizeText(city));
       const matchesTreatment = !selectedTreatment || clinicSpecialists.length > 0;
       const matchesPrice =
@@ -636,6 +654,7 @@ function ClinicsPageContent() {
                     treatment: selectedTreatment,
                     slot: nextSlot,
                   });
+                  const addressLines = getAddressLines(clinic.rawLocation);
 
                   return (
                     <article
@@ -725,6 +744,19 @@ function ClinicsPageContent() {
                           <div className="mt-5 rounded-md bg-[#F8F6F2] p-4 text-sm">
                             Primer especialista disponible:{" "}
                             <span className="font-semibold">{primarySpecialist.name}</span>
+                          </div>
+                        )}
+
+                        {addressLines.length > 1 && (
+                          <div className="mt-5 rounded-md bg-[#F8F6F2] p-4 text-sm leading-6 text-neutral-600">
+                            <span className="font-semibold text-black">
+                              Sedes de atencion:
+                            </span>
+                            <div className="mt-2 grid gap-1">
+                              {addressLines.map((address) => (
+                                <span key={address}>{address}</span>
+                              ))}
+                            </div>
                           </div>
                         )}
 

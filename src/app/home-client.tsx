@@ -170,7 +170,7 @@ export default function HomeClient() {
           >
             <div className="relative h-[620px] w-full md:h-[760px]">
               <Image
-                src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1800&auto=format&fit=crop"
+                src="/og-image.jpg"
                 alt="Clinica estetica verificada"
                 fill
                 priority

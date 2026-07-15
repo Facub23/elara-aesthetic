@@ -9,7 +9,7 @@ export function FeaturedExperience() {
         <div className="relative overflow-hidden rounded-[40px]">
 
           <img
-            src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=1600&auto=format&fit=crop"
+            src="/og-image.jpg"
             alt="Experience"
             className="h-[700px] w-full object-contain bg-[#F8F5F1]"
           />

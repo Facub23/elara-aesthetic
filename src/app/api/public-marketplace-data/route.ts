@@ -14,7 +14,7 @@ export async function GET() {
     supabase
       .from("clinics")
       .select(
-        "id,name,slug,city,country,image,description,rating,patients,experience"
+        "id,name,slug,city,country,location,image,description,rating,patients,experience"
       ),
     supabase
       .from("specialists")

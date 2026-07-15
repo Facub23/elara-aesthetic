@@ -6,6 +6,12 @@ import { Navbar } from "@/components/layout/navbar";
 import { filterPublicRecords } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
+import {
+  getAddressCities,
+  getAddressLines,
+  getAddressSearchText,
+  getLocationSummary,
+} from "@/lib/location-utils";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
   getTreatmentDurationValue,
@@ -165,7 +171,11 @@ function getClinicLocation(clinic?: ClinicRow) {
     return "";
   }
 
-  return clinic.location || [clinic.city, clinic.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
 }
 
 function formatSlotLabel(date: string, time: string) {
@@ -296,9 +306,20 @@ export default async function SpecialistsPage({
         clinicsByName.get(normalize(specialist.clinic_name));
       const clinicCity =
         clinic?.city ||
-        clinic?.location?.split(",")[0]?.trim() ||
-        specialist.consultation_address?.split(",").at(-1)?.trim() ||
+        getAddressCities(clinic?.location)[0] ||
+        getAddressCities(specialist.consultation_address)[0] ||
         "";
+      const placeSearchText = [
+        clinic?.location,
+        specialist.consultation_address,
+        getAddressSearchText(clinic?.location),
+        getAddressSearchText(specialist.consultation_address),
+      ].join(" ");
+      const placeCities = [
+        clinic?.city,
+        ...getAddressCities(clinic?.location),
+        ...getAddressCities(specialist.consultation_address),
+      ].filter(Boolean) as string[];
       const availability = allAvailability.filter(
         (item) => normalize(item.specialist_name) === normalize(specialist.name)
       );
@@ -313,13 +334,15 @@ export default async function SpecialistsPage({
         specialist,
         clinic,
         clinicCity,
+        placeCities,
+        placeSearchText,
         availability,
         availabilityLabel: getAvailabilityLabel(availability),
         selectedTreatmentData,
         reviewSummary: reviewSummaries.get(normalizeReviewKey(specialist.name)),
       };
     })
-    .filter(({ specialist, clinic, clinicCity, availability }) => {
+    .filter(({ specialist, clinic, placeCities, placeSearchText, availability }) => {
       const isIndependent = !clinic?.name && !specialist.clinic_name;
       const sameClinic =
         !selectedClinic ||
@@ -328,7 +351,9 @@ export default async function SpecialistsPage({
           String(selectedClinic.id) === String(specialist.clinic_id)) ||
         normalize(selectedClinic.name) === normalize(specialist.clinic_name);
       const sameTreatment = matchesTreatment(specialist, selectedTreatment);
-      const sameCity = selectedCity === "Todas" || clinicCity === selectedCity;
+      const sameCity =
+        selectedCity === "Todas" ||
+        placeCities.some((placeCity) => normalize(placeCity) === normalize(selectedCity));
       const activeAvailability = availability.filter(isActiveAvailability).length > 0;
       const priceFrom = getSpecialistPriceFrom(specialist, selectedTreatment);
       const samePrice =
@@ -353,6 +378,7 @@ export default async function SpecialistsPage({
         normalize(specialist.specialty).includes(searchValue) ||
         normalize(specialist.clinic_name).includes(searchValue) ||
         normalize(specialist.consultation_address).includes(searchValue) ||
+        normalize(placeSearchText).includes(searchValue) ||
         normalize(clinic?.name).includes(searchValue);
 
       return (
@@ -381,16 +407,16 @@ export default async function SpecialistsPage({
     ...Array.from(
       new Set(
         allSpecialists
-          .map((specialist) => {
+          .flatMap((specialist) => {
             const clinic =
               (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
               clinicsByName.get(normalize(specialist.clinic_name));
 
-            return (
-              clinic?.city ||
-              clinic?.location?.split(",")[0]?.trim() ||
-              specialist.consultation_address?.split(",").at(-1)?.trim()
-            );
+            return [
+              clinic?.city,
+              ...getAddressCities(clinic?.location),
+              ...getAddressCities(specialist.consultation_address),
+            ];
           })
           .filter(Boolean)
       )
@@ -726,9 +752,10 @@ export default async function SpecialistsPage({
                   const treatments = specialist.treatments || [];
                   const isIndependent = !clinic?.name && !specialist.clinic_name;
                   const placeName = clinic?.name || specialist.clinic_name;
-                  const placeDetail = isIndependent
-                    ? specialist.consultation_address
-                    : clinicCity;
+                  const placeAddresses = getAddressLines(
+                    isIndependent ? specialist.consultation_address : clinic?.location
+                  );
+                  const placeDetail = placeAddresses[0] || clinicCity;
 
                   return (
                     <article
@@ -797,11 +824,17 @@ export default async function SpecialistsPage({
                                 </span>
                               )}
                             </div>
-                            {placeDetail && (
+                            {placeAddresses.length > 1 ? (
+                              <div className="mt-2 grid gap-1 text-neutral-500">
+                                {placeAddresses.map((address) => (
+                                  <span key={address}>{address}</span>
+                                ))}
+                              </div>
+                            ) : placeDetail ? (
                               <div className="mt-1 text-neutral-500">
                                 {placeDetail}
                               </div>
-                            )}
+                            ) : null}
                           </div>
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
                             <span className="font-medium">Disponibilidad</span>

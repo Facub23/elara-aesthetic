@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Navbar } from "@/components/layout/navbar";
+import { getAddressCities, getLocationSummary } from "@/lib/location-utils";
 import { filterPublicRecords, isPublicPlaceholderRecord } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
@@ -109,7 +110,11 @@ function formatDuration(value?: number | null) {
 }
 
 function getClinicLocation(clinic: ClinicRow) {
-  return clinic.location || [clinic.city, clinic.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
 }
 
 function findSpecialistTreatment(specialist: SpecialistRow, treatmentSlug: string) {
@@ -125,13 +130,8 @@ function getFallbackDescription(treatmentName: string) {
 function getTreatmentLandingContent(slug: string, treatmentName: string) {
   const normalized = normalize(`${slug} ${treatmentName}`);
   const base = {
-    heroImage:
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1800&auto=format&fit=crop",
-    gallery: [
-      "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1629909615184-74f495363b67?q=80&w=1200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1200&auto=format&fit=crop",
-    ],
+    heroImage: "/og-image.jpg",
+    gallery: [] as string[],
     intro:
       "Una guia pensada para entender el tratamiento, comparar opciones y elegir profesional con mas contexto antes de reservar.",
     idealFor: [
@@ -171,13 +171,6 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
   if (normalized.includes("botox") || normalized.includes("toxina")) {
     return {
       ...base,
-      heroImage:
-        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=1800&auto=format&fit=crop",
-      gallery: [
-        "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1629909615184-74f495363b67?q=80&w=1200&auto=format&fit=crop",
-      ],
       intro:
         "El botox se suele valorar para suavizar lineas de expresion y planificar un resultado natural con un especialista cualificado.",
       idealFor: [
@@ -222,13 +215,6 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
   ) {
     return {
       ...base,
-      heroImage:
-        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1800&auto=format&fit=crop",
-      gallery: [
-        "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1200&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1200&auto=format&fit=crop",
-      ],
       intro:
         "Los tratamientos con acido hialuronico se plantean para armonizar volumen, hidratacion o definicion segun la zona y el objetivo.",
       idealFor: [
@@ -269,8 +255,6 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
   if (normalized.includes("rino")) {
     return {
       ...base,
-      heroImage:
-        "https://images.unsplash.com/photo-1550831107-1553da8c8464?q=80&w=1800&auto=format&fit=crop",
       intro:
         "La rinomodelacion se valora para armonizar el perfil nasal sin cirugia, siempre con indicacion profesional y expectativas realistas.",
       idealFor: [
@@ -442,15 +426,17 @@ export default async function TreatmentPage({
   }
 
   const cityNames = Array.from(
-    new Set([
-      ...clinicsForTreatment.map((clinic) => clinic.city).filter(Boolean),
-      ...allSpecialists
-        .filter((specialist) => !specialist.clinic_name && !specialist.clinic_id)
-        .map((specialist) =>
-          specialist.consultation_address?.split(",").at(-1)?.trim()
-        )
-        .filter(Boolean),
-    ])
+    new Set(
+      [
+        ...clinicsForTreatment.flatMap((clinic) => [
+          clinic.city,
+          ...getAddressCities(clinic.location),
+        ]),
+        ...allSpecialists
+          .filter((specialist) => !specialist.clinic_name && !specialist.clinic_id)
+          .flatMap((specialist) => getAddressCities(specialist.consultation_address)),
+      ].filter((item): item is string => Boolean(item))
+    )
   ) as string[];
   const prices = [
     getTreatmentPrice(treatmentRecord),
@@ -1009,7 +995,7 @@ export default async function TreatmentPage({
             <Image
               src={
                 treatmentRecord?.image ||
-                "https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=1600&auto=format&fit=crop"
+                "/og-image.jpg"
               }
               alt={treatmentName}
               fill

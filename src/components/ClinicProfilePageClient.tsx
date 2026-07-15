@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/layout/navbar";
+import { getAddressLines, getLocationSummary } from "@/lib/location-utils";
 import {
   getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
@@ -151,8 +152,12 @@ export default function ClinicProfilePageClient({
         ).toFixed(1)
       : null;
   const displayedRating = approvedReviewRating || clinic.rating || "5.0";
-  const clinicLocation =
-    clinic.location || `${clinic.city || ""}, ${clinic.country || ""}`;
+  const clinicLocation = getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
+  const clinicAddresses = getAddressLines(clinic.location);
 
   const clinicImage = clinic.heroImage || clinic.image || "/og-image.jpg";
   const clinicStats = [
@@ -219,6 +224,17 @@ export default function ClinicProfilePageClient({
             <p className="mt-10 max-w-2xl line-clamp-3 text-xl leading-relaxed text-neutral-600 md:text-2xl">
               {clinic.description}
             </p>
+
+            {clinicAddresses.length > 1 && (
+              <div className="mt-6 rounded-lg border border-black/10 bg-white/80 p-4 text-sm leading-6 text-neutral-600">
+                <span className="font-semibold text-black">Sedes:</span>
+                <div className="mt-2 grid gap-1">
+                  {clinicAddresses.map((address) => (
+                    <span key={address}>{address}</span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {clinicStats.map(([label, value]) => (

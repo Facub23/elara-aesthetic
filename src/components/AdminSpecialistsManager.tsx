@@ -676,7 +676,7 @@ export default function AdminSpecialistsManager({
                       <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
                         Direccion de atencion
                       </label>
-                      <input
+                      <textarea
                         value={form.consultation_address}
                         onChange={(e) =>
                           setForm({
@@ -684,8 +684,9 @@ export default function AdminSpecialistsManager({
                             consultation_address: e.target.value,
                           })
                         }
-                        placeholder="Ej: Calle Serrano 45, 1B, Madrid"
-                        className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                        placeholder={"Una direccion por linea\nEj: Calle Serrano 45, 1B, Madrid\nEj: Avenida Diagonal 210, Barcelona"}
+                        rows={5}
+                        className="w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] p-6 outline-none"
                       />
                     </div>
 

@@ -22,6 +22,7 @@ function emptyForm() {
     name: "",
     city: "",
     country: "",
+    location: "",
     image: "",
     slug: "",
     description: "",
@@ -67,9 +68,12 @@ export default function AddClinicForm() {
         hint: "Define nombre y URL publica.",
       },
       {
-        label: "Ciudad y pais",
-        done: Boolean(form.city.trim()) && Boolean(form.country.trim()),
-        hint: "Completa ubicacion para filtros y SEO local.",
+        label: "Ciudad y direcciones",
+        done:
+          Boolean(form.city.trim()) &&
+          Boolean(form.country.trim()) &&
+          Boolean(form.location.trim()),
+        hint: "Completa ciudad y una o mas direcciones de atencion.",
       },
       {
         label: "Imagen principal",
@@ -236,6 +240,24 @@ export default function AddClinicForm() {
                           })
                         }
                         className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
+                        Direcciones de atencion
+                      </label>
+                      <textarea
+                        value={form.location}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            location: e.target.value,
+                          })
+                        }
+                        placeholder={"Una direccion por linea\nEj: Calle Serrano 45, Madrid\nEj: Avenida Diagonal 210, Barcelona"}
+                        rows={5}
+                        className="w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] p-6 outline-none"
                       />
                     </div>
                   </div>

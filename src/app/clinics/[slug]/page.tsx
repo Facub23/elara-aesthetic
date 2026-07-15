@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import ClinicProfilePageClient from "@/components/ClinicProfilePageClient";
+import { getLocationSummary } from "@/lib/location-utils";
 import {
   filterPublicRecords,
   isPublicPlaceholderRecord,
@@ -13,7 +14,11 @@ type ClinicPageProps = {
 };
 
 function getClinicLocation(clinic: any) {
-  return clinic.location || [clinic.city, clinic.country].filter(Boolean).join(", ");
+  return getLocationSummary({
+    location: clinic.location,
+    city: clinic.city,
+    country: clinic.country,
+  });
 }
 
 function getClinicDescription(clinic: any) {

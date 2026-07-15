@@ -34,6 +34,7 @@ export default function EditClinicButton({ clinic }: { clinic: any }) {
     name: clinic.name || "",
     city: clinic.city || "",
     country: clinic.country || "",
+    location: clinic.location || "",
     image: clinic.image || "",
     slug: clinic.slug || "",
     description: clinic.description || "",
@@ -161,6 +162,15 @@ export default function EditClinicButton({ clinic }: { clinic: any }) {
                       }
                       placeholder="Pais"
                       className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
+                    />
+                    <textarea
+                      value={form.location}
+                      onChange={(e) =>
+                        setForm({ ...form, location: e.target.value })
+                      }
+                      placeholder={"Direcciones de atencion, una por linea\nEj: Calle Serrano 45, Madrid\nEj: Avenida Diagonal 210, Barcelona"}
+                      rows={5}
+                      className="w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] p-6 outline-none"
                     />
                   </div>
                 </>
