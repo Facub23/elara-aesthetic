@@ -116,11 +116,12 @@ export default function FavoriteSpecialistButton({
         type="button"
         onClick={toggleFavorite}
         disabled={loading}
+        aria-busy={loading}
         aria-pressed={isFavorite}
         className="rounded-full border border-black/10 bg-white/80 px-6 py-3 text-sm backdrop-blur-xl transition hover:bg-black hover:text-white disabled:opacity-50"
       >
         {loading
-          ? "Actualizando..."
+          ? "Guardar especialista"
           : isFavorite
             ? "Especialista guardado"
             : "Guardar especialista"}

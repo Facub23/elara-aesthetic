@@ -124,6 +124,24 @@ function getTodayDate() {
   }).format(new Date());
 }
 
+function getCurrentMadridMinutes() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const hours = Number(
+    parts.find((part) => part.type === "hour")?.value || 0
+  );
+  const minutes = Number(
+    parts.find((part) => part.type === "minute")?.value || 0
+  );
+
+  return hours * 60 + minutes;
+}
+
 function isDate(value: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
@@ -382,6 +400,9 @@ export async function getAvailableBookingSlots({
   bookingId?: string | number | null;
 }): Promise<AvailableBookingSlotsResult> {
   const date = normalizeBookingDate(bookingDate);
+  const today = getTodayDate();
+  const minimumSlotStart =
+    date === today ? getCurrentMadridMinutes() : null;
   const blockedReason = await getDayBlockReason(
     specialistName,
     date
@@ -499,6 +520,14 @@ export async function getAvailableBookingSlots({
     }
 
     const slotStart = timeToMinutes(slot);
+
+    if (
+      minimumSlotStart !== null &&
+      slotStart <= minimumSlotStart
+    ) {
+      return false;
+    }
+
     const slotEnd =
       slotStart + durationMinutes + defaultBufferMinutes;
 
@@ -570,6 +599,13 @@ export async function validateBookingSlot({
 
   if (date < getTodayDate()) {
     return "Selecciona una fecha futura";
+  }
+
+  if (
+    date === getTodayDate() &&
+    timeToMinutes(bookingTime) <= getCurrentMadridMinutes()
+  ) {
+    return "Selecciona un horario futuro";
   }
 
   const blockedReason = await getDayBlockReason(
