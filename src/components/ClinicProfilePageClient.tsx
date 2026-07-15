@@ -626,7 +626,7 @@ export default function ClinicProfilePageClient({
                             }`}
                             className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                           >
-                            Ver agenda
+                            Ver agenda y reservar
                           </Link>
                         )}
 
