@@ -437,7 +437,7 @@ export default async function TreatmentPage({
     ).values()
   );
 
-  if (allSpecialists.length === 0 && clinicsForTreatment.length === 0) {
+  if (!treatmentRecord && allSpecialists.length === 0 && clinicsForTreatment.length === 0) {
     notFound();
   }
 
@@ -900,6 +900,14 @@ export default async function TreatmentPage({
                   </Link>
                 );
               })}
+
+              {featuredSpecialists.length === 0 && (
+                <div className="rounded-md bg-[#F8F6F2] p-5 text-sm leading-6 text-neutral-600">
+                  Aun no hay especialistas asociados. La guia ya esta publicada
+                  y quedara conectada cuando asignes profesionales desde el
+                  admin.
+                </div>
+              )}
             </div>
           </div>
 
@@ -946,6 +954,13 @@ export default async function TreatmentPage({
                   </Link>
                 );
               })}
+
+              {featuredClinics.length === 0 && (
+                <div className="rounded-md bg-white/10 p-5 text-sm leading-6 text-white/70">
+                  Aun no hay clinicas asociadas. Cuando asignes especialistas
+                  de clinica, apareceran aqui.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1246,6 +1261,14 @@ export default async function TreatmentPage({
                 </article>
               );
             })}
+
+            {sortedSpecialists.length === 0 && (
+              <div className="rounded-lg border border-black/10 bg-white p-7 text-sm leading-7 text-neutral-600 md:col-span-2 xl:col-span-3">
+                Todavia no hay especialistas disponibles para este tratamiento.
+                Puedes publicar primero la guia y asociar especialistas,
+                precios, duracion y disponibilidad despues.
+              </div>
+            )}
           </div>
         </div>
       </section>

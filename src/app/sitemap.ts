@@ -50,6 +50,11 @@ type SpecialistRow = {
   treatments?: TreatmentOption[] | null;
 };
 
+type TreatmentRecord = {
+  name?: string | null;
+  slug?: string | null;
+};
+
 function getSpecialistClinic(
   specialist: SpecialistRow,
   clinicsById: Map<string, ClinicRow>,
@@ -82,8 +87,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/cookies",
   ];
 
-  const { data: clinics } = await supabase.from("clinics").select("*");
-  const { data: specialists } = await supabase.from("specialists").select("*");
+  const [{ data: clinics }, { data: specialists }, { data: treatments }] =
+    await Promise.all([
+      supabase.from("clinics").select("*"),
+      supabase.from("specialists").select("*"),
+      supabase.from("treatments").select("name,slug"),
+    ]);
 
   const routes = new Map<string, MetadataRoute.Sitemap[number]>();
 
@@ -96,6 +105,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const publicClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
   const publicSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]);
+  const publicTreatments = filterPublicRecords((treatments || []) as TreatmentRecord[]);
   const clinicsById = new Map(
     publicClinics.filter((clinic) => clinic.id).map((clinic) => [String(clinic.id), clinic])
   );
@@ -121,6 +131,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     routes.set(url, {
       url,
+      lastModified: new Date(),
+    });
+  });
+
+  publicTreatments.forEach((treatment) => {
+    const slug = treatment.slug || slugify(treatment.name || "");
+
+    if (!slug) return;
+
+    const treatmentUrl = `${baseUrl}/tratamientos/${slug}`;
+
+    routes.set(treatmentUrl, {
+      url: treatmentUrl,
       lastModified: new Date(),
     });
   });

@@ -308,6 +308,47 @@ function buildMarketplaceTreatments({
     });
   });
 
+  treatmentRecords.forEach((record) => {
+    const name = record.name?.trim();
+
+    if (!name) {
+      return;
+    }
+
+    const slug = record.slug || slugify(name);
+
+    if (catalog.has(slug)) {
+      const item = catalog.get(slug)!;
+      item.description = item.description || record.description || "";
+      item.category = inferCategory(item.name, record.category || item.category);
+      const price = getTreatmentPrice(record);
+
+      if (price) {
+        item.priceValues.push(price);
+      }
+
+      return;
+    }
+
+    const price = getTreatmentPrice(record);
+
+    catalog.set(slug, {
+      name,
+      slug,
+      description: record.description || "",
+      category: inferCategory(name, record.category),
+      specialistCount: 0,
+      clinicCount: 0,
+      cities: [],
+      clinicNames: [],
+      specialists: [],
+      specialistIds: new Set(),
+      clinicKeys: new Set(),
+      citySet: new Set(),
+      priceValues: price ? [price] : [],
+    });
+  });
+
   return Array.from(catalog.values())
     .map((item) => {
       const priceFrom =
