@@ -128,6 +128,8 @@ Resumen:
 
 El checklist operativo esta en [docs/PRELAUNCH.md](./docs/PRELAUNCH.md).
 
+La guia para cargar datos reales esta en [docs/DATA_LOADING_GUIDE.md](./docs/DATA_LOADING_GUIDE.md).
+
 Lo ultimo antes de publicar debe ser:
 
 1. Decidir modelo de pagos.

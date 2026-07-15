@@ -4,6 +4,8 @@ Checklist operativo para dejar la plataforma lista antes de cargar datos reales.
 
 Guia de despliegue: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
+Guia de carga real: [DATA_LOADING_GUIDE.md](./DATA_LOADING_GUIDE.md)
+
 ## Variables obligatorias
 
 - `NEXT_PUBLIC_SITE_URL`: dominio publico definitivo, sin barra final.
@@ -113,3 +115,5 @@ Cargar datos reales al final, en este orden:
 6. Disponibilidad semanal por especialista.
 7. Bloqueos, vacaciones y limites diarios.
 8. Plantillas de email finales.
+
+Para el checklist completo por clinica, tratamiento, especialista con clinica e independiente, usar [DATA_LOADING_GUIDE.md](./DATA_LOADING_GUIDE.md).
