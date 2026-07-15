@@ -7,6 +7,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/layout/navbar";
 import {
+  getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -24,7 +25,16 @@ function slugify(value: string) {
   return normalizeText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function getTreatmentName(treatment: string | { name?: string | null }) {
+type TreatmentEntry =
+  | string
+  | {
+      name?: string | null;
+      price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
+    };
+
+function getTreatmentName(treatment: TreatmentEntry) {
   return readTreatmentName(treatment);
 }
 
@@ -56,8 +66,32 @@ function formatPrice(value?: string | number | null) {
   }).format(parsed);
 }
 
-function getTreatmentPrice(treatment: string | { price?: string | number | null }) {
-  return formatPrice(getTreatmentPriceValue(treatment));
+function getMatchingTreatments(specialists: any[], treatmentName?: string) {
+  return specialists
+    .flatMap((specialist) =>
+      Array.isArray(specialist.treatments) ? specialist.treatments : []
+    )
+    .filter((treatment: TreatmentEntry) =>
+      treatmentName
+        ? normalizeText(getTreatmentName(treatment)) === normalizeText(treatmentName)
+        : true
+    );
+}
+
+function getLowestPriceLabel(treatments: TreatmentEntry[]) {
+  const prices = treatments
+    .map(getTreatmentPriceValue)
+    .filter((price): price is number => Boolean(price));
+
+  return prices.length > 0 ? formatPrice(Math.min(...prices)) : null;
+}
+
+function getLowestDurationLabel(treatments: TreatmentEntry[]) {
+  const durations = treatments
+    .map(getTreatmentDurationValue)
+    .filter((duration): duration is number => Boolean(duration));
+
+  return durations.length > 0 ? `${Math.min(...durations)} min` : null;
 }
 
 export default function ClinicProfilePageClient({
@@ -99,15 +133,13 @@ export default function ClinicProfilePageClient({
   );
 
   const lowestTreatmentPrice = useMemo(() => {
-    const prices = specialists
-      .flatMap((specialist) =>
-        Array.isArray(specialist.treatments) ? specialist.treatments : []
-      )
-      .map(getTreatmentPriceValue)
-      .filter((price): price is number => Boolean(price));
-
-    return prices.length > 0 ? formatPrice(Math.min(...prices)) : null;
+    return getLowestPriceLabel(getMatchingTreatments(specialists));
   }, [specialists]);
+
+  const lowestTreatmentDuration = useMemo(
+    () => getLowestDurationLabel(getMatchingTreatments(specialists)),
+    [specialists]
+  );
 
   const approvedReviewRating =
     reviews.length > 0
@@ -147,6 +179,7 @@ export default function ClinicProfilePageClient({
     ["Tratamientos disponibles", clinicTreatments.length],
     ["Equipo conectado", specialists.length],
     ["Precio desde", lowestTreatmentPrice || "A consultar"],
+    ["Duracion desde", lowestTreatmentDuration || "A confirmar"],
     ["Ubicacion", clinicLocation || "A confirmar"],
   ];
   const trustChecklist = [
@@ -376,20 +409,12 @@ export default function ClinicProfilePageClient({
               {treatmentContexts.map(({ name, specialists: treatmentSpecialists }) => {
                 const firstSpecialist = treatmentSpecialists[0];
                 const treatmentSlug = slugify(name);
-                const prices = treatmentSpecialists
-                  .flatMap((specialist) =>
-                    Array.isArray(specialist.treatments)
-                      ? specialist.treatments
-                      : []
-                  )
-                  .filter(
-                    (treatment: string | { name?: string | null }) =>
-                      normalizeText(getTreatmentName(treatment)) ===
-                      normalizeText(name)
-                  )
-                  .map(getTreatmentPrice)
-                  .filter(Boolean);
-                const priceLabel = prices[0];
+                const matchingTreatments = getMatchingTreatments(
+                  treatmentSpecialists,
+                  name
+                );
+                const priceLabel = getLowestPriceLabel(matchingTreatments);
+                const durationLabel = getLowestDurationLabel(matchingTreatments);
 
                 return (
                   <article
@@ -415,6 +440,12 @@ export default function ClinicProfilePageClient({
                           Desde <span className="font-semibold text-black">{priceLabel}</span>
                         </span>
                       ) : null}
+                      {durationLabel ? (
+                        <span className="mt-1 block text-neutral-500">
+                          Duracion desde{" "}
+                          <span className="font-semibold text-black">{durationLabel}</span>
+                        </span>
+                      ) : null}
                     </div>
 
                     <div className="mt-5 flex flex-wrap gap-2">
@@ -437,6 +468,13 @@ export default function ClinicProfilePageClient({
                         className="rounded-md bg-black px-5 py-3 text-sm font-medium text-white transition hover:opacity-90"
                       >
                         Comparar tratamiento
+                      </Link>
+
+                      <Link
+                        href={`/clinics?treatment=${encodeURIComponent(name)}`}
+                        className="rounded-md border border-black/10 px-5 py-3 text-sm font-medium transition hover:border-black"
+                      >
+                        Comparar clinicas
                       </Link>
 
                       <Link
@@ -499,6 +537,11 @@ export default function ClinicProfilePageClient({
                   ? specialist.treatments.map(getTreatmentName).filter(Boolean)
                   : [];
                 const primaryTreatment = specialistTreatments[0];
+                const specialistTreatmentEntries = Array.isArray(specialist.treatments)
+                  ? specialist.treatments
+                  : [];
+                const specialistPrice = getLowestPriceLabel(specialistTreatmentEntries);
+                const specialistDuration = getLowestDurationLabel(specialistTreatmentEntries);
 
                 return (
                   <article
@@ -528,6 +571,22 @@ export default function ClinicProfilePageClient({
                         {specialist.bio ||
                           `${specialist.name || "Especialista"} atiende tratamientos premium en ${clinic.name}.`}
                       </p>
+
+                      <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+                        <div className="rounded-md border border-black/10 bg-white p-3">
+                          <span className="text-neutral-500">Precio desde</span>
+                          <div className="mt-1 font-semibold text-black">
+                            {specialistPrice || "A consultar"}
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-black/10 bg-white p-3">
+                          <span className="text-neutral-500">Duracion desde</span>
+                          <div className="mt-1 font-semibold text-black">
+                            {specialistDuration || "A confirmar"}
+                          </div>
+                        </div>
+                      </div>
 
                       <div className="mt-5 flex flex-wrap gap-2">
                         {specialistTreatments.slice(0, 4).map((treatment) => (
