@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
+  getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -49,6 +50,8 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
     };
 
 type SpecialistRow = {
@@ -105,6 +108,10 @@ function getTreatmentPrice(treatment?: TreatmentOption | null) {
   return getTreatmentPriceValue(treatment) || undefined;
 }
 
+function getTreatmentDuration(treatment?: TreatmentOption | null) {
+  return getTreatmentDurationValue(treatment) || undefined;
+}
+
 function getSpecialistPriceFrom(
   specialist: SpecialistRow,
   selectedTreatment?: string
@@ -121,6 +128,22 @@ function getSpecialistPriceFrom(
   return prices.length > 0 ? Math.min(...prices) : undefined;
 }
 
+function getSpecialistDuration(
+  specialist: SpecialistRow,
+  selectedTreatment?: string
+) {
+  const durations = (specialist.treatments || [])
+    .filter((treatment) =>
+      selectedTreatment
+        ? normalize(getTreatmentName(treatment)) === normalize(selectedTreatment)
+        : true
+    )
+    .map((treatment) => getTreatmentDuration(treatment))
+    .filter((duration): duration is number => Boolean(duration));
+
+  return durations.length > 0 ? Math.min(...durations) : undefined;
+}
+
 function formatPrice(value?: number) {
   if (!value) {
     return null;
@@ -131,6 +154,10 @@ function formatPrice(value?: number) {
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function formatDuration(value?: number) {
+  return value ? `${value} min` : "A confirmar";
 }
 
 function getClinicLocation(clinic?: ClinicRow) {
@@ -219,6 +246,7 @@ export default async function SpecialistsPage({
     price?: string;
     availability?: string;
     practice?: string;
+    sort?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -229,6 +257,7 @@ export default async function SpecialistsPage({
   const selectedPrice = params.price || "Todos";
   const selectedAvailability = params.availability || "Todos";
   const selectedPractice = params.practice || "Todos";
+  const selectedSort = params.sort || "Recomendados";
 
   const [
     { data: specialists },
@@ -310,6 +339,7 @@ export default async function SpecialistsPage({
             (selectedPrice === "500+" && priceFrom > 500)));
       const sameAvailability =
         selectedAvailability === "Todos" ||
+        selectedAvailability === "Con huecos disponibles" ||
         (selectedAvailability === "Con horario" && activeAvailability) ||
         (selectedAvailability === "Sin horario" && !activeAvailability);
       const samePractice =
@@ -386,7 +416,7 @@ export default async function SpecialistsPage({
   const independentCount = specialistsWithContext.filter(
     ({ clinic, specialist }) => !clinic?.name && !specialist.clinic_name
   ).length;
-  const specialistsWithNextSlot = await Promise.all(
+  const specialistsWithNextSlotRaw = await Promise.all(
     specialistsWithContext.map(async (item) => ({
       ...item,
       nextSlot: await findNextAvailableSlot({
@@ -395,6 +425,33 @@ export default async function SpecialistsPage({
       }),
     }))
   );
+  const specialistsWithNextSlot = specialistsWithNextSlotRaw
+    .filter((item) =>
+      selectedAvailability === "Con huecos disponibles" ? Boolean(item.nextSlot) : true
+    )
+    .sort((a, b) => {
+      if (selectedSort === "Precio menor") {
+        return (
+          (getSpecialistPriceFrom(a.specialist, selectedTreatment) ||
+            Number.MAX_SAFE_INTEGER) -
+          (getSpecialistPriceFrom(b.specialist, selectedTreatment) ||
+            Number.MAX_SAFE_INTEGER)
+        );
+      }
+
+      if (selectedSort === "Proximo hueco") {
+        const aSlot = a.nextSlot ? `${a.nextSlot.date} ${a.nextSlot.time}` : "9999";
+        const bSlot = b.nextSlot ? `${b.nextSlot.date} ${b.nextSlot.time}` : "9999";
+
+        return aSlot.localeCompare(bSlot);
+      }
+
+      if (selectedSort === "Mejor rating") {
+        return Number(b.reviewSummary?.rating || 0) - Number(a.reviewSummary?.rating || 0);
+      }
+
+      return Number(Boolean(b.nextSlot)) - Number(Boolean(a.nextSlot));
+    });
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#F6F3EE] text-black">
@@ -492,7 +549,7 @@ export default async function SpecialistsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/especialistas"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.9fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.9fr_0.8fr_0.8fr_auto]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -546,6 +603,7 @@ export default async function SpecialistsPage({
             >
               <option value="Todos">Toda disponibilidad</option>
               <option value="Con horario">Con horario</option>
+              <option value="Con huecos disponibles">Con huecos disponibles</option>
               <option value="Sin horario">Sin horario</option>
             </select>
 
@@ -557,6 +615,17 @@ export default async function SpecialistsPage({
               <option value="Todos">Clinica o consulta</option>
               <option value="Clinica">Solo clinicas</option>
               <option value="Consulta independiente">Consultas independientes</option>
+            </select>
+
+            <select
+              name="sort"
+              defaultValue={selectedSort}
+              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+            >
+              <option value="Recomendados">Recomendados</option>
+              <option value="Proximo hueco">Proximo hueco</option>
+              <option value="Precio menor">Precio menor</option>
+              <option value="Mejor rating">Mejor rating</option>
             </select>
 
             <button
@@ -607,7 +676,7 @@ export default async function SpecialistsPage({
                 Resultados
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                {specialistsWithContext.length} especialistas para comparar
+                {specialistsWithNextSlot.length} especialistas para comparar
               </h2>
             </div>
 
@@ -616,6 +685,7 @@ export default async function SpecialistsPage({
               selectedPrice !== "Todos" ||
               selectedAvailability !== "Todos" ||
               selectedPractice !== "Todos" ||
+              selectedSort !== "Recomendados" ||
               search ||
               clinicSlug) && (
               <Link
@@ -627,7 +697,7 @@ export default async function SpecialistsPage({
             )}
           </div>
 
-          {specialistsWithContext.length === 0 ? (
+          {specialistsWithNextSlot.length === 0 ? (
             <div className="rounded-lg border border-black/10 bg-white p-10 text-center">
               <h2 className="text-2xl font-semibold">No hay especialistas con esos filtros</h2>
               <p className="mt-3 text-neutral-500">
@@ -648,6 +718,10 @@ export default async function SpecialistsPage({
                 }) => {
                   const price = formatPrice(
                     getSpecialistPriceFrom(specialist, selectedTreatment)
+                  );
+                  const duration = getSpecialistDuration(
+                    specialist,
+                    selectedTreatment
                   );
                   const treatments = specialist.treatments || [];
                   const isIndependent = !clinic?.name && !specialist.clinic_name;
@@ -697,7 +771,21 @@ export default async function SpecialistsPage({
                             `${specialist.name || "Especialista"} atiende tratamientos premium dentro de EncuentraTuClinica.`}
                         </p>
 
-                        <div className="mt-5 grid gap-3">
+                        <div className="mt-5 grid grid-cols-2 gap-3">
+                          <div className="rounded-md border border-black/10 bg-white p-3 text-sm">
+                            <span className="text-neutral-500">Precio</span>
+                            <div className="mt-1 font-semibold text-black">
+                              {price ? `Desde ${price}` : "A consultar"}
+                            </div>
+                          </div>
+
+                          <div className="rounded-md border border-black/10 bg-white p-3 text-sm">
+                            <span className="text-neutral-500">Duracion</span>
+                            <div className="mt-1 font-semibold text-black">
+                              {formatDuration(duration)}
+                            </div>
+                          </div>
+
                           <div className="rounded-md bg-[#F8F6F2] p-3 text-sm">
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="font-medium">
@@ -719,7 +807,7 @@ export default async function SpecialistsPage({
                             <span className="font-medium">Disponibilidad</span>
                             <span className="text-neutral-500"> - {availabilityLabel}</span>
                           </div>
-                          <div className="rounded-md bg-black p-3 text-sm text-white">
+                          <div className="rounded-md bg-black p-3 text-sm text-white sm:col-span-2">
                             <span className="font-medium">Proximo hueco</span>
                             <span className="text-white/70">
                               {" "}
