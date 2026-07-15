@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 import { Navbar } from "@/components/layout/navbar";
 import { SearchBar } from "@/components/search/search-bar";
-import { clinics } from "@/data/clinics";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
 type TreatmentSummary =
@@ -15,18 +15,30 @@ type TreatmentSummary =
       name?: string;
     };
 
+type ClinicSummary = {
+  name?: string | null;
+  slug?: string | null;
+  image?: string | null;
+  heroImage?: string | null;
+  location?: string | null;
+  city?: string | null;
+  country?: string | null;
+  treatments?: TreatmentSummary[] | null;
+};
+
 export default function HomeClient() {
-  const featuredClinics = clinics.slice(0, 3);
+  const [featuredClinics, setFeaturedClinics] = useState<ClinicSummary[]>([]);
+  const [clinicsLoading, setClinicsLoading] = useState(true);
   const marketplaceStats = [
     ["Marketplace", "Clinicas y consultas"],
     ["Agenda real", "Huecos por especialista"],
     ["Decision guiada", "Tratamiento, precio y lugar"],
   ];
   const quickRoutes = [
-    ["Botox en Madrid", "/madrid/botox"],
+    ["Explorar tratamientos", "/tratamientos"],
     ["Especialistas con horario", "/especialistas?availability=Con+horario"],
-    ["Clinicas para Botox", "/clinics?treatment=Botox"],
-    ["Especialistas en Madrid", "/especialistas?city=Madrid"],
+    ["Clinicas verificadas", "/clinics"],
+    ["Consultas independientes", "/especialistas?practice=Consulta+independiente"],
   ];
   const decisionSteps = [
     {
@@ -43,13 +55,38 @@ export default function HomeClient() {
     },
   ];
   const treatmentLinks = [
-    ["Botox", "botox", "Desde 290 EUR"],
-    ["Acido hialuronico", "acido-hialuronico", "Desde 350 EUR"],
-    ["Armonizacion facial", "armonizacion-facial", "Plan completo"],
-    ["Rinomodelacion", "rinomodelacion", "Sin cirugia"],
-    ["Bioestimuladores", "bioestimuladores", "Calidad de piel"],
-    ["Perfilado labial", "perfilado-labial", "Definicion natural"],
+    ["Tratamientos faciales", "tratamientos", "Comparar opciones"],
+    ["Medicina estetica", "tratamientos", "Clinicas y especialistas"],
+    ["Consultas independientes", "especialistas?practice=Consulta+independiente", "Agenda propia"],
+    ["Clinicas verificadas", "clinics", "Equipo conectado"],
+    ["Disponibilidad real", "especialistas?availability=Con+huecos+disponibles", "Huecos activos"],
+    ["Carga de datos reales", "admin", "Pre-lanzamiento"],
   ];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadClinics() {
+      try {
+        const response = await fetch("/api/public-marketplace-data");
+        const data = await response.json();
+
+        if (!cancelled) {
+          setFeaturedClinics((data.clinics || []).slice(0, 3));
+        }
+      } finally {
+        if (!cancelled) {
+          setClinicsLoading(false);
+        }
+      }
+    }
+
+    loadClinics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#F6F3EE] text-black">
@@ -270,7 +307,41 @@ export default function HomeClient() {
           </div>
 
           <div className="mt-12 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-            {featuredClinics.map((clinic, index) => {
+            {clinicsLoading
+              ? [0, 1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="h-[560px] animate-pulse rounded-[28px] bg-white/70"
+                  />
+                ))
+              : featuredClinics.length === 0
+                ? [0, 1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="flex min-h-[420px] flex-col justify-between rounded-[28px] border border-black/10 bg-white p-8 shadow-[0_20px_80px_rgba(0,0,0,0.05)]"
+                    >
+                      <div>
+                        <div className="w-fit rounded-full bg-[#F6F3EE] px-4 py-2 text-xs uppercase tracking-[0.16em] text-neutral-500">
+                          Pendiente de carga
+                        </div>
+                        <h3 className="mt-8 text-3xl font-semibold">
+                          Datos reales en preparacion
+                        </h3>
+                        <p className="mt-4 text-sm leading-6 text-neutral-600">
+                          Aqui apareceran clinicas verificadas cuando carguemos
+                          el contenido real de pre-lanzamiento.
+                        </p>
+                      </div>
+
+                      <Link
+                        href="/clinics"
+                        className="mt-8 w-fit rounded-full bg-black px-5 py-3 text-sm text-white"
+                      >
+                        Ver clinicas
+                      </Link>
+                    </div>
+                  ))
+                : featuredClinics.map((clinic, index) => {
               const treatmentCount = clinic.treatments?.length || 0;
 
               return (
@@ -290,8 +361,8 @@ export default function HomeClient() {
                   >
                     <div className="relative h-[340px] overflow-hidden">
                       <Image
-                        src={clinic.heroImage || clinic.image}
-                        alt={clinic.name}
+                        src={clinic.heroImage || clinic.image || "/og-image.jpg"}
+                        alt={clinic.name || "Clinica EncuentraTuClinica"}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
                         className="object-cover transition duration-700 group-hover:scale-105"
@@ -306,7 +377,11 @@ export default function HomeClient() {
                         <h3 className="min-w-0 text-2xl font-semibold sm:text-3xl">
                           {clinic.name}
                         </h3>
-                        <div className="text-neutral-500">{clinic.location}</div>
+                        <div className="text-neutral-500">
+                          {clinic.location ||
+                            [clinic.city, clinic.country].filter(Boolean).join(", ") ||
+                            "Ubicacion a confirmar"}
+                        </div>
                       </div>
 
                       <div className="mt-6 grid grid-cols-2 gap-3">
