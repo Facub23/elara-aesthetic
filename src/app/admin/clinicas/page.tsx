@@ -9,7 +9,7 @@ import AddClinicForm from "@/components/AddClinicForm";
 import AdminClinicWorkspace from "@/components/AdminClinicWorkspace";
 import AdminShell from "@/components/AdminShell";
 import AdminPublicationChecklist from "@/components/AdminPublicationChecklist";
-import { hasAnyAdminPermission } from "@/lib/admin-access";
+import { hasAnyAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
 function hasText(value?: string | null) {
@@ -84,6 +84,10 @@ export default async function AdminClinicasPage() {
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+
+  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
+    redirect("/admin/sin-permiso");
+  }
 
   if (!hasAnyAdminPermission({
     role: adminUser.role,
