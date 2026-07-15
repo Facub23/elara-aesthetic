@@ -18,6 +18,7 @@ type BookingNotification = {
   treatment?: string | null;
   status?: string | null;
   cancellation_token?: string | null;
+  booking_context?: unknown;
 };
 
 type NotificationOptions = {
@@ -45,6 +46,16 @@ function getBookingLabel(booking: BookingNotification) {
   const time = getBookingTime(booking);
 
   return [date, time].filter(Boolean).join(" a las ");
+}
+
+function getConfirmationChannel(booking: BookingNotification) {
+  const context =
+    typeof booking.booking_context === "object" && booking.booking_context !== null
+      ? (booking.booking_context as { confirmation_channel?: unknown })
+      : {};
+  const channel = String(context.confirmation_channel || "").toLowerCase();
+
+  return channel === "whatsapp" ? "whatsapp" : "email";
 }
 
 function getBookingVariables(
@@ -175,6 +186,7 @@ export async function notifyBookingCreated(
 ) {
   const bookingLabel = getBookingLabel(booking);
   const variables = getBookingVariables(booking);
+  const confirmationChannel = getConfirmationChannel(booking);
 
   await createActivityLog({
     title: "Nueva reserva recibida",
@@ -188,36 +200,30 @@ export async function notifyBookingCreated(
     relatedBookingId: booking.id,
   });
 
-  await safeSendEmail({
-    to: booking.email,
-    subject: "Confirma tu reserva en EncuentraTuClinica",
-    title: "Confirma tu reserva",
-    message: `Hola ${booking.full_name || ""}, recibimos tu solicitud para ${variables.tratamiento} en ${variables.clinica}${bookingLabel ? ` el ${bookingLabel}` : ""}. Para confirmar tu reserva, entra en el enlace seguro.`,
-    ctaLabel: options.confirmationUrl
-      ? "Confirmar reserva"
-      : undefined,
-    ctaUrl: options.confirmationUrl,
-    failureLog: "Email de confirmacion no enviado",
-    templateKey: "booking_created_patient",
-    templateVariables: variables,
-    relatedBookingId: booking.id,
-  });
-
-  await safeSendPlaceholderChannel({
-    channel: "whatsapp",
-    to: booking.phone,
-    subject: "Confirma tu reserva en EncuentraTuClinica",
-    message: `Hola ${booking.full_name || ""}, confirma tu reserva en EncuentraTuClinica${bookingLabel ? ` para el ${bookingLabel}` : ""}.`,
-    bookingId: booking.id,
-  });
-
-  await safeSendPlaceholderChannel({
-    channel: "sms",
-    to: booking.phone,
-    subject: "Confirma tu reserva en EncuentraTuClinica",
-    message: `EncuentraTuClinica: confirma tu reserva${bookingLabel ? ` para el ${bookingLabel}` : ""}.`,
-    bookingId: booking.id,
-  });
+  if (confirmationChannel === "whatsapp") {
+    await safeSendPlaceholderChannel({
+      channel: "whatsapp",
+      to: booking.phone,
+      subject: "Confirma tu reserva en EncuentraTuClinica",
+      message: `Hola ${booking.full_name || ""}, confirma tu reserva en EncuentraTuClinica${bookingLabel ? ` para el ${bookingLabel}` : ""}.${options.confirmationUrl ? ` Enlace: ${options.confirmationUrl}` : ""}`,
+      bookingId: booking.id,
+    });
+  } else {
+    await safeSendEmail({
+      to: booking.email,
+      subject: "Confirma tu reserva en EncuentraTuClinica",
+      title: "Confirma tu reserva",
+      message: `Hola ${booking.full_name || ""}, recibimos tu solicitud para ${variables.tratamiento} en ${variables.clinica}${bookingLabel ? ` el ${bookingLabel}` : ""}. Para confirmar tu reserva, entra en el enlace seguro.`,
+      ctaLabel: options.confirmationUrl
+        ? "Confirmar reserva"
+        : undefined,
+      ctaUrl: options.confirmationUrl,
+      failureLog: "Email de confirmacion no enviado",
+      templateKey: "booking_created_patient",
+      templateVariables: variables,
+      relatedBookingId: booking.id,
+    });
+  }
 
   await safeSendEmail({
     to: await getAdminEmail(),

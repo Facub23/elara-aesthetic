@@ -103,6 +103,7 @@ export function BookingModal({
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedTreatment, setSelectedTreatment] = useState("");
   const [treatmentDuration, setTreatmentDuration] = useState(60);
+  const [confirmationChannel, setConfirmationChannel] = useState<"email" | "whatsapp">("email");
 
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -194,6 +195,17 @@ export function BookingModal({
   useEffect(() => {
     setSelectedSpecialist(specialistName || "");
   }, [specialistName]);
+
+  useEffect(() => {
+    if (!open || typeof document === "undefined") return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -401,18 +413,30 @@ export function BookingModal({
 
     const formData = new FormData(e.currentTarget);
 
-    const full_name = formData.get("full_name") as string;
+    const first_name = formData.get("first_name") as string;
+    const last_name = formData.get("last_name") as string;
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
     const website = formData.get("website") as string;
+    const full_name = `${first_name || ""} ${last_name || ""}`.trim();
 
-    if (!full_name?.trim()) {
+    if (!first_name?.trim()) {
       setFormError("Indica tu nombre para continuar.");
+      return;
+    }
+
+    if (!last_name?.trim()) {
+      setFormError("Indica tu apellido para continuar.");
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email || "")) {
       setFormError("Indica un email valido para confirmar la reserva.");
+      return;
+    }
+
+    if (!phone?.trim()) {
+      setFormError("Indica un numero de telefono para gestionar la cita.");
       return;
     }
 
@@ -441,6 +465,7 @@ export function BookingModal({
           price_from: selectedPrice,
           duration_minutes: treatmentDuration,
           availability_checked: Boolean(selectedDate && selectedTime),
+          confirmation_channel: confirmationChannel,
         },
       }),
     });
@@ -476,13 +501,13 @@ export function BookingModal({
 
   const modal = (
     <AnimatePresence>
-      <motion.div className="fixed inset-0 z-[999999] flex items-start justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm lg:items-center">
+      <motion.div className="fixed inset-0 z-[999999] flex items-start justify-center overflow-hidden bg-black/50 p-4 backdrop-blur-sm lg:items-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 20 }}
           transition={{ duration: 0.35 }}
-          className="relative my-4 grid w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] sm:rounded-[40px] lg:grid-cols-[0.85fr_1.15fr]"
+          className="relative my-4 grid max-h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/10 bg-white shadow-[0_40px_120px_rgba(0,0,0,0.18)] sm:rounded-[40px] lg:grid-cols-[0.85fr_1.15fr]"
         >
           <button
             onClick={onClose}
@@ -562,19 +587,20 @@ export function BookingModal({
             </div>
           </div>
 
-          <div className="relative bg-[#FAF8F5] p-8 pt-20 lg:p-12 lg:pt-20">
+          <div className="relative max-h-[calc(100vh-2rem)] overflow-y-auto bg-[#FAF8F5] p-8 pt-20 lg:p-12 lg:pt-20">
             {success ? (
               <div className="flex min-h-[620px] flex-col items-center justify-center text-center">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-black text-3xl text-white">
                   OK
                 </div>
 
-                <h2 className="text-4xl font-semibold">Reserva enviada</h2>
+                <h2 className="text-4xl font-semibold">Aguardando confirmacion</h2>
 
                 <p className="mt-5 max-w-md text-lg leading-relaxed text-neutral-500">
-                  Te enviamos un email para confirmar la solicitud. El hueco queda
-                  protegido durante el plazo de confirmacion y el equipo recibira
-                  todos los detalles.
+                  Te enviamos la confirmacion por{" "}
+                  {confirmationChannel === "whatsapp" ? "WhatsApp" : "email"}. El hueco queda
+                  protegido durante el plazo de confirmacion y el equipo recibira todos
+                  los detalles.
                 </p>
 
                 <div className="mt-8 grid w-full max-w-xl gap-3 rounded-[28px] border border-black/10 bg-white p-5 text-left text-sm">
@@ -593,7 +619,7 @@ export function BookingModal({
                 </div>
 
                 <div className="mt-5 max-w-xl rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
-                  Importante: abre el email y pulsa confirmar para dejar la cita
+                  Importante: confirma desde el enlace recibido para dejar la cita
                   definitivamente reservada.
                 </div>
               </div>
@@ -615,7 +641,7 @@ export function BookingModal({
                     Paso 1
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Tus datos
+                    Datos de contacto
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-neutral-500">
                     Usaremos estos datos solo para confirmar y gestionar la cita.
@@ -653,9 +679,17 @@ export function BookingModal({
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <input
-                    name="full_name"
+                    name="first_name"
                     type="text"
-                    placeholder="Nombre completo"
+                    placeholder="Nombre"
+                    required
+                    className="h-16 rounded-2xl border border-black/10 bg-white px-5 text-lg outline-none transition focus:border-black"
+                  />
+
+                  <input
+                    name="last_name"
+                    type="text"
+                    placeholder="Apellido"
                     required
                     className="h-16 rounded-2xl border border-black/10 bg-white px-5 text-lg outline-none transition focus:border-black"
                   />
@@ -667,14 +701,55 @@ export function BookingModal({
                     required
                     className="h-16 rounded-2xl border border-black/10 bg-white px-5 text-lg outline-none transition focus:border-black"
                   />
+
+                  <input
+                    name="phone"
+                    type="tel"
+                    placeholder="Telefono / WhatsApp"
+                    required
+                    className="h-16 rounded-2xl border border-black/10 bg-white px-5 text-lg outline-none transition focus:border-black"
+                  />
                 </div>
 
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder="Telefono o WhatsApp opcional"
-                  className="h-16 rounded-2xl border border-black/10 bg-white px-5 text-lg outline-none transition focus:border-black"
-                />
+                <div className="rounded-[28px] border border-black/10 bg-white p-4">
+                  <div className="text-sm font-medium">Donde quieres recibir la confirmacion?</div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {[
+                      {
+                        value: "email" as const,
+                        label: "Email",
+                        hint: "Recibiras el enlace seguro en tu correo.",
+                      },
+                      {
+                        value: "whatsapp" as const,
+                        label: "WhatsApp",
+                        hint: "Usaremos el numero indicado para avisarte.",
+                      },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setConfirmationChannel(option.value)}
+                        className={`rounded-2xl border p-4 text-left transition ${
+                          confirmationChannel === option.value
+                            ? "border-black bg-black text-white"
+                            : "border-black/10 bg-[#F8F6F2] text-black hover:border-black"
+                        }`}
+                      >
+                        <div className="font-medium">{option.label}</div>
+                        <div
+                          className={`mt-1 text-sm ${
+                            confirmationChannel === option.value
+                              ? "text-white/70"
+                              : "text-neutral-500"
+                          }`}
+                        >
+                          {option.hint}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <select
                   value={selectedTreatment}
@@ -846,8 +921,12 @@ export function BookingModal({
                     Paso 3
                   </p>
                   <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Revisa y envia
+                    Aguardando confirmacion
                   </h2>
+                  <p className="mt-2 text-sm leading-6 text-neutral-500">
+                    Al enviar la solicitud, mandaremos el enlace de confirmacion por{" "}
+                    {confirmationChannel === "whatsapp" ? "WhatsApp" : "email"}.
+                  </p>
                 </div>
 
                 <div className="rounded-[28px] border border-black/10 bg-white p-5">
@@ -907,6 +986,10 @@ export function BookingModal({
                           ? "Hueco validado"
                           : "Pendiente"}
                     </div>
+                    <div>
+                      <span className="font-medium text-black">Confirmacion:</span>{" "}
+                      {confirmationChannel === "whatsapp" ? "WhatsApp" : "Email"}
+                    </div>
                   </div>
                 </div>
 
@@ -926,11 +1009,11 @@ export function BookingModal({
                   }
                   className="mt-3 h-16 rounded-2xl bg-black text-lg font-medium text-white transition-all duration-300 hover:scale-[1.01] hover:opacity-95 disabled:opacity-50"
                 >
-                  {loading ? "Enviando..." : "Enviar solicitud de reserva"}
+                  {loading ? "Enviando confirmacion..." : "Enviar y aguardar confirmacion"}
                 </button>
 
                 <p className="text-center text-xs leading-5 text-neutral-500">
-                  La cita se confirma definitivamente desde el email que recibiras.
+                  La cita se confirma definitivamente desde el enlace que recibiras.
                 </p>
               </form>
             )}
