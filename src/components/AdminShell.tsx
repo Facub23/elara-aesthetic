@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import AdminToast from "@/components/AdminToast";
 import {
   type AdminPermission,
+  getAccessRoleLabel,
   hasAdminPermission,
   hasAnyAdminPermission,
 } from "@/lib/admin-access";
@@ -37,57 +38,67 @@ export default function AdminShell({
     hasAdminPermission(adminAccess, permission);
   const canAny = (items: AdminPermission[]) =>
     hasAnyAdminPermission(adminAccess, items);
-  const navItems = isSuperAdmin
-    ? [
-        {
-          name: "Dashboard",
-          href: "/admin",
-          visible: true,
-        },
+  const canManageGlobalContent =
+    isSuperAdmin || accessRole === "content_editor";
+  const isSpecialistAccess = !isSuperAdmin && accessRole === "specialist";
+  const isClinicAccess =
+    !isSuperAdmin &&
+    ["clinic_owner", "clinic_manager", "reception"].includes(accessRole || "");
+  const navItems = [
+    {
+      name: "Dashboard",
+      href: "/admin",
+      visible: isSuperAdmin,
+    },
     {
       name: "Equipo",
       href: "/admin/admins",
       visible: isSuperAdmin,
     },
     {
-      name: "Reservas",
-      href: "/admin/reservas",
-      visible: can("bookings"),
+      name: isClinicAccess ? "Mi clinica" : "Clinicas",
+      href: "/admin/clinicas",
+      visible:
+        isSuperAdmin ||
+        canManageGlobalContent ||
+        (isClinicAccess && canAny(["content", "bookings", "calendar"])),
     },
     {
-      name: "Agenda",
+      name: "Reservas",
+      href: "/admin/reservas",
+      visible: !isSpecialistAccess && can("bookings"),
+    },
+    {
+      name: isSpecialistAccess ? "Mi agenda" : "Agenda",
       href: "/admin/calendar",
       visible: can("calendar"),
     },
     {
-      name: "Clinicas",
-      href: "/admin/clinicas",
-      visible: canAny(["content", "bookings", "calendar"]),
-    },
-    {
       name: "Tratamientos",
       href: "/admin/tratamientos",
-      visible: isSuperAdmin || can("content"),
+      visible: canManageGlobalContent,
     },
     {
       name: "Especialistas",
       href: "/admin/especialistas",
-      visible: isSuperAdmin || can("content") || accessRole === "clinic_manager",
+      visible:
+        canManageGlobalContent ||
+        (isClinicAccess && ["clinic_owner", "clinic_manager"].includes(accessRole || "")),
     },
     {
       name: "Pacientes",
       href: "/admin/pacientes",
-      visible: can("patients"),
+      visible: !isSpecialistAccess && can("patients"),
     },
     {
       name: "Opiniones",
       href: "/admin/reviews",
-      visible: can("reviews"),
+      visible: !isSpecialistAccess && can("reviews"),
     },
     {
       name: "Metricas",
       href: "/admin/analytics",
-      visible: can("analytics"),
+      visible: !isSpecialistAccess && can("analytics"),
     },
     {
       name: "Finanzas",
@@ -114,22 +125,8 @@ export default function AdminShell({
       href: "/admin/configuracion",
       visible: isSuperAdmin,
     },
-      ].filter((item) => item.visible)
-    : accessRole === "specialist"
-      ? [
-          {
-            name: "Mi agenda",
-            href: "/admin/calendar",
-            visible: true,
-          },
-        ]
-      : [
-        {
-          name: "Mi clinica",
-          href: "/admin/clinicas",
-          visible: true,
-        },
-      ];
+  ].filter((item) => item.visible);
+  const roleLabel = isSuperAdmin ? "Superadmin" : getAccessRoleLabel(accessRole);
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === "/admin";
@@ -148,7 +145,7 @@ export default function AdminShell({
             </div>
 
             <div className="mt-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
-              Admin Panel
+              {roleLabel}
             </div>
 
             <Link
@@ -190,7 +187,7 @@ export default function AdminShell({
             <div className="mt-5 text-3xl font-semibold">Admin</div>
 
             <p className="mt-4 text-sm leading-relaxed text-white/70">
-              Panel interno seguro con roles, metricas y actividad en vivo.
+              Acceso filtrado por rol para operar solo las areas permitidas.
             </p>
           </div>
         </aside>
@@ -204,7 +201,7 @@ export default function AdminShell({
                 </div>
 
                 <div className="text-xs uppercase tracking-[0.25em] text-neutral-500">
-                  Admin
+                  {roleLabel}
                 </div>
               </div>
 

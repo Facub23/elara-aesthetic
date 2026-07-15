@@ -29,13 +29,18 @@ export default async function AdminTreatmentsPage() {
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+  const canManageGlobalContent =
+    isSuperAdmin || adminUser.access_role === "content_editor";
 
-  if (!hasAdminPermission({
-    role: adminUser.role,
-    accessRole: adminUser.access_role,
-    permissions: adminUser.permissions,
-    status: adminUser.status,
-  }, "content")) {
+  if (
+    !canManageGlobalContent ||
+    !hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "content")
+  ) {
     redirect("/admin");
   }
 
