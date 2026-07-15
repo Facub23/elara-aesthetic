@@ -517,7 +517,7 @@ export function BookingModal({
             x
           </button>
 
-          <div className="relative flex max-h-[calc(100vh-2rem)] flex-col overflow-y-auto bg-[#050505] p-5 pb-8 text-white sm:p-10 sm:pb-12 lg:p-12 lg:pb-14">
+          <div className="booking-modal-dark-scroll relative flex max-h-[calc(100vh-2rem)] flex-col overflow-y-auto bg-[#050505] p-5 pb-8 text-white sm:p-10 sm:pb-12 lg:p-12 lg:pb-14">
             <div className="relative z-10">
               <div className="mb-3 max-w-[calc(100%-56px)] text-xs uppercase tracking-[0.28em] text-white/40 sm:mb-4 sm:tracking-[0.35em]">
                 Reserva EncuentraTuClinica
