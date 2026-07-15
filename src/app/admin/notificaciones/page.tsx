@@ -126,6 +126,10 @@ export default async function AdminNotificationsPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
+  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+    redirect("/admin/sin-permiso");
+  }
+
   if (
     !isSuperAdmin &&
     !hasAdminPermission({

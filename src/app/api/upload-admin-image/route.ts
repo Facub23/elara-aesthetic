@@ -22,7 +22,10 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get("file");
   const area = String(formData.get("area") || "marketplace");
-  const specialistUpload = isSpecialistAdmin(admin) && area === "specialists";
+  const specialistUpload =
+    isSpecialistAdmin(admin) &&
+    admin.accessRole === "independent_specialist" &&
+    area === "specialists";
 
   if (
     admin.role !== "super_admin" &&

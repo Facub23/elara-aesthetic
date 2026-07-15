@@ -53,9 +53,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
-  const specialistAdmin = isSpecialistAdmin(admin);
+  const independentSpecialistAdmin =
+    isSpecialistAdmin(admin) && admin.accessRole === "independent_specialist";
 
-  if (!hasAdminPermission(admin, "content") && !specialistAdmin) {
+  if (!hasAdminPermission(admin, "content") && !independentSpecialistAdmin) {
     return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
@@ -118,14 +119,17 @@ export async function POST(req: Request) {
       );
     }
 
-    if (specialistAdmin && String(admin.specialistId || "") !== String(currentSpecialist.id)) {
+    if (
+      independentSpecialistAdmin &&
+      String(admin.specialistId || "") !== String(currentSpecialist.id)
+    ) {
       return NextResponse.json(
         { success: false, error: "No puedes editar otro especialista" },
         { status: 403 }
       );
     }
 
-    if (admin.accessRole === "independent_specialist" && clinic_name) {
+    if (independentSpecialistAdmin && clinic_name) {
       return NextResponse.json(
         {
           success: false,

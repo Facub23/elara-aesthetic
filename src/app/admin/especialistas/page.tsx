@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import AdminSpecialistsManager from "@/components/AdminSpecialistsManager";
-import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
+import { hasAdminPermission } from "@/lib/admin-access";
 
 export default async function AdminSpecialistsPage({
   searchParams,
@@ -37,10 +37,11 @@ export default async function AdminSpecialistsPage({
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
-  const isSpecialistAccess = !isSuperAdmin && isSpecialistAccessRole(adminUser.access_role);
+  const isIndependentSpecialist =
+    !isSuperAdmin && adminUser.access_role === "independent_specialist";
 
   if (
-    !isSpecialistAccess &&
+    !isIndependentSpecialist &&
     !hasAdminPermission({
       role: adminUser.role,
       accessRole: adminUser.access_role,
@@ -85,14 +86,14 @@ export default async function AdminSpecialistsPage({
   const assignedClinic = !isSuperAdmin && adminUser.clinic_id
     ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
     : null;
-  const assignedSpecialist = isSpecialistAccess && adminUser.specialist_id
+  const assignedSpecialist = isIndependentSpecialist && adminUser.specialist_id
     ? (specialists || []).find(
         (specialist) => String(specialist.id) === String(adminUser.specialist_id)
       )
     : null;
   const visibleSpecialists = assignedSpecialist
     ? [assignedSpecialist]
-    : isSpecialistAccess
+    : isIndependentSpecialist
       ? []
     : assignedClinic?.name
       ? (specialists || []).filter(
@@ -104,8 +105,8 @@ export default async function AdminSpecialistsPage({
   const visibleSpecialistNames = new Set(
     visibleSpecialists.map((specialist) => specialist.name)
   );
-  const visibleClinics = assignedClinic ? [assignedClinic] : isSpecialistAccess ? [] : clinics || [];
-  const shouldScopeByVisibleSpecialists = isSpecialistAccess || !!assignedClinic;
+  const visibleClinics = assignedClinic ? [assignedClinic] : isIndependentSpecialist ? [] : clinics || [];
+  const shouldScopeByVisibleSpecialists = isIndependentSpecialist || !!assignedClinic;
   const visibleAvailability = shouldScopeByVisibleSpecialists
     ? (availability || []).filter((item) =>
         visibleSpecialistNames.has(item.specialist_name)
@@ -140,11 +141,11 @@ export default async function AdminSpecialistsPage({
         </p>
 
         <h1 className="mt-4 text-5xl font-semibold tracking-tight">
-          {isSpecialistAccess ? "Mi perfil profesional" : "Gestion de especialistas"}
+          {isIndependentSpecialist ? "Mi perfil profesional" : "Gestion de especialistas"}
         </h1>
 
         <p className="mt-4 max-w-2xl text-neutral-500">
-          {isSpecialistAccess
+          {isIndependentSpecialist
             ? "Actualiza tu ficha publica, tratamientos y lugar de atencion."
             : "Crea, edita y elimina especialistas conectados a clinicas y tratamientos."}
         </p>
@@ -159,8 +160,8 @@ export default async function AdminSpecialistsPage({
           blockedTimeSlots={visibleBlockedTimeSlots}
           initialClinicName={assignedClinic?.name || params.clinic || ""}
           openCreateOnLoad={params.new === "1"}
-          canCreate={!isSpecialistAccess}
-          canDelete={!isSpecialistAccess}
+          canCreate={!isIndependentSpecialist}
+          canDelete={!isIndependentSpecialist}
         />
       </div>
     </AdminShell>

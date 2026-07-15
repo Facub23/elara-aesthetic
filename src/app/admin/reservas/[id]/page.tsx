@@ -127,6 +127,10 @@ export default async function AdminBookingDetailPage({
 
   if (!adminUser) redirect("/login");
 
+  if (adminUser.role !== "super_admin" && adminUser.access_role === "specialist") {
+    redirect("/admin/sin-permiso");
+  }
+
   if (!hasAdminPermission({
     role: adminUser.role,
     accessRole: adminUser.access_role,
