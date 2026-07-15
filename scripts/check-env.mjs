@@ -77,7 +77,6 @@ const recommended = [
   "GOOGLE_CLIENT_ID",
   "GOOGLE_CLIENT_SECRET",
   "ENCUENTRA_BILLING_MODEL",
-  "ENCUENTRA_COMMISSION_RATE",
 ];
 
 const rows = [];

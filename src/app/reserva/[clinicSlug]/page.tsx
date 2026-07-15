@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { BookingModal } from "@/components/modals/booking-modal";
 import { supabase } from "@/lib/supabase";
 import { Navbar } from "@/components/layout/navbar";
 import { getTreatmentName } from "@/lib/treatment-utils";
 
-export default function ClinicPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
+export default function ClinicPage() {
+  const params = useParams<{ clinicSlug: string }>();
+  const slug = params.clinicSlug;
   const [clinic, setClinic] = useState<any>(null);
   const [specialists, setSpecialists] = useState<any[]>([]);
   const [treatments, setTreatments] = useState<any[]>([]);

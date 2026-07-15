@@ -23,7 +23,6 @@ Configurar estas variables en Project Settings > Environment Variables:
 | `GOOGLE_CLIENT_ID` | Recomendado | Necesario para conectar Google Calendar. |
 | `GOOGLE_CLIENT_SECRET` | Recomendado | Necesario para conectar Google Calendar. |
 | `ENCUENTRA_BILLING_MODEL` | Recomendado | Mantener `simulation` hasta decidir pagos reales. |
-| `ENCUENTRA_COMMISSION_RATE` | Recomendado | Comision si el modelo final usa porcentaje por cita. |
 
 Validar localmente antes de desplegar:
 
@@ -129,4 +128,4 @@ Las rutas privadas y de sistema (`/admin`, `/login`, `/mi-cuenta`, `/dashboard`,
 
 ## 5. Antes de datos reales
 
-Mantener pagos en modo simulacion hasta decidir el modelo comercial. Cargar datos reales al final, cuando el flujo tecnico, emails, crons y admin esten validados en la URL publica.
+Mantener pagos en modo simulacion hasta decidir el modelo comercial. Si se usa comision por cita, configurarla de forma personal desde `/admin/finanzas` para cada clinica o especialista; no usar una comision global. Cargar datos reales al final, cuando el flujo tecnico, emails, crons y admin esten validados en la URL publica.

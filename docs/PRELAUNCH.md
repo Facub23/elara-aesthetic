@@ -6,6 +6,8 @@ Guia de despliegue: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 Guia de carga real: [DATA_LOADING_GUIDE.md](./DATA_LOADING_GUIDE.md)
 
+Bloque de notas de carga final: [PRELAUNCH_CONTENT_NOTES.md](./PRELAUNCH_CONTENT_NOTES.md)
+
 ## Variables obligatorias
 
 - `NEXT_PUBLIC_SITE_URL`: dominio publico definitivo, sin barra final.
@@ -26,16 +28,18 @@ Guia de carga real: [DATA_LOADING_GUIDE.md](./DATA_LOADING_GUIDE.md)
 - `GOOGLE_CLIENT_ID`: OAuth para Google Calendar.
 - `GOOGLE_CLIENT_SECRET`: OAuth para Google Calendar.
 - `ENCUENTRA_BILLING_MODEL`: mantener `simulation` hasta decidir pagos.
-- `ENCUENTRA_COMMISSION_RATE`: comision si se usa modelo porcentual.
 
 ## Pagos
 
 Mantener Finanzas en modo simulacion hasta decidir:
 
-- Comision por cita completada.
+- Comision personalizada por clinica o especialista.
 - Suscripcion por clinica.
 - Lead verificado.
 - Modelo mixto.
+
+No usar comision global. Si el modelo usa porcentaje, configurarlo desde
+`/admin/finanzas` para cada clinica o especialista individual.
 
 Antes de activar cobros reales faltan:
 
@@ -114,6 +118,7 @@ Cargar datos reales al final, en este orden:
 5. Tratamientos y precios por especialista.
 6. Disponibilidad semanal por especialista.
 7. Bloqueos, vacaciones y limites diarios.
-8. Plantillas de email finales.
+8. Comisiones personalizadas por clinica o especialista.
+9. Plantillas de email finales.
 
 Para el checklist completo por clinica, tratamiento, especialista con clinica e independiente, usar [DATA_LOADING_GUIDE.md](./DATA_LOADING_GUIDE.md).

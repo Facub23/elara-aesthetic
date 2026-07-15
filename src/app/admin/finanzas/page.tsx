@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import AdminCommissionRulesManager from "@/components/AdminCommissionRulesManager";
 import AdminShell from "@/components/AdminShell";
 import { hasAdminPermission } from "@/lib/admin-access";
 import {
@@ -16,11 +17,28 @@ type FinanceBooking = {
   id: string | number;
   full_name: string | null;
   clinic_name: string | null;
+  specialist_name: string | null;
   treatment: string | null;
   booking_date: string | null;
   booking_time: string | null;
   status: string | null;
   booking_context?: unknown;
+};
+
+type CommissionRule = {
+  id: string;
+  target_type: "clinic" | "specialist";
+  target_id?: string | null;
+  target_name: string;
+  commission_rate: number | string;
+  notes?: string | null;
+};
+
+type TargetOption = {
+  type: "clinic" | "specialist";
+  id?: string | number | null;
+  name: string;
+  detail?: string | null;
 };
 
 function formatCurrency(value: number) {
@@ -55,6 +73,36 @@ function getBookingDateLabel(booking: FinanceBooking) {
 
 function getEnvFlag(...keys: string[]) {
   return keys.some((key) => Boolean(process.env[key]));
+}
+
+function normalizeText(value: string | null | undefined) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function getBookingCommissionRule(
+  booking: FinanceBooking,
+  rules: CommissionRule[]
+) {
+  const specialistName = normalizeText(booking.specialist_name);
+  const clinicName = normalizeText(booking.clinic_name);
+
+  const specialistRule = rules.find(
+    (rule) =>
+      rule.target_type === "specialist" &&
+      normalizeText(rule.target_name) === specialistName
+  );
+
+  if (specialistRule) return specialistRule;
+
+  return (
+    rules.find(
+      (rule) =>
+        rule.target_type === "clinic" &&
+        normalizeText(rule.target_name) === clinicName
+    ) || null
+  );
 }
 
 export default async function AdminFinanzasPage() {
@@ -96,7 +144,7 @@ export default async function AdminFinanzasPage() {
   let bookingsQuery = supabase
     .from("bookings")
     .select(
-      "id,full_name,clinic_name,treatment,booking_date,booking_time,status,booking_context"
+      "id,full_name,clinic_name,specialist_name,treatment,booking_date,booking_time,status,booking_context"
     )
     .order("booking_date", { ascending: false })
     .limit(300);
@@ -108,27 +156,61 @@ export default async function AdminFinanzasPage() {
   );
 
   const { data: bookings } = await bookingsQuery;
+  const { data: commissionRules, error: commissionRulesError } = await supabase
+    .from("commission_rules")
+    .select("id,target_type,target_id,target_name,commission_rate,notes")
+    .eq("active", true)
+    .order("target_type", { ascending: true })
+    .order("target_name", { ascending: true });
+  const { data: clinics } = await supabase
+    .from("clinics")
+    .select("id,name,city")
+    .order("name", { ascending: true });
+  const { data: specialists } = await supabase
+    .from("specialists")
+    .select("id,name,clinic_name,specialty")
+    .order("name", { ascending: true });
 
   const financeBookings = (bookings || []) as FinanceBooking[];
+  const commissionRulesSafe = (
+    commissionRulesError ? [] : commissionRules || []
+  ) as CommissionRule[];
   const pricedBookings = financeBookings
     .map((booking) => ({
       ...booking,
       priceFrom: getPriceFromContext(booking.booking_context),
     }))
     .filter((booking) => booking.priceFrom > 0);
+  const pricedBookingsWithCommission = pricedBookings.map((booking) => {
+    const commissionRule = getBookingCommissionRule(
+      booking,
+      commissionRulesSafe
+    );
+    const commissionRate = commissionRule
+      ? Number(commissionRule.commission_rate)
+      : 0;
+    const commissionAmount = Math.round(
+      booking.priceFrom * (Number.isFinite(commissionRate) ? commissionRate : 0) / 100
+    );
 
-  const completedBookings = pricedBookings.filter(
+    return {
+      ...booking,
+      commissionRule,
+      commissionRate,
+      commissionAmount,
+    };
+  });
+
+  const completedBookings = pricedBookingsWithCommission.filter(
     (booking) => getBookingStatusKey(booking.status) === "completed"
   );
-  const activePipeline = pricedBookings.filter((booking) =>
+  const activePipeline = pricedBookingsWithCommission.filter((booking) =>
     ["confirmed", "rescheduled", "pending"].includes(
       getBookingStatusKey(booking.status)
     )
   );
-  const incidentBookings = pricedBookings.filter((booking) =>
-    ["cancelled", "no_show", "expired"].includes(
-      getBookingStatusKey(booking.status)
-    )
+  const unconfiguredCommissionBookings = pricedBookingsWithCommission.filter(
+    (booking) => !booking.commissionRule
   );
 
   const capturedVolume = pricedBookings.reduce(
@@ -145,7 +227,10 @@ export default async function AdminFinanzasPage() {
   );
   const averageTicket =
     pricedBookings.length > 0 ? capturedVolume / pricedBookings.length : 0;
-  const simulatedCommission = Math.round(completedVolume * 0.12);
+  const configuredCommission = completedBookings.reduce(
+    (total, booking) => total + booking.commissionAmount,
+    0
+  );
   const billingModel = process.env.ENCUENTRA_BILLING_MODEL || "simulation";
   const paymentsSimulationMode = billingModel === "simulation";
   const paymentChecks = [
@@ -161,8 +246,11 @@ export default async function AdminFinanzasPage() {
     },
     {
       label: "Modelo comercial",
-      done: getEnvFlag("ENCUENTRA_COMMISSION_RATE", "ENCUENTRA_BILLING_MODEL"),
-      hint: "Define comision, suscripcion, lead verificado o modelo mixto.",
+      done:
+        getEnvFlag("ENCUENTRA_BILLING_MODEL") ||
+        commissionRulesSafe.length > 0,
+      hint:
+        "No hay comision global: configura porcentajes por clinica o especialista.",
     },
     {
       label: "Precios capturados",
@@ -234,15 +322,15 @@ export default async function AdminFinanzasPage() {
             <h2 className="mt-4 text-3xl font-semibold">
               {paymentsSimulationMode
                 ? "Cobros reales desactivados"
-                : "Comision estimada 12%"}
+                : "Comisiones personalizadas"}
             </h2>
             <p className="mt-4 text-5xl font-semibold">
-              {formatCurrency(simulatedCommission)}
+              {formatCurrency(configuredCommission)}
             </p>
             <p className="mt-5 text-sm leading-7 text-white/60">
               {paymentsSimulationMode
-                ? "Esta pantalla calcula oportunidad comercial, pero no cobra, no liquida y no emite facturas reales."
-                : "Calculo orientativo sobre citas completadas con precio capturado. Revisa proveedor, webhook y facturacion antes de operar."}
+                ? "Esta pantalla calcula oportunidad comercial con reglas personales, pero no cobra, no liquida y no emite facturas reales."
+                : "Calculo orientativo sobre citas completadas con una regla de comision personal configurada."}
             </p>
           </div>
 
@@ -265,7 +353,7 @@ export default async function AdminFinanzasPage() {
               {[
                 ["Completadas", completedBookings.length],
                 ["Pipeline", activePipeline.length],
-                ["Incidencias", incidentBookings.length],
+                ["Sin regla", unconfiguredCommissionBookings.length],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-2xl bg-[#F7F5F2] p-5">
                   <p className="text-xs uppercase tracking-[0.2em] text-neutral-500">
@@ -277,9 +365,9 @@ export default async function AdminFinanzasPage() {
             </div>
 
             <p className="mt-7 text-sm leading-7 text-neutral-500">
-              Para publicar con una capa financiera real, el siguiente paso sera
-              decidir si EncuentraTuClinica cobra por comision, suscripcion de
-              clinicas, leads verificados o un modelo mixto.
+              Para publicar con una capa financiera real, cada clinica o
+              especialista debe tener su porcentaje propio. Si una reserva no
+              tiene regla asociada, no se calcula comision.
             </p>
           </div>
         </section>
@@ -300,6 +388,53 @@ export default async function AdminFinanzasPage() {
             </p>
           </section>
         )}
+
+        {commissionRulesError && (
+          <section className="mt-6 rounded-[32px] border border-amber-100 bg-amber-50 p-8 text-amber-950">
+            <p className="text-xs uppercase tracking-[0.25em] text-amber-700">
+              Migracion pendiente
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold">
+              Falta crear la tabla de comisiones
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-7">
+              Ejecuta la migracion{" "}
+              <span className="font-medium">
+                202607150002_commission_rules.sql
+              </span>{" "}
+              en Supabase para poder guardar porcentajes personalizados.
+            </p>
+          </section>
+        )}
+
+        <AdminCommissionRulesManager
+          rules={commissionRulesSafe}
+          clinics={((clinics || []) as Array<{
+            id: string | number;
+            name: string;
+            city?: string | null;
+          }>)
+            .filter((clinic) => clinic.name)
+            .map((clinic) => ({
+              type: "clinic",
+              id: clinic.id,
+              name: clinic.name,
+              detail: clinic.city || null,
+            } satisfies TargetOption))}
+          specialists={((specialists || []) as Array<{
+            id: string | number;
+            name: string;
+            clinic_name?: string | null;
+            specialty?: string | null;
+          }>)
+            .filter((specialist) => specialist.name)
+            .map((specialist) => ({
+              type: "specialist",
+              id: specialist.id,
+              name: specialist.name,
+              detail: specialist.clinic_name || specialist.specialty || null,
+            } satisfies TargetOption))}
+        />
 
         <section className="mt-6 rounded-[32px] border border-black/5 bg-white/80 p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -365,18 +500,20 @@ export default async function AdminFinanzasPage() {
           </div>
 
           <div className="mt-7 divide-y divide-black/5">
-            {pricedBookings.slice(0, 8).map((booking) => (
+            {pricedBookingsWithCommission.slice(0, 8).map((booking) => (
               <Link
                 key={booking.id}
                 href={`/admin/reservas/${booking.id}`}
-                className="grid gap-3 py-5 text-sm transition hover:bg-[#F7F5F2] sm:grid-cols-[1.2fr_1fr_0.8fr_0.6fr]"
+                className="grid gap-3 py-5 text-sm transition hover:bg-[#F7F5F2] sm:grid-cols-[1.2fr_1fr_0.8fr_0.7fr_0.7fr]"
               >
                 <span>
                   <span className="block font-medium">
                     {booking.full_name || "Paciente"}
                   </span>
                   <span className="text-neutral-500">
-                    {booking.clinic_name || "Sin clinica"}
+                    {booking.specialist_name ||
+                      booking.clinic_name ||
+                      "Sin asignar"}
                   </span>
                 </span>
                 <span className="text-neutral-600">
@@ -387,6 +524,13 @@ export default async function AdminFinanzasPage() {
                 </span>
                 <span className="font-semibold">
                   {formatCurrency(booking.priceFrom)}
+                </span>
+                <span className="text-neutral-500">
+                  {booking.commissionRule
+                    ? `${booking.commissionRate}% - ${formatCurrency(
+                        booking.commissionAmount
+                      )}`
+                    : "Sin regla"}
                 </span>
               </Link>
             ))}

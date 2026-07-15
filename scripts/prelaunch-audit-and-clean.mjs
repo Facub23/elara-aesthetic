@@ -57,6 +57,7 @@ const contentTables = [
   "blocked_dates",
   "specialist_availability",
   "treatment_durations",
+  "commission_rules",
   "specialists",
   "clinics",
   "treatments",
