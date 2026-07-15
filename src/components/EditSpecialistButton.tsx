@@ -9,6 +9,7 @@ import { showAdminToast } from "@/components/AdminToast";
 import ImageUpload from "@/components/ImageUpload";
 import {
   getTreatmentName,
+  getTreatmentRawDuration,
   getTreatmentRawPrice,
 } from "@/lib/treatment-utils";
 
@@ -31,6 +32,27 @@ function getTreatmentPriceValue(
   treatment: string | { price?: string | number | null }
 ) {
   return getTreatmentRawPrice(treatment);
+}
+
+function getTreatmentDurationValue(
+  treatment:
+    | string
+    | {
+        duration_minutes?: string | number | null;
+        durationMinutes?: string | number | null;
+      }
+) {
+  return getTreatmentRawDuration(treatment);
+}
+
+function hasCompleteTreatmentConfig(treatments: any[]) {
+  return treatments.length > 0
+    ? treatments.every(
+        (treatment) =>
+          getTreatmentRawPrice(treatment).trim().length > 0 &&
+          getTreatmentRawDuration(treatment).trim().length > 0
+      )
+    : false;
 }
 
 export default function EditSpecialistButton({
@@ -81,7 +103,7 @@ export default function EditSpecialistButton({
             (item: any) =>
               normalize(getTreatmentName(item)) !== normalize(treatmentName)
           )
-        : [...form.treatments, { name: treatmentName, price: "" }],
+        : [...form.treatments, { name: treatmentName, price: "", duration_minutes: "" }],
     });
   }
 
@@ -90,7 +112,26 @@ export default function EditSpecialistButton({
       ...form,
       treatments: form.treatments.map((item: any) =>
         normalize(getTreatmentName(item)) === normalize(treatmentName)
-          ? { name: treatmentName, price }
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              price,
+            }
+          : item
+      ),
+    });
+  }
+
+  function updateTreatmentDuration(treatmentName: string, duration: string) {
+    setForm({
+      ...form,
+      treatments: form.treatments.map((item: any) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              duration_minutes: duration,
+            }
           : item
       ),
     });
@@ -103,10 +144,11 @@ export default function EditSpecialistButton({
       (!hasText(form.clinic_name) && !hasText(form.consultation_address)) ||
       !hasText(form.image) ||
       !hasText(form.bio) ||
-      form.treatments.length === 0
+      form.treatments.length === 0 ||
+      !hasCompleteTreatmentConfig(form.treatments)
     ) {
       showAdminToast(
-        "Completa perfil, lugar de atencion, imagen, bio y al menos un tratamiento",
+        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion para cada tratamiento",
         "error"
       );
       return;
@@ -287,26 +329,49 @@ export default function EditSpecialistButton({
                         return (
                           <div
                             key={treatmentName}
-                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_180px]"
+                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_160px_160px]"
                           >
                             <div>
                               <div className="font-medium">{treatmentName}</div>
                               <div className="mt-1 text-xs text-neutral-500">
-                                Precio desde para marketplace.
+                                Precio y duracion propios de este especialista.
                               </div>
                             </div>
 
-                            <input
-                              value={getTreatmentPriceValue(treatment)}
-                              onChange={(e) =>
-                                updateTreatmentPrice(
-                                  treatmentName,
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Ej: 290"
-                              className="h-12 rounded-2xl border border-black/5 bg-white px-4 outline-none"
-                            />
+                            <div>
+                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                Precio
+                              </label>
+                              <input
+                                value={getTreatmentPriceValue(treatment)}
+                                onChange={(e) =>
+                                  updateTreatmentPrice(
+                                    treatmentName,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Ej: 290 EUR"
+                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                Duracion
+                              </label>
+                              <input
+                                value={getTreatmentDurationValue(treatment)}
+                                onChange={(e) =>
+                                  updateTreatmentDuration(
+                                    treatmentName,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Ej: 45"
+                                inputMode="numeric"
+                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                              />
+                            </div>
                           </div>
                         );
                       })}

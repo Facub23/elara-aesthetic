@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import {
   getAvailableBookingSlots,
-  getTreatmentDuration,
+  getEffectiveTreatmentDuration,
 } from "@/lib/booking-availability";
 
 export async function GET(req: Request) {
@@ -29,9 +29,11 @@ export async function GET(req: Request) {
     const availability = await getAvailableBookingSlots({
       specialistName: specialist,
       bookingDate: date,
-      durationMinutes: treatment
-        ? await getTreatmentDuration(treatment)
-        : duration,
+      durationMinutes: await getEffectiveTreatmentDuration({
+        specialistName: specialist,
+        treatment,
+        fallbackDuration: duration,
+      }),
       bookingId,
     });
 

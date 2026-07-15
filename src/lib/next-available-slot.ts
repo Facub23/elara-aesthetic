@@ -1,6 +1,6 @@
 import {
   getAvailableBookingSlots,
-  getTreatmentDuration,
+  getEffectiveTreatmentDuration,
 } from "@/lib/booking-availability";
 
 type NextAvailableSlotInput = {
@@ -48,7 +48,10 @@ export async function findNextAvailableSlot({
     return null;
   }
 
-  const duration = await getTreatmentDuration(treatment);
+  const duration = await getEffectiveTreatmentDuration({
+    specialistName,
+    treatment,
+  });
   const start = getStartDate(startDate);
 
   for (let dayOffset = 0; dayOffset < maxDays; dayOffset += 1) {

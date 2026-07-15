@@ -36,14 +36,44 @@ function normalizeSelectedTreatments(treatments: unknown) {
         typeof treatment === "object" && treatment !== null
           ? String((treatment as any).price || "").trim()
           : "";
+      const duration =
+        typeof treatment === "object" && treatment !== null
+          ? Number(
+              String(
+                (treatment as any).duration_minutes ||
+                  (treatment as any).durationMinutes ||
+                  ""
+              ).replace(/[^0-9]/g, "")
+            )
+          : 0;
 
       if (!name) {
         return null;
       }
 
-      return price ? { name, price } : { name };
+      return { name, price, duration_minutes: duration || null };
     })
-    .filter(Boolean) as Array<{ name: string; price?: string }>;
+    .filter(Boolean) as Array<{
+      name: string;
+      price?: string;
+      duration_minutes?: number | null;
+    }>;
+}
+
+function hasIncompleteTreatmentConfig(
+  treatments: Array<{
+    name: string;
+    price?: string;
+    duration_minutes?: number | null;
+  }>
+) {
+  return treatments.some(
+    (treatment) =>
+      !String(treatment.price || "").trim() ||
+      !treatment.duration_minutes ||
+      treatment.duration_minutes < 5 ||
+      treatment.duration_minutes > 240
+  );
 }
 
 export async function POST(req: Request) {
@@ -79,13 +109,14 @@ export async function POST(req: Request) {
       !specialty ||
       !image ||
       !bio ||
-      selectedTreatments.length === 0
+      selectedTreatments.length === 0 ||
+      hasIncompleteTreatmentConfig(selectedTreatments)
     ) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Completa nombre, imagen, bio y al menos un tratamiento",
+            "Completa nombre, imagen, bio, precio y duracion valida para cada tratamiento",
         },
         { status: 400 }
       );

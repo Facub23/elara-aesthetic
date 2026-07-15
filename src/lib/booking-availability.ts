@@ -1,4 +1,10 @@
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
+import {
+  getTreatmentDurationValue,
+  getTreatmentName,
+  getTreatmentPriceValue,
+  type TreatmentEntry,
+} from "@/lib/treatment-utils";
 
 export const blockingStatuses = [
   "Pendiente",
@@ -102,6 +108,82 @@ export async function getTreatmentDuration(
     data?.duration_minutes ||
       (await getDefaultAppointmentDuration())
   );
+}
+
+function normalizeText(value?: string | null) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+export function findSpecialistTreatmentEntry(
+  treatments: TreatmentEntry[] | null | undefined,
+  treatment?: string | null
+) {
+  if (!treatment || !Array.isArray(treatments)) {
+    return null;
+  }
+
+  return (
+    treatments.find(
+      (item) => normalizeText(getTreatmentName(item)) === normalizeText(treatment)
+    ) || null
+  );
+}
+
+export async function getSpecialistTreatmentConfig(
+  specialistName?: string | null,
+  treatment?: string | null
+) {
+  if (!specialistName || !treatment) {
+    return {
+      durationMinutes: null as number | null,
+      priceFrom: null as number | null,
+    };
+  }
+
+  const { data } = await supabase
+    .from("specialists")
+    .select("treatments")
+    .eq("name", specialistName)
+    .maybeSingle();
+
+  const selectedTreatment = findSpecialistTreatmentEntry(
+    data?.treatments as TreatmentEntry[] | null | undefined,
+    treatment
+  );
+
+  return {
+    durationMinutes: getTreatmentDurationValue(selectedTreatment),
+    priceFrom: getTreatmentPriceValue(selectedTreatment),
+  };
+}
+
+export async function getEffectiveTreatmentDuration({
+  specialistName,
+  treatment,
+  fallbackDuration,
+}: {
+  specialistName?: string | null;
+  treatment?: string | null;
+  fallbackDuration?: number | null;
+}) {
+  const specialistConfig = await getSpecialistTreatmentConfig(
+    specialistName,
+    treatment
+  );
+
+  if (specialistConfig.durationMinutes) {
+    return specialistConfig.durationMinutes;
+  }
+
+  if (treatment) {
+    return getTreatmentDuration(treatment);
+  }
+
+  return Number(fallbackDuration || (await getDefaultAppointmentDuration()));
 }
 
 async function getDefaultAppointmentDuration() {

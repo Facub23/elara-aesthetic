@@ -5,6 +5,7 @@ import { createActivityLog } from "@/lib/activity";
 import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { getAssignedClinicName } from "@/lib/admin-scope";
 import {
+  findSpecialistTreatmentEntry,
   getTreatmentDuration,
   validateBookingSlot,
 } from "@/lib/booking-availability";
@@ -14,12 +15,16 @@ import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
 import { getSiteUrl } from "@/lib/site-url";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { getTreatmentName } from "@/lib/treatment-utils";
+import {
+  getTreatmentDurationValue,
+  getTreatmentPriceValue,
+  type TreatmentEntry,
+} from "@/lib/treatment-utils";
 
 type SpecialistRecord = {
   clinic_id?: string | number | null;
   clinic_name?: string | null;
-  treatments?: Array<string | { name?: string | null }> | null;
+  treatments?: TreatmentEntry[] | null;
 };
 
 function normalize(value?: string | null) {
@@ -190,9 +195,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const offersTreatment = (specialistRecord.treatments || []).some(
-      (item) => normalize(getTreatmentName(item)) === normalize(treatment)
+    const selectedTreatmentEntry = findSpecialistTreatmentEntry(
+      specialistRecord.treatments,
+      treatment
     );
+    const offersTreatment = Boolean(selectedTreatmentEntry);
 
     if (!offersTreatment) {
       return NextResponse.json(
@@ -207,7 +214,10 @@ export async function POST(req: Request) {
     }
 
     const bookingDateTime = `${booking_date} ${booking_time}`;
-    const durationMinutes = await getTreatmentDuration(treatment);
+    const durationMinutes =
+      getTreatmentDurationValue(selectedTreatmentEntry) ||
+      (await getTreatmentDuration(treatment));
+    const specialistPrice = getTreatmentPriceValue(selectedTreatmentEntry);
 
     const validationError = await validateBookingSlot({
       specialistName: specialist_name,
@@ -243,6 +253,10 @@ export async function POST(req: Request) {
           booking_time,
           treatment,
           duration_minutes: durationMinutes,
+          booking_context: {
+            price_from: specialistPrice,
+            duration_minutes: durationMinutes,
+          },
           status: "Confirmada",
           confirmed_by_client: true,
           cancellation_token: cancellationToken,

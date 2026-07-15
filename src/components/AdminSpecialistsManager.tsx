@@ -11,6 +11,7 @@ import ImageUpload from "@/components/ImageUpload";
 import { showAdminToast } from "@/components/AdminToast";
 import {
   getTreatmentName,
+  getTreatmentRawDuration,
   getTreatmentRawPrice,
 } from "@/lib/treatment-utils";
 
@@ -37,17 +38,29 @@ function getTreatmentPriceValue(
   return getTreatmentRawPrice(treatment);
 }
 
+function getTreatmentDurationValue(
+  treatment:
+    | string
+    | {
+        duration_minutes?: string | number | null;
+        durationMinutes?: string | number | null;
+      }
+) {
+  return getTreatmentRawDuration(treatment);
+}
+
 function getSpecialistTreatmentNames(specialist: any): string[] {
   return Array.isArray(specialist.treatments)
     ? specialist.treatments.map(getTreatmentName).filter(Boolean)
     : [];
 }
 
-function hasTreatmentPrices(specialist: any) {
-  return Array.isArray(specialist.treatments)
-    ? specialist.treatments.some(
+function hasCompleteTreatmentConfig(specialist: any) {
+  return Array.isArray(specialist.treatments) && specialist.treatments.length > 0
+    ? specialist.treatments.every(
         (treatment: any) =>
-          getTreatmentRawPrice(treatment).trim().length > 0
+          getTreatmentRawPrice(treatment).trim().length > 0 &&
+          getTreatmentRawDuration(treatment).trim().length > 0
       )
     : false;
 }
@@ -84,8 +97,8 @@ function getSpecialistIssues(specialist: any, clinics: any[], treatments: any[])
     issues.push("No tiene tratamientos asignados.");
   }
 
-  if (specialistTreatmentNames.length > 0 && !hasTreatmentPrices(specialist)) {
-    issues.push("Faltan precios por tratamiento.");
+  if (specialistTreatmentNames.length > 0 && !hasCompleteTreatmentConfig(specialist)) {
+    issues.push("Cada tratamiento necesita precio y duracion propios del especialista.");
   }
 
   if (
@@ -247,9 +260,9 @@ function getSpecialistChecklist(specialist: any, clinics: any[] = [], treatments
       hint: "Usa solo tratamientos existentes en el catalogo.",
     },
     {
-      label: "Precios por tratamiento",
-      done: specialistTreatmentNames.length > 0 && hasTreatmentPrices(specialist),
-      hint: "Anade precio desde para mejorar comparadores y conversion.",
+      label: "Precio y duracion por tratamiento",
+      done: specialistTreatmentNames.length > 0 && hasCompleteTreatmentConfig(specialist),
+      hint: "Anade precio y duracion propios por tratamiento para reservas reales.",
     },
   ];
 }
@@ -264,7 +277,9 @@ function emptyForm() {
     bio: "",
     rating: "5",
     reviews_count: "0",
-    treatments: [] as Array<string | { name: string; price?: string }>,
+    treatments: [] as Array<
+      string | { name: string; price?: string; duration_minutes?: string }
+    >,
   };
 }
 
@@ -275,7 +290,8 @@ function isSpecialistReady(form: ReturnType<typeof emptyForm>) {
     (hasText(form.clinic_name) || hasText(form.consultation_address)) &&
     hasText(form.image) &&
     hasText(form.bio) &&
-    form.treatments.length > 0
+    form.treatments.length > 0 &&
+    hasCompleteTreatmentConfig(form)
   );
 }
 
@@ -415,7 +431,7 @@ export default function AdminSpecialistsManager({
             (item) =>
               normalize(getTreatmentName(item)) !== normalize(treatmentName)
           )
-        : [...prev.treatments, { name: treatmentName, price: "" }],
+        : [...prev.treatments, { name: treatmentName, price: "", duration_minutes: "" }],
     }));
   }
 
@@ -424,7 +440,26 @@ export default function AdminSpecialistsManager({
       ...prev,
       treatments: prev.treatments.map((item) =>
         normalize(getTreatmentName(item)) === normalize(treatmentName)
-          ? { name: treatmentName, price }
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              price,
+            }
+          : item
+      ),
+    }));
+  }
+
+  function updateTreatmentDuration(treatmentName: string, duration: string) {
+    setForm((prev) => ({
+      ...prev,
+      treatments: prev.treatments.map((item) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              duration_minutes: duration,
+            }
           : item
       ),
     }));
@@ -433,7 +468,7 @@ export default function AdminSpecialistsManager({
   async function createSpecialist(options?: { configureAvailability?: boolean }) {
     if (!isSpecialistReady(form)) {
       showAdminToast(
-        "Completa perfil, lugar de atencion, imagen, bio y al menos un tratamiento",
+        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento",
         "error"
       );
       return;
@@ -699,26 +734,49 @@ export default function AdminSpecialistsManager({
                         return (
                           <div
                             key={treatmentName}
-                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_180px]"
+                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_160px_160px]"
                           >
                             <div>
                               <div className="font-medium">{treatmentName}</div>
                               <div className="mt-1 text-xs text-neutral-500">
-                                Precio desde para fichas y comparadores.
+                                Precio y duracion propios de este especialista.
                               </div>
                             </div>
 
-                            <input
-                              value={getTreatmentPriceValue(treatment)}
-                              onChange={(e) =>
-                                updateTreatmentPrice(
-                                  treatmentName,
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Ej: 290"
-                              className="h-12 rounded-2xl border border-black/5 bg-white px-4 outline-none"
-                            />
+                            <div>
+                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                Precio
+                              </label>
+                              <input
+                                value={getTreatmentPriceValue(treatment)}
+                                onChange={(e) =>
+                                  updateTreatmentPrice(
+                                    treatmentName,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Ej: 290 EUR"
+                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                Duracion
+                              </label>
+                              <input
+                                value={getTreatmentDurationValue(treatment)}
+                                onChange={(e) =>
+                                  updateTreatmentDuration(
+                                    treatmentName,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Ej: 45"
+                                inputMode="numeric"
+                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                              />
+                            </div>
                           </div>
                         );
                       })}
@@ -744,7 +802,7 @@ export default function AdminSpecialistsManager({
                   {!isSpecialistReady(form) && (
                     <div className="mt-6 rounded-[24px] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-800">
                       Para publicarlo correctamente necesitas perfil completo,
-                      lugar de atencion y al menos un tratamiento del catalogo.
+                      lugar de atencion, precio y duracion por tratamiento.
                     </div>
                   )}
                 </>

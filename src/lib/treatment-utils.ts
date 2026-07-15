@@ -4,6 +4,8 @@ export type TreatmentEntry =
       name?: string | null;
       price?: string | number | null;
       category?: string | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
     };
 
 export function parseTreatmentEntry(treatment?: TreatmentEntry | null) {
@@ -57,6 +59,31 @@ export function getTreatmentPriceValue(treatment?: TreatmentEntry | null) {
 
 export function getTreatmentRawPrice(treatment?: TreatmentEntry | null) {
   const value = parseTreatmentEntry(treatment)?.price;
+
+  return value === null || value === undefined ? "" : String(value);
+}
+
+export function getTreatmentDurationValue(treatment?: TreatmentEntry | null) {
+  const parsed = parseTreatmentEntry(treatment);
+  const value = parsed?.duration_minutes ?? parsed?.durationMinutes;
+
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+
+  const numericValue =
+    typeof value === "number"
+      ? value
+      : Number(String(value).replace(/[^0-9]/g, ""));
+
+  return Number.isFinite(numericValue) && numericValue > 0
+    ? numericValue
+    : null;
+}
+
+export function getTreatmentRawDuration(treatment?: TreatmentEntry | null) {
+  const parsed = parseTreatmentEntry(treatment);
+  const value = parsed?.duration_minutes ?? parsed?.durationMinutes;
 
   return value === null || value === undefined ? "" : String(value);
 }

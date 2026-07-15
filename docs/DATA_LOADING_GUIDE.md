@@ -47,7 +47,7 @@ Campos obligatorios:
 - Slug limpio y estable.
 - Descripcion clara.
 - Imagen principal.
-- Duracion por defecto.
+- Duracion por defecto del catalogo.
 
 Campos recomendados:
 
@@ -64,7 +64,7 @@ Checklist:
 - El slug no cambia despues de publicar.
 - El tratamiento aparece en `/tratamientos`.
 - La ficha `/tratamientos/[slug]` tiene contenido suficiente.
-- Existe duracion en `treatment_durations`.
+- Existe duracion base en `treatment_durations`.
 - Al menos un especialista lo ofrece antes de publicarlo como activo.
 
 ## 3. Clinicas
@@ -117,7 +117,7 @@ Campos obligatorios:
 - Bio publica.
 - Clinica asociada.
 - Tratamientos ofrecidos.
-- Precio por tratamiento.
+- Precio y duracion por tratamiento.
 
 Campos recomendados:
 
@@ -140,7 +140,7 @@ Checklist:
 - El especialista aparece en la clinica correcta.
 - El especialista no aparece como independiente.
 - Todos sus tratamientos existen en catalogo.
-- Cada tratamiento tiene precio orientativo.
+- Cada tratamiento tiene precio orientativo y duracion real del especialista.
 - Tiene disponibilidad activa antes de aceptar reservas.
 
 ## 5. Especialistas independientes
@@ -156,7 +156,7 @@ Campos obligatorios:
 - Bio publica.
 - Direccion de atencion (`consultation_address`).
 - Tratamientos ofrecidos.
-- Precio por tratamiento.
+- Precio y duracion por tratamiento.
 
 Campos recomendados:
 

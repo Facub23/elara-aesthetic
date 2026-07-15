@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  getTreatmentDurationValue,
   getTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -26,6 +27,8 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
     };
 
 type SpecialistOption =
@@ -173,6 +176,7 @@ export function BookingModal({
   }, [selectedSpecialist, selectedTreatment, specialists, treatments]);
 
   const selectedPrice = getTreatmentPriceValue(selectedTreatmentEntry);
+  const selectedDuration = getTreatmentDurationValue(selectedTreatmentEntry);
 
   const weekDays = useMemo(() => {
     const base = addDays(new Date(), weekOffset * 7);
@@ -240,12 +244,17 @@ export function BookingModal({
   useEffect(() => {
     if (!selectedTreatment) return;
 
+    if (selectedDuration) {
+      setTreatmentDuration(selectedDuration);
+      return;
+    }
+
     fetch(`/api/treatment-duration?treatment=${encodeURIComponent(selectedTreatment)}`)
       .then((res) => res.json())
       .then((data) => {
         setTreatmentDuration(data.duration || 60);
       });
-  }, [selectedTreatment]);
+  }, [selectedDuration, selectedTreatment]);
 
   useEffect(() => {
     if (!selectedDate || !selectedSpecialist) {

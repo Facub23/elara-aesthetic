@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import {
   blockingStatuses,
+  findSpecialistTreatmentEntry,
   getTreatmentDuration,
   validateBookingSlot,
 } from "@/lib/booking-availability";
@@ -10,12 +11,16 @@ import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingCreated } from "@/lib/booking-notifications";
 import { getSiteUrl } from "@/lib/site-url";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
-import { getTreatmentName } from "@/lib/treatment-utils";
+import {
+  getTreatmentDurationValue,
+  getTreatmentPriceValue,
+  type TreatmentEntry,
+} from "@/lib/treatment-utils";
 
 type SpecialistRecord = {
   clinic_id?: string | number | null;
   clinic_name?: string | null;
-  treatments?: Array<string | { name?: string | null }> | null;
+  treatments?: TreatmentEntry[] | null;
 };
 
 function normalize(value?: string | null) {
@@ -209,9 +214,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const offersTreatment = (specialistRecord.treatments || []).some(
-      (item) => normalize(getTreatmentName(item)) === normalize(treatment)
+    const selectedTreatmentEntry = findSpecialistTreatmentEntry(
+      specialistRecord.treatments,
+      treatment
     );
+    const offersTreatment = Boolean(selectedTreatmentEntry);
 
     if (!offersTreatment) {
       return NextResponse.json(
@@ -226,7 +233,10 @@ export async function POST(req: Request) {
     }
 
     const bookingDateTime = `${booking_date} ${booking_time}`;
-    const durationMinutes = await getTreatmentDuration(treatment);
+    const durationMinutes =
+      getTreatmentDurationValue(selectedTreatmentEntry) ||
+      (await getTreatmentDuration(treatment));
+    const specialistPrice = getTreatmentPriceValue(selectedTreatmentEntry);
 
     const { data: repeatedBooking } = await supabase
       .from("bookings")
@@ -291,8 +301,15 @@ export async function POST(req: Request) {
       source_url: source_url || null,
       booking_context:
         typeof booking_context === "object" && booking_context !== null
-          ? booking_context
-          : {},
+          ? {
+              ...booking_context,
+              price_from: specialistPrice ?? booking_context.price_from ?? null,
+              duration_minutes: durationMinutes,
+            }
+          : {
+              price_from: specialistPrice,
+              duration_minutes: durationMinutes,
+            },
     };
 
     const { data: booking, error } = await supabase
