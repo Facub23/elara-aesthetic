@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
+  getTreatmentDurationValue,
   getTreatmentName,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
@@ -16,6 +17,9 @@ type TreatmentOption =
   | string
   | {
       name?: string | null;
+      price?: string | number | null;
+      duration_minutes?: string | number | null;
+      durationMinutes?: string | number | null;
     };
 
 type ClinicRow = {
@@ -90,6 +94,31 @@ function specialistHasTreatment(specialist: SpecialistRow, treatment?: string | 
   );
 }
 
+function getTreatmentDuration(treatment?: TreatmentOption | null) {
+  return getTreatmentDurationValue(treatment) || undefined;
+}
+
+function getClinicDurationFrom(
+  specialists: SpecialistRow[],
+  selectedTreatment?: string | null
+) {
+  const durations = specialists
+    .flatMap((specialist) => specialist.treatments || [])
+    .filter((treatment) =>
+      selectedTreatment
+        ? normalizeText(getTreatmentName(treatment)) === normalizeText(selectedTreatment)
+        : true
+    )
+    .map((treatment) => getTreatmentDuration(treatment))
+    .filter((duration): duration is number => Boolean(duration));
+
+  return durations.length > 0 ? Math.min(...durations) : null;
+}
+
+function formatDuration(value?: number | null) {
+  return value ? `${value} min` : "A confirmar";
+}
+
 function formatSlotLabel(slot?: NextSlot | null) {
   if (!slot) {
     return "Sin huecos proximos";
@@ -143,6 +172,7 @@ function ClinicsPageContent() {
   const [city, setCity] = useState(selectedCity || "Todas");
   const [priceRange, setPriceRange] = useState("Todos");
   const [availabilityFilter, setAvailabilityFilter] = useState("Todos");
+  const [sortBy, setSortBy] = useState("Recomendadas");
   const [clinics, setClinics] = useState<ClinicRow[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -219,6 +249,7 @@ function ClinicsPageContent() {
           treatments: clinicTreatments,
           primarySpecialist: clinicSpecialists[0],
           priceFrom: prices.length > 0 ? Math.min(...prices) : null,
+          durationFrom: getClinicDurationFrom(clinicSpecialists, selectedTreatment),
           reviewSummary,
         };
       }),
@@ -308,17 +339,44 @@ function ClinicsPageContent() {
   }, [filteredClinicContexts, selectedTreatment]);
 
   const visibleClinicContexts = useMemo(() => {
-    if (availabilityFilter === "Todos") {
-      return filteredClinicContexts;
-    }
+    const filteredBySlot =
+      availabilityFilter === "Todos"
+        ? filteredClinicContexts
+        : filteredClinicContexts.filter(({ clinic }) => {
+            const clinicKey = String(clinic.id || clinic.slug || clinic.name);
+            const hasSlot = Boolean(nextSlots[clinicKey]);
 
-    return filteredClinicContexts.filter(({ clinic }) => {
-      const clinicKey = String(clinic.id || clinic.slug || clinic.name);
-      const hasSlot = Boolean(nextSlots[clinicKey]);
+            return availabilityFilter === "Con huecos" ? hasSlot : !hasSlot;
+          });
 
-      return availabilityFilter === "Con huecos" ? hasSlot : !hasSlot;
+    return [...filteredBySlot].sort((a, b) => {
+      if (sortBy === "Precio menor") {
+        return (
+          (a.priceFrom || Number.MAX_SAFE_INTEGER) -
+          (b.priceFrom || Number.MAX_SAFE_INTEGER)
+        );
+      }
+
+      if (sortBy === "Proximo hueco") {
+        const aKey = String(a.clinic.id || a.clinic.slug || a.clinic.name);
+        const bKey = String(b.clinic.id || b.clinic.slug || b.clinic.name);
+        const aSlot = nextSlots[aKey]
+          ? `${nextSlots[aKey]?.date} ${nextSlots[aKey]?.time}`
+          : "9999";
+        const bSlot = nextSlots[bKey]
+          ? `${nextSlots[bKey]?.date} ${nextSlots[bKey]?.time}`
+          : "9999";
+
+        return aSlot.localeCompare(bSlot);
+      }
+
+      if (sortBy === "Mejor rating") {
+        return Number(b.reviewSummary?.rating || 0) - Number(a.reviewSummary?.rating || 0);
+      }
+
+      return b.specialists.length - a.specialists.length;
     });
-  }, [availabilityFilter, filteredClinicContexts, nextSlots]);
+  }, [availabilityFilter, filteredClinicContexts, nextSlots, sortBy]);
 
   const specialistCount = new Set(
     visibleClinicContexts.flatMap(({ specialists: clinicSpecialists }) =>
@@ -428,7 +486,7 @@ function ClinicsPageContent() {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_auto]">
+          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]">
             <input
               type="text"
               placeholder="Buscar clinica, ciudad o tratamiento..."
@@ -468,6 +526,17 @@ function ClinicsPageContent() {
               <option value="Todos">Toda disponibilidad</option>
               <option value="Con huecos">Con huecos</option>
               <option value="Sin huecos">Sin huecos</option>
+            </select>
+
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+            >
+              <option value="Recomendadas">Recomendadas</option>
+              <option value="Proximo hueco">Proximo hueco</option>
+              <option value="Precio menor">Precio menor</option>
+              <option value="Mejor rating">Mejor rating</option>
             </select>
 
             <Link
@@ -557,6 +626,7 @@ function ClinicsPageContent() {
                   treatments,
                   primarySpecialist,
                   priceFrom,
+                  durationFrom,
                   reviewSummary,
                 }) => {
                   const clinicKey = String(clinic.id || clinic.slug || clinic.name);
@@ -621,6 +691,17 @@ function ClinicsPageContent() {
                               Tratamientos
                             </div>
                           </div>
+                          <div className="rounded-md bg-[#F8F6F2] p-3">
+                            <div className="text-xl font-semibold">
+                              {formatDuration(durationFrom)}
+                            </div>
+                            <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+                              Duracion desde
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-2">
                           <div className="rounded-md bg-black p-3 text-white">
                             <div className="text-sm font-semibold">
                               {formatSlotLabel(nextSlot)}
@@ -629,15 +710,15 @@ function ClinicsPageContent() {
                               Proximo hueco
                             </div>
                           </div>
-                        </div>
 
-                        <div className="mt-5 rounded-md border border-black/10 bg-white p-4 text-sm">
-                          Precio orientativo:{" "}
-                          <span className="font-semibold">
-                            {priceFrom
-                              ? `desde ${formatPrice(priceFrom)}`
-                              : "a consultar"}
-                          </span>
+                          <div className="rounded-md border border-black/10 bg-white p-3 text-sm">
+                            Precio orientativo
+                            <div className="mt-1 font-semibold text-black">
+                              {priceFrom
+                                ? `desde ${formatPrice(priceFrom)}`
+                                : "a consultar"}
+                            </div>
+                          </div>
                         </div>
 
                         {selectedTreatment && primarySpecialist && (
