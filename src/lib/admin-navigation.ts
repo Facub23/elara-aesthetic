@@ -70,9 +70,9 @@ export function getAdminNavItems(context: AdminNavContext) {
         (isClinicAccess && canAny(["content", "bookings", "calendar"])),
     },
     {
-      name: "Reservas",
+      name: isSpecialistAccess ? "Mis reservas" : "Reservas",
       href: "/admin/reservas",
-      visible: !isSpecialistAccess && can("bookings"),
+      visible: can("bookings"),
     },
     {
       name: isSpecialistAccess ? "Mi agenda" : "Agenda",
@@ -85,17 +85,18 @@ export function getAdminNavItems(context: AdminNavContext) {
       visible: canManageGlobalContent,
     },
     {
-      name: "Especialistas",
+      name: isSpecialistAccess ? "Mi perfil" : "Especialistas",
       href: "/admin/especialistas",
       visible:
+        isSpecialistAccess ||
         canManageGlobalContent ||
         (isClinicAccess &&
           ["clinic_owner", "clinic_manager"].includes(accessRole || "")),
     },
     {
-      name: "Pacientes",
+      name: isSpecialistAccess ? "Mis pacientes" : "Pacientes",
       href: "/admin/pacientes",
-      visible: !isSpecialistAccess && can("patients"),
+      visible: can("patients"),
     },
     {
       name: "Opiniones",
@@ -125,7 +126,7 @@ export function getAdminNavItems(context: AdminNavContext) {
     {
       name: "Notificaciones",
       href: "/admin/notificaciones",
-      visible: !isSpecialistAccess && (isSuperAdmin || can("bookings")),
+      visible: isSuperAdmin || can("bookings"),
     },
     {
       name: "Configuracion",

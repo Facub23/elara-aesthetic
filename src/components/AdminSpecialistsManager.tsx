@@ -289,6 +289,8 @@ export default function AdminSpecialistsManager({
   blockedTimeSlots = [],
   initialClinicName = "",
   openCreateOnLoad = false,
+  canCreate = true,
+  canDelete = true,
 }: {
   initialSpecialists: any[];
   clinics: any[];
@@ -299,6 +301,8 @@ export default function AdminSpecialistsManager({
   blockedTimeSlots?: any[];
   initialClinicName?: string;
   openCreateOnLoad?: boolean;
+  canCreate?: boolean;
+  canDelete?: boolean;
 }) {
   const router = useRouter();
   const [specialists, setSpecialists] = useState(initialSpecialists);
@@ -325,11 +329,11 @@ export default function AdminSpecialistsManager({
       clinic_name: initialClinicName,
     }));
 
-    if (openCreateOnLoad) {
+    if (openCreateOnLoad && canCreate) {
       setOpen(true);
       setActiveStep("profile");
     }
-  }, [initialClinicName, openCreateOnLoad]);
+  }, [canCreate, initialClinicName, openCreateOnLoad]);
 
   const filteredSpecialists = specialists.filter((specialist) => {
     const searchValue = search.toLowerCase();
@@ -508,16 +512,18 @@ export default function AdminSpecialistsManager({
 
   return (
     <div className="mt-10">
-      <div className="flex justify-end">
-        <button
-          onClick={() => setOpen(true)}
-          className="rounded-full bg-black px-6 py-3 text-white transition-all duration-300 hover:scale-[1.03]"
-        >
-          Nuevo especialista
-        </button>
-      </div>
+      {canCreate && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setOpen(true)}
+            className="rounded-full bg-black px-6 py-3 text-white transition-all duration-300 hover:scale-[1.03]"
+          >
+            Nuevo especialista
+          </button>
+        </div>
+      )}
 
-      {open && (
+      {open && canCreate && (
         <AdminEntityEditorShell
           title="Nuevo especialista"
           steps={specialistEditorSteps}
@@ -1071,12 +1077,14 @@ export default function AdminSpecialistsManager({
                     treatments={treatments}
                   />
 
-                  <button
-                    onClick={() => setDeleteId(specialist.id)}
-                    className="rounded-full bg-red-500 px-5 py-3 text-sm text-white"
-                  >
-                    Eliminar
-                  </button>
+                  {canDelete && (
+                    <button
+                      onClick={() => setDeleteId(specialist.id)}
+                      className="rounded-full bg-red-500 px-5 py-3 text-sm text-white"
+                    >
+                      Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

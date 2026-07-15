@@ -2102,14 +2102,12 @@ export default function AdminAdvancedCalendarPage({
         </p>
       </div>
 
-      {!isSpecialistAccess && (
-        <Link
-          href="/admin/reservas"
-          className="mt-8 inline-flex rounded-full border border-black/10 bg-white px-6 py-3 text-sm transition hover:border-black"
-        >
-          Ver cola de reservas
-        </Link>
-      )}
+      <Link
+        href="/admin/reservas"
+        className="mt-8 inline-flex rounded-full border border-black/10 bg-white px-6 py-3 text-sm transition hover:border-black"
+      >
+        {isSpecialistAccess ? "Ver mis reservas" : "Ver cola de reservas"}
+      </Link>
 
       {feedback && (
         <div
@@ -4335,14 +4333,12 @@ export default function AdminAdvancedCalendarPage({
               Editar reserva
             </h2>
 
-            {!isSpecialistAccess && (
-              <Link
-                href={`/admin/reservas/${selectedBooking.id}`}
-                className="mt-5 inline-flex rounded-full border border-black/10 px-5 py-2.5 text-sm transition hover:border-black"
-              >
-                Abrir ficha completa
-              </Link>
-            )}
+            <Link
+              href={`/admin/reservas/${selectedBooking.id}`}
+              className="mt-5 inline-flex rounded-full border border-black/10 px-5 py-2.5 text-sm transition hover:border-black"
+            >
+              Abrir ficha completa
+            </Link>
 
             {selectedBooking.rescheduled_at && (
               <div className="mt-5 rounded-2xl bg-sky-50 p-4 text-sm text-sky-800">

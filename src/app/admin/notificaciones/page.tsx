@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import AdminShell from "@/components/AdminShell";
 import MarkAdminNotificationReadButton from "@/components/MarkAdminNotificationReadButton";
 import ResendNotificationButton from "@/components/ResendNotificationButton";
-import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
+import { hasAdminPermission } from "@/lib/admin-access";
 import {
   getAssignedClinicName,
   getAssignedSpecialist,
@@ -125,10 +125,6 @@ export default async function AdminNotificationsPage({
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
-
-  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
-    redirect("/admin/sin-permiso");
-  }
 
   if (
     !isSuperAdmin &&
@@ -293,12 +289,14 @@ export default async function AdminNotificationsPage({
             </p>
           </div>
 
-          <Link
-            href="/admin/emails"
-            className="w-fit rounded-full bg-black px-6 py-3 text-sm text-white"
-          >
-            Editar plantillas
-          </Link>
+          {isSuperAdmin && (
+            <Link
+              href="/admin/emails"
+              className="w-fit rounded-full bg-black px-6 py-3 text-sm text-white"
+            >
+              Editar plantillas
+            </Link>
+          )}
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-5">

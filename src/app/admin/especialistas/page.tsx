@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import AdminSpecialistsManager from "@/components/AdminSpecialistsManager";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 
 export default async function AdminSpecialistsPage({
   searchParams,
@@ -37,13 +37,17 @@ export default async function AdminSpecialistsPage({
   }
 
   const isSuperAdmin = adminUser.role === "super_admin";
+  const isSpecialistAccess = !isSuperAdmin && isSpecialistAccessRole(adminUser.access_role);
 
-  if (!hasAdminPermission({
-    role: adminUser.role,
-    accessRole: adminUser.access_role,
-    permissions: adminUser.permissions,
-    status: adminUser.status,
-  }, "content")) {
+  if (
+    !isSpecialistAccess &&
+    !hasAdminPermission({
+      role: adminUser.role,
+      accessRole: adminUser.access_role,
+      permissions: adminUser.permissions,
+      status: adminUser.status,
+    }, "content")
+  ) {
     redirect("/admin/sin-permiso");
   }
 
@@ -81,31 +85,43 @@ export default async function AdminSpecialistsPage({
   const assignedClinic = !isSuperAdmin && adminUser.clinic_id
     ? clinics?.find((clinic) => Number(clinic.id) === Number(adminUser.clinic_id))
     : null;
-  const visibleSpecialists = assignedClinic?.name
-    ? (specialists || []).filter(
-        (specialist) => specialist.clinic_name === assignedClinic.name
+  const assignedSpecialist = isSpecialistAccess && adminUser.specialist_id
+    ? (specialists || []).find(
+        (specialist) => String(specialist.id) === String(adminUser.specialist_id)
       )
-    : specialists || [];
+    : null;
+  const visibleSpecialists = assignedSpecialist
+    ? [assignedSpecialist]
+    : isSpecialistAccess
+      ? []
+    : assignedClinic?.name
+      ? (specialists || []).filter(
+          (specialist) =>
+            specialist.clinic_name === assignedClinic.name ||
+            Number(specialist.clinic_id || 0) === Number(assignedClinic.id)
+        )
+      : specialists || [];
   const visibleSpecialistNames = new Set(
     visibleSpecialists.map((specialist) => specialist.name)
   );
-  const visibleClinics = assignedClinic ? [assignedClinic] : clinics || [];
-  const visibleAvailability = assignedClinic
+  const visibleClinics = assignedClinic ? [assignedClinic] : isSpecialistAccess ? [] : clinics || [];
+  const shouldScopeByVisibleSpecialists = isSpecialistAccess || !!assignedClinic;
+  const visibleAvailability = shouldScopeByVisibleSpecialists
     ? (availability || []).filter((item) =>
         visibleSpecialistNames.has(item.specialist_name)
       )
     : availability || [];
-  const visibleVacations = assignedClinic
+  const visibleVacations = shouldScopeByVisibleSpecialists
     ? (vacations || []).filter((item) =>
         visibleSpecialistNames.has(item.specialist_name)
       )
     : vacations || [];
-  const visibleBlockedDates = assignedClinic
+  const visibleBlockedDates = shouldScopeByVisibleSpecialists
     ? (blockedDates || []).filter((item) =>
         visibleSpecialistNames.has(item.specialist_name)
       )
     : blockedDates || [];
-  const visibleBlockedTimeSlots = assignedClinic
+  const visibleBlockedTimeSlots = shouldScopeByVisibleSpecialists
     ? (blockedTimeSlots || []).filter((item) =>
         visibleSpecialistNames.has(item.specialist_name)
       )
@@ -124,12 +140,13 @@ export default async function AdminSpecialistsPage({
         </p>
 
         <h1 className="mt-4 text-5xl font-semibold tracking-tight">
-          Gestion de especialistas
+          {isSpecialistAccess ? "Mi perfil profesional" : "Gestion de especialistas"}
         </h1>
 
         <p className="mt-4 max-w-2xl text-neutral-500">
-          Crea, edita y elimina especialistas conectados a clinicas y
-          tratamientos.
+          {isSpecialistAccess
+            ? "Actualiza tu ficha publica, tratamientos y lugar de atencion."
+            : "Crea, edita y elimina especialistas conectados a clinicas y tratamientos."}
         </p>
 
         <AdminSpecialistsManager
@@ -142,6 +159,8 @@ export default async function AdminSpecialistsPage({
           blockedTimeSlots={visibleBlockedTimeSlots}
           initialClinicName={assignedClinic?.name || params.clinic || ""}
           openCreateOnLoad={params.new === "1"}
+          canCreate={!isSpecialistAccess}
+          canDelete={!isSpecialistAccess}
         />
       </div>
     </AdminShell>
