@@ -258,7 +258,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error,
+          error: error.message || "Error actualizando especialista",
         },
         {
           status: 500,
@@ -281,7 +281,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: err,
+        error: err instanceof Error ? err.message : "Error interno",
       },
       {
         status: 500,

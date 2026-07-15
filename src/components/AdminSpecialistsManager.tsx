@@ -325,6 +325,7 @@ export default function AdminSpecialistsManager({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [createAndConfigure, setCreateAndConfigure] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [activeStep, setActiveStep] = useState("profile");
   const [search, setSearch] = useState("");
   const [clinicFilter, setClinicFilter] = useState("");
@@ -418,6 +419,7 @@ export default function AdminSpecialistsManager({
   function resetEditor() {
     setOpen(false);
     setActiveStep("profile");
+    setActionError("");
     setForm(emptyForm());
   }
 
@@ -466,9 +468,15 @@ export default function AdminSpecialistsManager({
   }
 
   async function createSpecialist(options?: { configureAvailability?: boolean }) {
+    setActionError("");
+
     if (!isSpecialistReady(form)) {
+      const message =
+        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento";
+
+      setActionError(message);
       showAdminToast(
-        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento",
+        message,
         "error"
       );
       return;
@@ -480,13 +488,25 @@ export default function AdminSpecialistsManager({
 
     setLoading(true);
 
-    const res = await fetch("/api/create-specialist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    let res: Response;
+
+    try {
+      res = await fetch("/api/create-specialist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+    } catch {
+      const message = "No se pudo conectar con el servidor para crear.";
+
+      setLoading(false);
+      setCreateAndConfigure(false);
+      setActionError(message);
+      showAdminToast(message, "error");
+      return;
+    }
 
     const data = await res.json();
 
@@ -494,7 +514,13 @@ export default function AdminSpecialistsManager({
     setCreateAndConfigure(false);
 
     if (!res.ok) {
-      showAdminToast(data.error || "Error creando especialista", "error");
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : "Error creando especialista";
+
+      setActionError(message);
+      showAdminToast(message, "error");
       return;
     }
 
@@ -578,6 +604,14 @@ export default function AdminSpecialistsManager({
             onClick: () => createSpecialist({ configureAvailability: true }),
           }}
         >
+          {actionError && (
+            <div className="mx-auto mt-6 max-w-7xl px-6">
+              <div className="rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+                {actionError}
+              </div>
+            </div>
+          )}
+
           <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
               {activeStep === "profile" && (

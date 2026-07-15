@@ -191,7 +191,7 @@ export async function POST(req: Request) {
 
     if (error) {
       return NextResponse.json(
-        { success: false, error },
+        { success: false, error: error.message || "Error creando especialista" },
         { status: 500 }
       );
     }
@@ -210,7 +210,10 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     return NextResponse.json(
-      { success: false, error: err },
+      {
+        success: false,
+        error: err instanceof Error ? err.message : "Error interno",
+      },
       { status: 500 }
     );
   }

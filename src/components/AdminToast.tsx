@@ -71,7 +71,7 @@ export default function AdminToast() {
           transition={{
             duration: 0.35,
           }}
-          className={`fixed bottom-8 right-8 z-[99999] max-w-sm rounded-[28px] px-6 py-5 shadow-[0_20px_80px_rgba(0,0,0,0.25)] ${
+          className={`fixed bottom-8 right-8 z-[1000000] max-w-sm rounded-[28px] px-6 py-5 shadow-[0_20px_80px_rgba(0,0,0,0.25)] ${
             styles[toast.type || "info"]
           }`}
         >
