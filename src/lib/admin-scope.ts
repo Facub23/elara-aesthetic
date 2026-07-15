@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isSpecialistAccessRole } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
 type AdminScope = {
@@ -10,7 +11,7 @@ type AdminScope = {
 };
 
 export function isSpecialistAdmin(admin: AdminScope) {
-  return admin.role !== "super_admin" && admin.accessRole === "specialist";
+  return admin.role !== "super_admin" && isSpecialistAccessRole(admin.accessRole);
 }
 
 export async function getAssignedClinicName(admin: AdminScope) {

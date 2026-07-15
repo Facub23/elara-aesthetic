@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
 import GoogleCalendarSyncButton from "@/components/GoogleCalendarSyncButton";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import {
   getBookingStatusClass,
   getBookingStatusKey,
@@ -127,7 +127,7 @@ export default async function AdminBookingDetailPage({
 
   if (!adminUser) redirect("/login");
 
-  if (adminUser.role !== "super_admin" && adminUser.access_role === "specialist") {
+  if (adminUser.role !== "super_admin" && isSpecialistAccessRole(adminUser.access_role)) {
     redirect("/admin/sin-permiso");
   }
 

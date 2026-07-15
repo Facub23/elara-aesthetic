@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { createActivityLog } from "@/lib/activity";
-import { isAdminAccessRole, filterAdminPermissions } from "@/lib/admin-access";
+import {
+  isAdminAccessRole,
+  filterAdminPermissions,
+  isSpecialistAccessRole,
+} from "@/lib/admin-access";
 import { createAdminNotification } from "@/lib/admin-notifications";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
@@ -24,6 +28,9 @@ export async function POST(req: Request) {
     const permissions = filterAdminPermissions(body.permissions);
     const clinicId = Number(body.clinicId || 0) || null;
     const specialistId = String(body.specialistId || "").trim() || null;
+    const specialistAccess = isSpecialistAccessRole(accessRole);
+    const requestedClinicId =
+      accessRole === "independent_specialist" ? null : clinicId;
 
     if (!name || !email || !email.includes("@")) {
       return NextResponse.json(
@@ -39,7 +46,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (accessRole === "specialist" && !specialistId) {
+    if (specialistAccess && !specialistId) {
       return NextResponse.json(
         { success: false, error: "Selecciona el especialista asociado." },
         { status: 400 }
@@ -73,6 +80,33 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
+
+      if (
+        accessRole === "independent_specialist" &&
+        (specialist.clinic_id || specialist.clinic_name)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Selecciona un especialista independiente sin clinica asociada.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (
+        accessRole === "specialist" &&
+        !specialist.clinic_id &&
+        !specialist.clinic_name
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Para un especialista independiente usa el rango correspondiente.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     const { data: existingPending } = await supabase
@@ -99,7 +133,7 @@ export async function POST(req: Request) {
         email,
         phone: phone || null,
         company: company || null,
-        requested_clinic_id: clinicId,
+        requested_clinic_id: requestedClinicId,
         requested_clinic_name: clinicName || null,
         requested_specialist_id: specialistId,
         requested_access_role: accessRole,

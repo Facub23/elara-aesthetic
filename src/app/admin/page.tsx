@@ -12,6 +12,7 @@ import AdminActivityFeed from "@/components/AdminActivityFeed";
 import AdminDeliveryLog from "@/components/AdminDeliveryLog";
 import AdminMarketplaceHealth from "@/components/AdminMarketplaceHealth";
 import AdminPrelaunchChecklist from "@/components/AdminPrelaunchChecklist";
+import { isSpecialistAccessRole } from "@/lib/admin-access";
 import { getBookingStatusFilterValues } from "@/lib/booking-status";
 
 type OperationalBooking = {
@@ -62,7 +63,7 @@ export default async function PremiumAdminDashboard() {
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
     redirect("/admin/calendar");
   }
 

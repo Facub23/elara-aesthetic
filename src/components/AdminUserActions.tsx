@@ -6,6 +6,7 @@ import AdminConfirmModal from "@/components/AdminConfirmModal";
 import {
   ADMIN_ACCESS_ROLES,
   ADMIN_PERMISSION_OPTIONS,
+  isSpecialistAccessRole,
 } from "@/lib/admin-access";
 
 export default function AdminUserActions({
@@ -221,7 +222,7 @@ export default function AdminUserActions({
                 role,
                 e.target.value,
                 permissions,
-                e.target.value === "specialist" ? specialistId : ""
+                isSpecialistAccessRole(e.target.value) ? specialistId : ""
               )
             }
             className="rounded-full border border-black/10 bg-white px-5 py-3 text-sm"
@@ -234,7 +235,7 @@ export default function AdminUserActions({
           </select>
         ) : null}
 
-        {role !== "super_admin" && accessRole === "specialist" ? (
+        {role !== "super_admin" && isSpecialistAccessRole(accessRole) ? (
           <select
             value={specialistId}
             disabled={loading}
@@ -246,6 +247,14 @@ export default function AdminUserActions({
             <option value="">Especialista asociado</option>
             {specialists
               .filter((specialist) => {
+                if (accessRole === "independent_specialist") {
+                  return !specialist.clinic_id && !specialist.clinic_name;
+                }
+
+                if (accessRole === "specialist" && !currentClinicId) {
+                  return Boolean(specialist.clinic_id || specialist.clinic_name);
+                }
+
                 if (!currentClinicId) return true;
 
                 return Number(specialist.clinic_id || 0) === Number(currentClinicId);

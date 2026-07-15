@@ -2,6 +2,7 @@ import {
   type AdminPermission,
   hasAdminPermission,
   hasAnyAdminPermission,
+  isSpecialistAccessRole,
 } from "@/lib/admin-access";
 
 export type AdminNavContext = {
@@ -43,7 +44,8 @@ export function getAdminNavItems(context: AdminNavContext) {
     hasAnyAdminPermission(adminAccess, items);
   const canManageGlobalContent =
     isSuperAdmin || accessRole === "content_editor";
-  const isSpecialistAccess = !isSuperAdmin && accessRole === "specialist";
+  const isSpecialistAccess =
+    !isSuperAdmin && isSpecialistAccessRole(accessRole);
   const isClinicAccess =
     !isSuperAdmin &&
     ["clinic_owner", "clinic_manager", "reception"].includes(accessRole || "");

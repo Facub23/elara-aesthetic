@@ -6,6 +6,7 @@ import AdminLoadingOverlay from "@/components/AdminLoadingOverlay";
 import {
   ADMIN_ACCESS_ROLES,
   ADMIN_PERMISSION_OPTIONS,
+  isSpecialistAccessRole,
 } from "@/lib/admin-access";
 
 type ClinicOption = {
@@ -66,7 +67,18 @@ export default function AddAdminForm() {
   }, []);
 
   const selectedClinic = clinics.find((clinic) => String(clinic.id) === clinicId);
+  const isSpecialistRole = isSpecialistAccessRole(accessRole);
+  const requiresClinic =
+    role !== "super_admin" && !isSpecialistRole;
   const availableSpecialists = specialists.filter((specialist) => {
+    if (accessRole === "independent_specialist") {
+      return !specialist.clinic_id && !specialist.clinic_name;
+    }
+
+    if (accessRole === "specialist" && !clinicId) {
+      return Boolean(specialist.clinic_id || specialist.clinic_name);
+    }
+
     if (!clinicId) return true;
 
     return (
@@ -103,7 +115,7 @@ export default function AddAdminForm() {
       return;
     }
 
-    if (role !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+    if (requiresClinic && !clinicId) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
@@ -116,7 +128,7 @@ export default function AddAdminForm() {
       return;
     }
 
-    if (role !== "super_admin" && accessRole === "specialist" && !specialistId) {
+    if (role !== "super_admin" && isSpecialistRole && !specialistId) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
@@ -292,7 +304,7 @@ export default function AddAdminForm() {
                 onChange={(e) =>
                   {
                     setAccessRole(e.target.value);
-                    if (e.target.value !== "specialist") {
+                    if (!isSpecialistAccessRole(e.target.value)) {
                       setSpecialistId("");
                     }
                   }
@@ -306,7 +318,7 @@ export default function AddAdminForm() {
                 ))}
               </select>
 
-              {accessRole === "specialist" ? (
+              {isSpecialistRole ? (
                 <select
                   value={specialistId}
                   onChange={(e) => setSpecialistId(e.target.value)}

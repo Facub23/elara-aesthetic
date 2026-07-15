@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import AdminAdvancedCalendarPage from "@/components/AdminAdvancedCalendarPage";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,7 +35,7 @@ export default async function AdminCalendarPage() {
   }
 
   const { data: assignedSpecialist } =
-    adminUser.access_role === "specialist" && adminUser.specialist_id
+    isSpecialistAccessRole(adminUser.access_role) && adminUser.specialist_id
       ? await supabase
           .from("specialists")
           .select("id,name")

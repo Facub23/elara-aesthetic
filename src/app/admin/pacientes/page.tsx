@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import AdminShell from "@/components/AdminShell";
 import PatientSearch from "@/components/PatientSearch";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { getBookingStatusClass, getBookingStatusKey } from "@/lib/booking-status";
 
 type PatientData = {
@@ -93,7 +93,7 @@ export default async function AdminPacientesPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
     redirect("/admin/sin-permiso");
   }
 

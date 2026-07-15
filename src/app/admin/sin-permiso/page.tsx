@@ -2,12 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AdminShell from "@/components/AdminShell";
-import { getAccessRoleLabel } from "@/lib/admin-access";
+import { getAccessRoleLabel, isSpecialistAccessRole } from "@/lib/admin-access";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 function getPrimaryAdminPath(accessRole?: string | null) {
-  if (accessRole === "specialist") return "/admin/calendar";
+  if (isSpecialistAccessRole(accessRole)) return "/admin/calendar";
   if (
     accessRole === "clinic_owner" ||
     accessRole === "clinic_manager" ||

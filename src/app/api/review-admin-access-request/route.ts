@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { createActivityLog } from "@/lib/activity";
-import { filterAdminPermissions, isAdminAccessRole } from "@/lib/admin-access";
+import {
+  filterAdminPermissions,
+  isAdminAccessRole,
+  isSpecialistAccessRole,
+} from "@/lib/admin-access";
 import { getAdminRequestContext } from "@/lib/admin-auth";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 
@@ -70,6 +74,11 @@ export async function POST(req: Request) {
     const specialistId =
       String(body.specialistId || request.requested_specialist_id || "").trim() ||
       null;
+    const specialistAccess = isSpecialistAccessRole(accessRole);
+    const assignedClinicId =
+      systemRole === "super_admin" || accessRole === "independent_specialist"
+        ? null
+        : clinicId;
 
     if (password.length < 8) {
       return NextResponse.json(
@@ -95,14 +104,14 @@ export async function POST(req: Request) {
       );
     }
 
-    if (systemRole !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+    if (systemRole !== "super_admin" && !specialistAccess && !clinicId) {
       return NextResponse.json(
         { success: false, error: "Selecciona la clinica asociada." },
         { status: 400 }
       );
     }
 
-    if (systemRole !== "super_admin" && accessRole === "specialist" && !specialistId) {
+    if (systemRole !== "super_admin" && specialistAccess && !specialistId) {
       return NextResponse.json(
         { success: false, error: "Selecciona el especialista asociado." },
         { status: 400 }
@@ -130,6 +139,27 @@ export async function POST(req: Request) {
       ) {
         return NextResponse.json(
           { success: false, error: "El especialista no pertenece a la clinica asignada." },
+          { status: 400 }
+        );
+      }
+
+      if (
+        accessRole === "independent_specialist" &&
+        (specialist.clinic_id || specialist.clinic_name)
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Selecciona un especialista independiente sin clinica asociada." },
+          { status: 400 }
+        );
+      }
+
+      if (
+        accessRole === "specialist" &&
+        !specialist.clinic_id &&
+        !specialist.clinic_name
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Para un especialista independiente usa el rango correspondiente." },
           { status: 400 }
         );
       }
@@ -173,9 +203,9 @@ export async function POST(req: Request) {
         email,
         role: systemRole,
         user_id: createdUser.user.id,
-        clinic_id: clinicId,
+        clinic_id: assignedClinicId,
         specialist_id:
-          systemRole === "super_admin" || accessRole !== "specialist"
+          systemRole === "super_admin" || !specialistAccess
             ? null
             : specialistId,
         access_role: systemRole === "super_admin" ? "super_admin" : accessRole,

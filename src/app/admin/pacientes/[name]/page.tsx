@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import AddPatientNote from "@/components/AddPatientNote";
 import AdminShell from "@/components/AdminShell";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { getBookingStatusClass, getBookingStatusKey } from "@/lib/booking-status";
 
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -86,7 +86,7 @@ export default async function PatientDetailPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
     redirect("/admin/sin-permiso");
   }
 

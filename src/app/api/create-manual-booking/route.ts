@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 
 import { createActivityLog } from "@/lib/activity";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import { getAssignedClinicName } from "@/lib/admin-scope";
 import {
   getTreatmentDuration,
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (adminUser.access_role === "specialist") {
+    if (isSpecialistAccessRole(adminUser.access_role)) {
       const { data: assignedSpecialist } = adminUser.specialist_id
         ? await supabase
             .from("specialists")

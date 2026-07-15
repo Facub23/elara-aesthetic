@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   ADMIN_ACCESS_ROLES,
   ADMIN_PERMISSION_OPTIONS,
+  isSpecialistAccessRole,
 } from "@/lib/admin-access";
 
 type ClinicOption = {
@@ -63,7 +64,7 @@ export default function AdminAccessRequestForm() {
       ...current,
       [name]: value,
       ...(name === "clinicId" ? { specialistId: "" } : {}),
-      ...(name === "accessRole" && value !== "specialist"
+      ...(name === "accessRole" && !isSpecialistAccessRole(value)
         ? { specialistId: "" }
         : {}),
     }));
@@ -73,6 +74,14 @@ export default function AdminAccessRequestForm() {
     (clinic) => String(clinic.id) === form.clinicId
   );
   const availableSpecialists = specialists.filter((specialist) => {
+    if (form.accessRole === "independent_specialist") {
+      return !specialist.clinic_id && !specialist.clinic_name;
+    }
+
+    if (form.accessRole === "specialist" && !form.clinicId) {
+      return Boolean(specialist.clinic_id || specialist.clinic_name);
+    }
+
     if (!form.clinicId && !form.clinicName) return true;
 
     const sameClinicId =
@@ -226,7 +235,7 @@ export default function AdminAccessRequestForm() {
             ))}
           </select>
 
-          {form.accessRole === "specialist" ? (
+          {isSpecialistAccessRole(form.accessRole) ? (
             <select
               required
               value={form.specialistId}

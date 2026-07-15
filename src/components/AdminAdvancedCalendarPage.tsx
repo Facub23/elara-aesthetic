@@ -9,6 +9,7 @@ import {
   normalizeBookingStatus,
 } from "@/lib/booking-status";
 import AdminShell from "@/components/AdminShell";
+import { isSpecialistAccessRole } from "@/lib/admin-access";
 import BookingTimeline from "@/components/BookingTimeline";
 
 type Clinic = {
@@ -348,7 +349,7 @@ export default function AdminAdvancedCalendarPage({
   specialistId?: string | number | null;
   specialistName?: string | null;
 }) {
-  const isSpecialistAccess = accessRole === "specialist";
+  const isSpecialistAccess = isSpecialistAccessRole(accessRole);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [specialists, setSpecialists] =
     useState<Specialist[]>([]);

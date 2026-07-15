@@ -7,6 +7,7 @@ import {
   ADMIN_PERMISSION_OPTIONS,
   getAccessRoleLabel,
   getPermissionLabel,
+  isSpecialistAccessRole,
 } from "@/lib/admin-access";
 
 type AccessRequest = {
@@ -111,6 +112,14 @@ function AccessRequestCard({
 
   const selectedClinic = clinics.find((clinic) => String(clinic.id) === clinicId);
   const availableSpecialists = specialists.filter((specialist) => {
+    if (accessRole === "independent_specialist") {
+      return !specialist.clinic_id && !specialist.clinic_name;
+    }
+
+    if (accessRole === "specialist" && !clinicId) {
+      return Boolean(specialist.clinic_id || specialist.clinic_name);
+    }
+
     if (!clinicId) return true;
 
     return (
@@ -132,7 +141,12 @@ function AccessRequestCard({
       return;
     }
 
-    if (action === "approved" && systemRole !== "super_admin" && accessRole !== "specialist" && !clinicId) {
+    if (
+      action === "approved" &&
+      systemRole !== "super_admin" &&
+      !isSpecialistAccessRole(accessRole) &&
+      !clinicId
+    ) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
@@ -144,7 +158,7 @@ function AccessRequestCard({
       return;
     }
 
-    if (action === "approved" && accessRole === "specialist" && !specialistId) {
+    if (action === "approved" && isSpecialistAccessRole(accessRole) && !specialistId) {
       window.dispatchEvent(
         new CustomEvent("admin-toast", {
           detail: {
@@ -270,7 +284,7 @@ function AccessRequestCard({
           value={accessRole}
           onChange={(event) => {
             setAccessRole(event.target.value);
-            if (event.target.value !== "specialist") {
+            if (!isSpecialistAccessRole(event.target.value)) {
               setSpecialistId("");
             }
           }}
@@ -300,7 +314,7 @@ function AccessRequestCard({
           className="rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm outline-none"
         />
 
-        {accessRole === "specialist" ? (
+        {isSpecialistAccessRole(accessRole) ? (
           <select
             value={specialistId}
             onChange={(event) => setSpecialistId(event.target.value)}

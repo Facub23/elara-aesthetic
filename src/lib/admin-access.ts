@@ -16,8 +16,13 @@ export const ADMIN_ACCESS_ROLES = [
   },
   {
     value: "specialist",
-    label: "Especialista",
-    description: "Su agenda, reservas y pacientes asignados.",
+    label: "Especialista de clinica",
+    description: "Su agenda dentro de una clinica asociada.",
+  },
+  {
+    value: "independent_specialist",
+    label: "Especialista independiente",
+    description: "Su agenda y perfil profesional sin clinica asociada.",
   },
   {
     value: "content_editor",
@@ -53,6 +58,10 @@ export type AdminAccessContext = {
 
 export function isAdminAccessRole(value: string): value is AdminAccessRole {
   return ADMIN_ACCESS_ROLES.some((role) => role.value === value);
+}
+
+export function isSpecialistAccessRole(value?: string | null) {
+  return value === "specialist" || value === "independent_specialist";
 }
 
 export function filterAdminPermissions(values: unknown): string[] {
@@ -101,6 +110,7 @@ const IMPLIED_ROLE_PERMISSIONS: Record<string, AdminPermission[]> = {
   ],
   reception: ["bookings", "calendar", "patients"],
   specialist: ["bookings", "calendar", "patients"],
+  independent_specialist: ["bookings", "calendar", "patients"],
   content_editor: ["content", "reviews", "analytics"],
   finance: ["finance", "analytics"],
 };

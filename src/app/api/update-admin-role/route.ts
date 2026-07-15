@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createActivityLog } from "@/lib/activity";
-import { filterAdminPermissions, isAdminAccessRole } from "@/lib/admin-access";
+import {
+  filterAdminPermissions,
+  isAdminAccessRole,
+  isSpecialistAccessRole,
+} from "@/lib/admin-access";
 
 export async function POST(req: Request) {
   try {
@@ -45,6 +49,11 @@ export async function POST(req: Request) {
 
     const normalizedAccessRole =
       role === "super_admin" ? "super_admin" : String(accessRole || "clinic_manager");
+    const specialistAccess = isSpecialistAccessRole(normalizedAccessRole);
+    const assignedClinicId =
+      role === "super_admin" || normalizedAccessRole === "independent_specialist"
+        ? null
+        : Number(clinicId || 0) || null;
 
     if (
       role !== "super_admin" &&
@@ -56,7 +65,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (role !== "super_admin" && normalizedAccessRole !== "specialist" && !clinicId) {
+    if (role !== "super_admin" && !specialistAccess && !clinicId) {
       return NextResponse.json(
         { success: false, error: "Selecciona la clinica asociada" },
         { status: 400 }
@@ -64,11 +73,11 @@ export async function POST(req: Request) {
     }
 
     const normalizedSpecialistId =
-      role === "super_admin" || normalizedAccessRole !== "specialist"
+      role === "super_admin" || !specialistAccess
         ? null
         : String(specialistId || "").trim() || null;
 
-    if (role !== "super_admin" && normalizedAccessRole === "specialist" && !normalizedSpecialistId) {
+    if (role !== "super_admin" && specialistAccess && !normalizedSpecialistId) {
       return NextResponse.json(
         { success: false, error: "Selecciona el especialista asociado" },
         { status: 400 }
@@ -78,7 +87,7 @@ export async function POST(req: Request) {
     if (normalizedSpecialistId) {
       const { data: specialist } = await supabase
         .from("specialists")
-        .select("id,clinic_id")
+        .select("id,clinic_id,clinic_name")
         .eq("id", normalizedSpecialistId)
         .maybeSingle();
 
@@ -96,6 +105,27 @@ export async function POST(req: Request) {
       ) {
         return NextResponse.json(
           { success: false, error: "El especialista no pertenece a la clinica asignada" },
+          { status: 400 }
+        );
+      }
+
+      if (
+        normalizedAccessRole === "independent_specialist" &&
+        (specialist.clinic_id || specialist.clinic_name)
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Selecciona un especialista independiente sin clinica asociada" },
+          { status: 400 }
+        );
+      }
+
+      if (
+        normalizedAccessRole === "specialist" &&
+        !specialist.clinic_id &&
+        !specialist.clinic_name
+      ) {
+        return NextResponse.json(
+          { success: false, error: "Para un especialista independiente usa el rango correspondiente" },
           { status: 400 }
         );
       }
@@ -141,7 +171,7 @@ export async function POST(req: Request) {
         role,
         access_role: normalizedAccessRole,
         permissions: role === "super_admin" ? [] : filterAdminPermissions(permissions),
-        clinic_id: Number(clinicId || 0) || null,
+        clinic_id: assignedClinicId,
         specialist_id: normalizedSpecialistId,
       })
       .eq("id", adminId)

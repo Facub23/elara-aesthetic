@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import AdminShell from "@/components/AdminShell";
 import MarkAdminNotificationReadButton from "@/components/MarkAdminNotificationReadButton";
 import ResendNotificationButton from "@/components/ResendNotificationButton";
-import { hasAdminPermission } from "@/lib/admin-access";
+import { hasAdminPermission, isSpecialistAccessRole } from "@/lib/admin-access";
 import {
   getAssignedClinicName,
   getAssignedSpecialist,
@@ -126,7 +126,7 @@ export default async function AdminNotificationsPage({
 
   const isSuperAdmin = adminUser.role === "super_admin";
 
-  if (!isSuperAdmin && adminUser.access_role === "specialist") {
+  if (!isSuperAdmin && isSpecialistAccessRole(adminUser.access_role)) {
     redirect("/admin/sin-permiso");
   }
 
