@@ -169,6 +169,8 @@ export default async function ConfirmBookingPage({
 }: {
   searchParams: Promise<{
     token?: string;
+    confirmed?: string;
+    expired?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -197,9 +199,13 @@ export default async function ConfirmBookingPage({
   if (booking.confirmed_by_client) {
     return (
       <StatusCard
-        title="Reserva ya confirmada"
-        message="Tu reserva ya fue confirmada anteriormente."
-        tone="info"
+        title={params.confirmed ? "Reserva confirmada" : "Reserva ya confirmada"}
+        message={
+          params.confirmed
+            ? "Tu cita quedo confirmada correctamente. El equipo ya puede verla como confirmada en el panel."
+            : "Tu reserva ya fue confirmada anteriormente."
+        }
+        tone={params.confirmed ? "success" : "info"}
         booking={booking}
       />
     );

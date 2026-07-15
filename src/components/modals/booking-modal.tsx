@@ -594,6 +594,10 @@ export function BookingModal({
                   OK
                 </div>
 
+                <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
+                  Paso 3
+                </p>
+
                 <h2 className="text-4xl font-semibold">Aguardando confirmacion</h2>
 
                 <p className="mt-5 max-w-md text-lg leading-relaxed text-neutral-500">
@@ -914,83 +918,6 @@ export function BookingModal({
                         </button>
                       </div>
                     )}
-                </div>
-
-                <div className="pt-2">
-                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                    Paso 3
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Aguardando confirmacion
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-neutral-500">
-                    Al enviar la solicitud, mandaremos el enlace de confirmacion por{" "}
-                    {confirmationChannel === "whatsapp" ? "WhatsApp" : "email"}.
-                  </p>
-                </div>
-
-                <div className="rounded-[28px] border border-black/10 bg-white p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-sm uppercase tracking-[0.25em] text-neutral-500">
-                        Resumen
-                      </div>
-                      <div className="mt-2 text-lg font-semibold">
-                        {bookingReady
-                          ? "Todo listo para solicitar la reserva"
-                          : "Completa los pasos para continuar"}
-                      </div>
-                    </div>
-
-                    <div
-                      className={`rounded-full px-4 py-2 text-xs ${
-                        bookingReady
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {bookingReady
-                        ? "Listo"
-                        : "Pendiente"}
-                    </div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 text-sm text-neutral-600 md:grid-cols-2">
-                    <div>
-                      <span className="font-medium text-black">Lugar:</span>{" "}
-                      {clinicName}
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Especialista:</span>{" "}
-                      {selectedSpecialist || "Sin seleccionar"}
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Tratamiento:</span>{" "}
-                      {selectedTreatment || "Sin seleccionar"} - {treatmentDuration} min
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Fecha y hora:</span>{" "}
-                      {selectedDate && selectedTime
-                        ? `${formatReadableDate(selectedDate)} - ${selectedTime}`
-                        : "Sin seleccionar"}
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Precio:</span>{" "}
-                      Desde {formatPrice(selectedPrice)}
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Disponibilidad:</span>{" "}
-                      {availabilityLoading
-                        ? "Comprobando"
-                        : selectedTime
-                          ? "Hueco validado"
-                          : "Pendiente"}
-                    </div>
-                    <div>
-                      <span className="font-medium text-black">Confirmacion:</span>{" "}
-                      {confirmationChannel === "whatsapp" ? "WhatsApp" : "Email"}
-                    </div>
-                  </div>
                 </div>
 
                 {formError && (
