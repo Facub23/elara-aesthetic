@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-import { isSuperAdminRequest } from "@/lib/admin-auth";
+import { hasAdminPermission } from "@/lib/admin-access";
+import { getAdminRequestContext } from "@/lib/admin-auth";
+import { isSpecialistAdmin } from "@/lib/admin-scope";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const imageExtensions: Record<string, string> = {
@@ -11,13 +13,24 @@ const imageExtensions: Record<string, string> = {
 };
 
 export async function POST(req: Request) {
-  if (!(await isSuperAdminRequest())) {
-    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  const admin = await getAdminRequestContext();
+
+  if (!admin) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
 
   const formData = await req.formData();
   const file = formData.get("file");
   const area = String(formData.get("area") || "marketplace");
+  const specialistUpload = isSpecialistAdmin(admin) && area === "specialists";
+
+  if (
+    admin.role !== "super_admin" &&
+    !hasAdminPermission(admin, "content") &&
+    !specialistUpload
+  ) {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+  }
 
   if (!(file instanceof File)) {
     return NextResponse.json({ success: false, error: "Imagen requerida" }, { status: 400 });

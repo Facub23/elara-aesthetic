@@ -49,12 +49,14 @@ function normalizeSelectedTreatments(treatments: unknown) {
 export async function POST(req: Request) {
   const admin = await getAdminRequestContext();
 
-  if (!hasAdminPermission(admin, "content")) {
-    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
-  }
-
   if (!admin) {
     return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const specialistAdmin = isSpecialistAdmin(admin);
+
+  if (!hasAdminPermission(admin, "content") && !specialistAdmin) {
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
   try {
@@ -116,12 +118,19 @@ export async function POST(req: Request) {
       );
     }
 
-    if (
-      isSpecialistAdmin(admin) &&
-      String(admin.specialistId || "") !== String(currentSpecialist.id)
-    ) {
+    if (specialistAdmin && String(admin.specialistId || "") !== String(currentSpecialist.id)) {
       return NextResponse.json(
         { success: false, error: "No puedes editar otro especialista" },
+        { status: 403 }
+      );
+    }
+
+    if (admin.accessRole === "independent_specialist" && clinic_name) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Los especialistas independientes deben usar direccion de consulta",
+        },
         { status: 403 }
       );
     }
