@@ -498,7 +498,7 @@ export default async function TreatmentsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/tratamientos"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.4fr_0.8fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -506,13 +506,13 @@ export default async function TreatmentsPage({
               name="q"
               defaultValue={query}
               placeholder="Buscar botox, labios, piel, clinica..."
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             />
 
             <select
               name="city"
               defaultValue={selectedCity}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               {cities.map((city) => (
                 <option key={city} value={city}>
@@ -524,7 +524,7 @@ export default async function TreatmentsPage({
             <select
               name="category"
               defaultValue={selectedCategory}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               {categoryLabels.map((category) => (
                 <option key={category} value={category}>
@@ -535,7 +535,7 @@ export default async function TreatmentsPage({
 
             <button
               type="submit"
-              className="h-12 rounded-md bg-black px-6 text-sm font-medium text-white transition hover:opacity-90"
+              className="h-12 w-full min-w-0 rounded-md bg-black px-6 text-sm font-medium text-white transition hover:opacity-90"
             >
               Buscar
             </button>

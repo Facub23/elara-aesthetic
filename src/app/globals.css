@@ -108,6 +108,22 @@ button {
   cursor: pointer;
 }
 
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+}
+
+.grid > input,
+.grid > select,
+.grid > textarea,
+.grid > button,
+.grid > a,
+.grid > label {
+  min-width: 0;
+}
+
 /* SMOOTH */
 
 * {

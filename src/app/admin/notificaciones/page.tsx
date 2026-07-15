@@ -321,18 +321,18 @@ export default async function AdminNotificationsPage({
           ))}
         </div>
 
-        <form className="mt-8 grid gap-4 rounded-[32px] bg-white/75 p-5 md:grid-cols-[1fr_180px_180px_auto]">
+        <form className="mt-8 grid gap-4 rounded-[32px] bg-white/75 p-5 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
           <input
             name="search"
             defaultValue={search}
             placeholder="Buscar por email, asunto, mensaje o error"
-            className="min-h-12 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
+            className="min-h-12 w-full min-w-0 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
           />
 
           <select
             name="channel"
             defaultValue={selectedChannel}
-            className="min-h-12 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
+            className="min-h-12 w-full min-w-0 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
           >
             {channelOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -344,7 +344,7 @@ export default async function AdminNotificationsPage({
           <select
             name="status"
             defaultValue={selectedStatus}
-            className="min-h-12 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
+            className="min-h-12 w-full min-w-0 rounded-full border border-black/10 bg-white px-5 text-sm outline-none focus:border-black"
           >
             {statusOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -353,7 +353,7 @@ export default async function AdminNotificationsPage({
             ))}
           </select>
 
-          <button className="min-h-12 rounded-full bg-black px-6 text-sm text-white">
+          <button className="min-h-12 w-full min-w-0 rounded-full bg-black px-6 text-sm text-white">
             Filtrar
           </button>
         </form>

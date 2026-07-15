@@ -576,28 +576,28 @@ export default async function AdminReviewsPage({
           )}
         </section>
 
-        <form className="mt-8 grid gap-3 rounded-[28px] border border-black/10 bg-white/70 p-4 md:grid-cols-[1.2fr_0.8fr_auto_auto]">
+        <form className="mt-8 grid gap-3 rounded-[28px] border border-black/10 bg-white/70 p-4 [grid-template-columns:repeat(auto-fit,minmax(180px,1fr))]">
           <input
             name="search"
             defaultValue={params.search || ""}
             placeholder="Buscar paciente, clinica, especialista..."
-            className="h-12 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-12 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           />
           <select
             name="status"
             defaultValue={selectedStatus}
-            className="h-12 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-12 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="Todas">Todos los estados</option>
             <option value="Pendiente">Pendientes</option>
             <option value="Aprobada">Aprobadas</option>
             <option value="Rechazada">Rechazadas</option>
           </select>
-          <label className="flex h-12 items-center gap-2 rounded-2xl border border-black/10 bg-white px-5 text-sm">
+          <label className="flex h-12 w-full min-w-0 items-center gap-2 rounded-2xl border border-black/10 bg-white px-5 text-sm">
             <input type="checkbox" name="featured" value="1" defaultChecked={featuredOnly} />
             Destacadas
           </label>
-          <button className="h-12 rounded-2xl bg-black px-6 text-sm text-white">
+          <button className="h-12 w-full min-w-0 rounded-2xl bg-black px-6 text-sm text-white">
             Filtrar
           </button>
         </form>

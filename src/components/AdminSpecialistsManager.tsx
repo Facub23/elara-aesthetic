@@ -905,18 +905,18 @@ export default function AdminSpecialistsManager({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr]">
+        <div className="mt-5 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(220px,1fr))]">
           <input
             placeholder="Buscar especialista, especialidad o lugar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           />
 
           <select
             value={clinicFilter}
             onChange={(e) => setClinicFilter(e.target.value)}
-            className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="">Todos los lugares</option>
             <option value="__independent__">Consultas independientes</option>
@@ -930,7 +930,7 @@ export default function AdminSpecialistsManager({
           <select
             value={treatmentFilter}
             onChange={(e) => setTreatmentFilter(e.target.value)}
-            className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="">Todos los tratamientos</option>
             {treatments.map((treatment) => (
@@ -943,7 +943,7 @@ export default function AdminSpecialistsManager({
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="">Todos los estados</option>
             <option value="ready">Listos</option>
@@ -954,7 +954,7 @@ export default function AdminSpecialistsManager({
           <select
             value={scheduleFilter}
             onChange={(e) => setScheduleFilter(e.target.value)}
-            className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+            className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
           >
             <option value="">Toda la disponibilidad</option>
             <option value="active">Horario activo</option>

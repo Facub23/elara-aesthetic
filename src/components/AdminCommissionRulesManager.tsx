@@ -123,11 +123,11 @@ export default function AdminCommissionRulesManager({
         </span>
       </div>
 
-      <div className="mt-7 grid gap-3 lg:grid-cols-[1.2fr_0.4fr_1fr_auto]">
+      <div className="mt-7 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
         <select
           value={target}
           onChange={(event) => setTarget(event.target.value)}
-          className="h-14 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
         >
           {options.length === 0 ? (
             <option value="">Carga clinicas o especialistas reales primero</option>
@@ -146,21 +146,21 @@ export default function AdminCommissionRulesManager({
           onChange={(event) => setCommissionRate(event.target.value)}
           inputMode="decimal"
           placeholder="%"
-          className="h-14 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
         />
 
         <input
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           placeholder="Notas internas opcionales"
-          className="h-14 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-[#F7F5F2] px-4 text-sm outline-none"
         />
 
         <button
           type="button"
           onClick={saveRule}
           disabled={loading || options.length === 0}
-          className="h-14 rounded-2xl bg-black px-6 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
+          className="h-14 w-full min-w-0 rounded-2xl bg-black px-6 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-40"
         >
           {loading ? "Guardando..." : "Guardar"}
         </button>
@@ -170,12 +170,12 @@ export default function AdminCommissionRulesManager({
         {rules.map((rule) => (
           <div
             key={rule.id}
-            className="grid gap-3 py-5 text-sm md:grid-cols-[0.8fr_1.2fr_0.4fr_1fr_auto]"
+            className="grid gap-3 py-5 text-sm md:grid-cols-[0.8fr_minmax(0,1.2fr)_0.4fr_minmax(0,1fr)_auto]"
           >
             <span className="font-medium">{getTargetLabel(rule.target_type)}</span>
-            <span>{rule.target_name}</span>
+            <span className="min-w-0 break-words">{rule.target_name}</span>
             <span className="font-semibold">{Number(rule.commission_rate)}%</span>
-            <span className="text-neutral-500">{rule.notes || "Sin notas"}</span>
+            <span className="min-w-0 break-words text-neutral-500">{rule.notes || "Sin notas"}</span>
             <button
               type="button"
               onClick={() => deleteRule(rule.id)}

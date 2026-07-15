@@ -486,19 +486,19 @@ function ClinicsPageContent() {
 
       <section className="px-6 py-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr_0.8fr_auto]">
+          <div className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] [grid-template-columns:repeat(auto-fit,minmax(170px,1fr))]">
             <input
               type="text"
               placeholder="Buscar clinica, ciudad o tratamiento..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             />
 
             <select
               value={city}
               onChange={(event) => setCity(event.target.value)}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               {cities.map((item) => (
                 <option key={item} value={item}>
@@ -510,7 +510,7 @@ function ClinicsPageContent() {
             <select
               value={priceRange}
               onChange={(event) => setPriceRange(event.target.value)}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Todos">Cualquier precio</option>
               <option value="0-300">Hasta 300 EUR</option>
@@ -521,7 +521,7 @@ function ClinicsPageContent() {
             <select
               value={availabilityFilter}
               onChange={(event) => setAvailabilityFilter(event.target.value)}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Todos">Toda disponibilidad</option>
               <option value="Con huecos">Con huecos</option>
@@ -531,7 +531,7 @@ function ClinicsPageContent() {
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Recomendadas">Recomendadas</option>
               <option value="Proximo hueco">Proximo hueco</option>
@@ -541,7 +541,7 @@ function ClinicsPageContent() {
 
             <Link
               href="/tratamientos"
-              className="flex h-12 items-center justify-center rounded-md bg-black px-6 text-sm font-medium text-white transition hover:opacity-90"
+              className="flex h-12 w-full min-w-0 items-center justify-center rounded-md bg-black px-6 text-center text-sm font-medium text-white transition hover:opacity-90"
             >
               Ver tratamientos
             </Link>

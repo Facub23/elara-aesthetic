@@ -65,12 +65,12 @@ export default function BookingOperationsFilters({
 
   return (
     <div className="rounded-[36px] border border-white/40 bg-white/70 p-6 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
-      <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr_0.8fr]">
+      <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(210px,1fr))]">
         <input
           value={search}
           onChange={(event) => handleSearch(event.target.value)}
           placeholder="Buscar paciente, email, clinica, especialista o tratamiento..."
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
         />
 
         <select
@@ -80,7 +80,7 @@ export default function BookingOperationsFilters({
               status: event.target.value,
             })
           }
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
         >
           <option value="Todas">Todas</option>
           {bookingFilterStatusOptions.map((status) => (
@@ -97,7 +97,7 @@ export default function BookingOperationsFilters({
               clinic: event.target.value,
             })
           }
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
         >
           <option value="">Todas las clinicas</option>
           {clinics.map((clinic) => (
@@ -114,7 +114,7 @@ export default function BookingOperationsFilters({
               specialist: event.target.value,
             })
           }
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
         >
           <option value="">Todos los especialistas</option>
           {specialists.map((specialist) => (
@@ -135,7 +135,7 @@ export default function BookingOperationsFilters({
               date: event.target.value,
             })
           }
-          className="h-14 rounded-2xl border border-black/10 bg-white px-5 outline-none"
+          className="h-14 w-full min-w-0 rounded-2xl border border-black/10 bg-white px-5 outline-none"
         />
       </div>
 

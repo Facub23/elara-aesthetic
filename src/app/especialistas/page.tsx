@@ -549,7 +549,7 @@ export default async function SpecialistsPage({
         <div className="mx-auto max-w-7xl">
           <form
             action="/especialistas"
-            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] md:grid-cols-[1.1fr_1fr_0.8fr_0.8fr_0.9fr_0.8fr_0.8fr_auto]"
+            className="grid gap-3 rounded-lg border border-black/10 bg-white/90 p-3 shadow-[0_16px_50px_rgba(0,0,0,0.04)] [grid-template-columns:repeat(auto-fit,minmax(165px,1fr))]"
           >
             {clinicSlug && <input type="hidden" name="clinic" value={clinicSlug} />}
 
@@ -557,13 +557,13 @@ export default async function SpecialistsPage({
               name="q"
               defaultValue={search}
               placeholder="Buscar especialista o clinica..."
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             />
 
             <select
               name="treatment"
               defaultValue={selectedTreatment || ""}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="">Todos los tratamientos</option>
               {uniqueTreatments.map((treatment) => (
@@ -576,7 +576,7 @@ export default async function SpecialistsPage({
             <select
               name="city"
               defaultValue={selectedCity}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               {cities.map((city) => (
                 <option key={city} value={city}>
@@ -588,7 +588,7 @@ export default async function SpecialistsPage({
             <select
               name="price"
               defaultValue={selectedPrice}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Todos">Cualquier precio</option>
               <option value="0-300">Hasta 300 EUR</option>
@@ -599,7 +599,7 @@ export default async function SpecialistsPage({
             <select
               name="availability"
               defaultValue={selectedAvailability}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Todos">Toda disponibilidad</option>
               <option value="Con horario">Con horario</option>
@@ -610,7 +610,7 @@ export default async function SpecialistsPage({
             <select
               name="practice"
               defaultValue={selectedPractice}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Todos">Clinica o consulta</option>
               <option value="Clinica">Solo clinicas</option>
@@ -620,7 +620,7 @@ export default async function SpecialistsPage({
             <select
               name="sort"
               defaultValue={selectedSort}
-              className="h-12 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
+              className="h-12 w-full min-w-0 rounded-md border border-black/10 bg-[#F8F6F2] px-4 text-sm outline-none focus:border-black"
             >
               <option value="Recomendados">Recomendados</option>
               <option value="Proximo hueco">Proximo hueco</option>
@@ -630,7 +630,7 @@ export default async function SpecialistsPage({
 
             <button
               type="submit"
-              className="h-12 rounded-md bg-black px-6 text-sm font-medium text-white transition hover:opacity-90"
+              className="h-12 w-full min-w-0 rounded-md bg-black px-6 text-sm font-medium text-white transition hover:opacity-90"
             >
               Buscar
             </button>
