@@ -172,11 +172,17 @@ export default function AdminEntityEditorShell({
 
               <button
                 type="button"
-                disabled={!nextStep}
-                onClick={() => nextStep && onStepChange(nextStep.id)}
+                disabled={primaryAction.loading}
+                onClick={() =>
+                  nextStep ? onStepChange(nextStep.id) : primaryAction.onClick()
+                }
                 className="rounded-full bg-black px-6 py-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Siguiente
+                {nextStep
+                  ? "Siguiente"
+                  : primaryAction.loading
+                    ? primaryAction.loadingLabel || "Guardando..."
+                    : primaryAction.label}
               </button>
             </div>
           </div>
