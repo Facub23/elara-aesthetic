@@ -87,7 +87,7 @@ export default async function AdminReservasPage({
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "bookings")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const params = await searchParams;

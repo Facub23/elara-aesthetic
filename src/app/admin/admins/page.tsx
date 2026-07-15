@@ -30,7 +30,7 @@ export default async function AdminUsersPage() {
   }
 
   if (adminUser.role !== "super_admin") {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const [{ data: admins }, { data: accessRequests }, { data: clinics }, { data: specialists }] =

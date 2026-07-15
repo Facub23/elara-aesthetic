@@ -99,7 +99,7 @@ export default async function AdminPacientesPage({
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "patients")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const params =

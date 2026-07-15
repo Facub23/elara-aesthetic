@@ -44,7 +44,7 @@ export default async function AdminSpecialistsPage({
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "content")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const [

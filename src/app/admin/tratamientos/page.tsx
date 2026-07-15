@@ -41,7 +41,7 @@ export default async function AdminTreatmentsPage() {
       status: adminUser.status,
     }, "content")
   ) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const [{ data: treatments }, { data: specialists }, { data: durations }] =

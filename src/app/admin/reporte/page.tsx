@@ -47,7 +47,7 @@ export default async function AdminReportePage() {
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, ["analytics", "finance"])) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const adminScope = {

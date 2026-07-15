@@ -52,7 +52,7 @@ export default async function AdminAnalyticsPage() {
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "analytics")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const adminScope = {

@@ -31,7 +31,7 @@ export default async function AdminCalendarPage() {
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "calendar")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const { data: assignedSpecialist } =

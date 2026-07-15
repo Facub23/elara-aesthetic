@@ -33,7 +33,7 @@ export default async function AdminEmailsPage() {
   const isSuperAdmin = adminUser.role === "super_admin";
 
   if (!isSuperAdmin) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const { data: savedTemplates } = await supabase

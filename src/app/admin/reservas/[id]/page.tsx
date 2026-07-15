@@ -133,7 +133,7 @@ export default async function AdminBookingDetailPage({
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "bookings")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const { id } = await params;

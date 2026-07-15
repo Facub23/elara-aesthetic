@@ -106,7 +106,7 @@ async function checkAdmin() {
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, "reviews")) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   return { supabaseAuth, adminUser };

@@ -91,7 +91,7 @@ export default async function AdminClinicasPage() {
     permissions: adminUser.permissions,
     status: adminUser.status,
   }, ["content", "bookings", "calendar"])) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   let clinicsQuery = supabase

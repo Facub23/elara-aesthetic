@@ -32,7 +32,7 @@ export default async function AdminConfigPage() {
   const isSuperAdmin = adminUser.role === "super_admin";
 
   if (!isSuperAdmin) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const { data: settings } = await supabase

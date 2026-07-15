@@ -135,7 +135,7 @@ export default async function AdminNotificationsPage({
       status: adminUser.status,
     }, "bookings")
   ) {
-    redirect("/admin");
+    redirect("/admin/sin-permiso");
   }
 
   const params = await searchParams;
