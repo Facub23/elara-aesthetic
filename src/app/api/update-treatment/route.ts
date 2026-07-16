@@ -50,6 +50,36 @@ async function saveTreatmentDuration(
   });
 }
 
+function hasText(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function getTreatmentValidationIssue({
+  id,
+  name,
+  description,
+  image,
+  duration_minutes,
+}: {
+  id?: string | number;
+  name?: string;
+  description?: string;
+  image?: string;
+  duration_minutes?: string | number;
+}) {
+  const duration = Number(duration_minutes);
+
+  if (!id) return "Falta el ID del tratamiento.";
+  if (!hasText(name)) return "Falta el nombre del tratamiento.";
+  if (!hasText(description)) return "Falta la descripcion del tratamiento.";
+  if (!hasText(image)) return "Falta subir la imagen principal del tratamiento.";
+  if (!Number.isFinite(duration) || duration < 5 || duration > 240) {
+    return "La duracion del tratamiento debe estar entre 5 y 240 minutos.";
+  }
+
+  return "";
+}
+
 export async function POST(req: Request) {
   const admin = await getAdminRequestContext();
 
@@ -62,11 +92,19 @@ export async function POST(req: Request) {
 
     const { id, name, previous_name, description, image, duration_minutes } = body;
 
-    if (!id || !name || !description || !image) {
+    const validationIssue = getTreatmentValidationIssue({
+      id,
+      name,
+      description,
+      image,
+      duration_minutes,
+    });
+
+    if (validationIssue) {
       return NextResponse.json(
         {
           success: false,
-          error: "Faltan datos",
+          error: validationIssue,
         },
         {
           status: 400,
@@ -74,7 +112,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const durationMinutes = Math.max(Number(duration_minutes) || 60, 5);
+    const durationMinutes = Number(duration_minutes);
     const slug = slugify(name);
     const { data: existingTreatment } = await supabase
       .from("treatments")

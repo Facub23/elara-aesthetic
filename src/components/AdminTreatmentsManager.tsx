@@ -31,8 +31,12 @@ function getTreatmentValidationIssues(form: ReturnType<typeof emptyForm>) {
   const issues: Array<{ step: string; message: string }> = [];
 
   if (!form.name.trim()) issues.push({ step: "identity", message: "Falta el nombre del tratamiento." });
-  if (Number(form.duration_minutes) < 5) {
-    issues.push({ step: "identity", message: "La duracion debe ser de al menos 5 minutos." });
+  if (
+    !Number.isFinite(Number(form.duration_minutes)) ||
+    Number(form.duration_minutes) < 5 ||
+    Number(form.duration_minutes) > 240
+  ) {
+    issues.push({ step: "identity", message: "La duracion debe estar entre 5 y 240 minutos." });
   }
   if (!form.description.trim()) issues.push({ step: "content", message: "Falta la descripcion del tratamiento." });
   if (!form.image.trim()) issues.push({ step: "media", message: "Falta subir la imagen principal." });
