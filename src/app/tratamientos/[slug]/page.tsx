@@ -10,6 +10,7 @@ import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary"
 import {
   getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
+  getTreatmentPriceOptions,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
 
@@ -20,6 +21,11 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      price_options?: Array<{
+        label?: string | null;
+        price?: string | number | null;
+        duration_minutes?: string | number | null;
+      }> | null;
       duration_minutes?: string | number | null;
       durationMinutes?: string | number | null;
       description?: string | null;
@@ -1136,6 +1142,7 @@ export default async function TreatmentPage({
             {sortedSpecialists.map((specialist) => {
               const specialistTreatment = findSpecialistTreatment(specialist, slug);
               const price = formatPrice(getTreatmentPrice(specialistTreatment) || priceFrom);
+              const priceOptions = getTreatmentPriceOptions(specialistTreatment);
               const durationLabel = formatDuration(
                 getSpecialistTreatmentDuration(specialistTreatment) || duration
               );
@@ -1252,6 +1259,27 @@ export default async function TreatmentPage({
                       </div>
                     </div>
                   </div>
+
+                  {priceOptions.length > 0 && (
+                    <div className="mt-3 grid gap-2">
+                      {priceOptions.map((option) => (
+                        <div
+                          key={`${specialist.id}-${option.label}`}
+                          className="flex items-center justify-between gap-3 rounded-md bg-[#F8F6F2] px-3 py-2 text-xs"
+                        >
+                          <span className="font-medium text-black">
+                            {option.label}
+                          </span>
+                          <span className="text-neutral-600">
+                            {formatPrice(option.price)}
+                            {option.duration_minutes
+                              ? ` - ${formatDuration(option.duration_minutes)}`
+                              : ""}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="mt-auto flex flex-wrap gap-3 pt-7">
                     {reserveHref ? (

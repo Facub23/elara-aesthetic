@@ -46,17 +46,69 @@ function normalizeSelectedTreatments(treatments: unknown) {
               ).replace(/[^0-9]/g, "")
             )
           : 0;
+      const priceOptions =
+        typeof treatment === "object" && treatment !== null
+          ? normalizePriceOptions((treatment as any).price_options || (treatment as any).priceOptions)
+          : [];
 
       if (!name) {
         return null;
       }
 
-      return { name, price, duration_minutes: duration || null };
+      return {
+        name,
+        price,
+        duration_minutes: duration || null,
+        price_options: priceOptions,
+      };
     })
     .filter(Boolean) as Array<{
       name: string;
       price?: string;
       duration_minutes?: number | null;
+      price_options?: Array<{
+        label: string;
+        price: string;
+        duration_minutes?: number | null;
+      }>;
+    }>;
+}
+
+function normalizePriceOptions(options: unknown) {
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options
+    .map((option) => {
+      if (!option || typeof option !== "object") {
+        return null;
+      }
+
+      const label = String((option as any).label || "").trim();
+      const price = String((option as any).price || "").trim();
+      const duration = Number(
+        String(
+          (option as any).duration_minutes ||
+            (option as any).durationMinutes ||
+            ""
+        ).replace(/[^0-9]/g, "")
+      );
+
+      if (!label && !price && !duration) {
+        return null;
+      }
+
+      return {
+        label,
+        price,
+        duration_minutes: duration || null,
+      };
+    })
+    .filter(Boolean) as Array<{
+      label: string;
+      price: string;
+      duration_minutes: number | null;
     }>;
 }
 
@@ -65,6 +117,11 @@ function getTreatmentConfigIssue(
     name: string;
     price?: string;
     duration_minutes?: number | null;
+    price_options?: Array<{
+      label: string;
+      price: string;
+      duration_minutes?: number | null;
+    }>;
   }>
 ) {
   const treatment = treatments.find(
@@ -75,15 +132,46 @@ function getTreatmentConfigIssue(
       item.duration_minutes > 240
   );
 
-  if (!treatment) {
+  if (treatment) {
+    if (!String(treatment.price || "").trim()) {
+      return `Falta precio en ${treatment.name}.`;
+    }
+
+    return `La duracion de ${treatment.name} debe estar entre 5 y 240 minutos.`;
+  }
+
+  const treatmentWithInvalidOption = treatments.find((item) =>
+    item.price_options?.some(
+      (option) =>
+        !option.label ||
+        !String(option.price || "").trim() ||
+        (option.duration_minutes !== null &&
+          option.duration_minutes !== undefined &&
+          (option.duration_minutes < 5 || option.duration_minutes > 240))
+    )
+  );
+  const invalidOption = treatmentWithInvalidOption?.price_options?.find(
+    (option) =>
+      !option.label ||
+      !String(option.price || "").trim() ||
+      (option.duration_minutes !== null &&
+        option.duration_minutes !== undefined &&
+        (option.duration_minutes < 5 || option.duration_minutes > 240))
+  );
+
+  if (!invalidOption) {
     return "";
   }
 
-  if (!String(treatment.price || "").trim()) {
-    return `Falta precio en ${treatment.name}.`;
+  if (!invalidOption.label) {
+    return `Falta el nombre de una opcion de precio en ${treatmentWithInvalidOption?.name}.`;
   }
 
-  return `La duracion de ${treatment.name} debe estar entre 5 y 240 minutos.`;
+  if (!String(invalidOption.price || "").trim()) {
+    return `Falta precio en la opcion ${invalidOption.label} de ${treatmentWithInvalidOption?.name}.`;
+  }
+
+  return `La duracion de la opcion ${invalidOption.label} debe estar entre 5 y 240 minutos.`;
 }
 
 function getSpecialistValidationIssue({
@@ -101,6 +189,11 @@ function getSpecialistValidationIssue({
     name: string;
     price?: string;
     duration_minutes?: number | null;
+    price_options?: Array<{
+      label: string;
+      price: string;
+      duration_minutes?: number | null;
+    }>;
   }>;
 }) {
   if (!String(name || "").trim()) {

@@ -10,6 +10,7 @@ import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary"
 import { supabase } from "@/lib/supabase";
 import {
   getTreatmentName as readTreatmentName,
+  getTreatmentPriceOptions,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
 
@@ -20,6 +21,11 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      price_options?: Array<{
+        label?: string | null;
+        price?: string | number | null;
+        duration_minutes?: string | number | null;
+      }> | null;
       description?: string | null;
     };
 
@@ -582,6 +588,7 @@ export default async function CityTreatmentPage({
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {specialistContexts.map(({ specialist, clinic }) => {
+              const specialistTreatment = findSpecialistTreatment(specialist, treatment);
               const reviewSummary = specialistReviewSummaries.get(
                 normalizeReviewKey(specialist.name)
               );
@@ -589,8 +596,9 @@ export default async function CityTreatmentPage({
                 String(specialist.id || specialist.slug || specialist.name)
               );
               const price = formatPrice(
-                getTreatmentPrice(findSpecialistTreatment(specialist, treatment))
+                getTreatmentPrice(specialistTreatment)
               );
+              const priceOptions = getTreatmentPriceOptions(specialistTreatment);
               const isIndependent = !clinic?.name && !specialist.clinic_name;
               const reserveHref = buildSpecialistHref({
                 slug: specialist.slug,
@@ -652,6 +660,23 @@ export default async function CityTreatmentPage({
                       {formatSlotLabel(slot)}
                     </div>
                   </div>
+                  {priceOptions.length > 0 && (
+                    <div className="mt-3 grid gap-2">
+                      {priceOptions.map((option) => (
+                        <div
+                          key={`${specialist.id}-${option.label}`}
+                          className="flex items-center justify-between gap-3 rounded-md border border-black/10 bg-white px-3 py-2 text-xs"
+                        >
+                          <span className="font-medium text-black">
+                            {option.label}
+                          </span>
+                          <span className="text-neutral-600">
+                            {formatPrice(option.price)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-3 rounded-md bg-[#F8F6F2] p-3 text-sm text-neutral-600">
                     {reviewSummary
                       ? `${reviewSummary.rating}/5 - ${reviewSummary.count} opiniones verificadas`

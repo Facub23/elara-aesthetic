@@ -13,6 +13,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import {
   getTreatmentDurationValue,
+  getTreatmentPriceOptions,
   getTreatmentPriceValue,
   type TreatmentEntry,
 } from "@/lib/treatment-utils";
@@ -233,10 +234,22 @@ export async function POST(req: Request) {
     }
 
     const bookingDateTime = `${booking_date} ${booking_time}`;
+    const selectedTreatmentOptionLabel =
+      typeof booking_context === "object" && booking_context !== null
+        ? cleanText(booking_context.treatment_option)
+        : "";
+    const selectedTreatmentOption = selectedTreatmentOptionLabel
+      ? getTreatmentPriceOptions(selectedTreatmentEntry).find(
+          (option) =>
+            normalize(option.label) === normalize(selectedTreatmentOptionLabel)
+        )
+      : null;
     const durationMinutes =
+      selectedTreatmentOption?.duration_minutes ||
       getTreatmentDurationValue(selectedTreatmentEntry) ||
       (await getTreatmentDuration(treatment));
-    const specialistPrice = getTreatmentPriceValue(selectedTreatmentEntry);
+    const specialistPrice =
+      selectedTreatmentOption?.price || getTreatmentPriceValue(selectedTreatmentEntry);
 
     const { data: repeatedBooking } = await supabase
       .from("bookings")
@@ -304,10 +317,14 @@ export async function POST(req: Request) {
           ? {
               ...booking_context,
               price_from: specialistPrice ?? booking_context.price_from ?? null,
+              treatment_option: selectedTreatmentOption?.label || null,
+              treatment_option_price: selectedTreatmentOption?.price || null,
               duration_minutes: durationMinutes,
             }
           : {
               price_from: specialistPrice,
+              treatment_option: selectedTreatmentOption?.label || null,
+              treatment_option_price: selectedTreatmentOption?.price || null,
               duration_minutes: durationMinutes,
             },
     };

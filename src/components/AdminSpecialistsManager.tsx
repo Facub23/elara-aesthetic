@@ -49,6 +49,14 @@ function getTreatmentDurationValue(
   return getTreatmentRawDuration(treatment);
 }
 
+function getTreatmentPriceOptions(treatment: any) {
+  return Array.isArray(treatment?.price_options)
+    ? treatment.price_options
+    : Array.isArray(treatment?.priceOptions)
+      ? treatment.priceOptions
+      : [];
+}
+
 function getSpecialistTreatmentNames(specialist: any): string[] {
   return Array.isArray(specialist.treatments)
     ? specialist.treatments.map(getTreatmentName).filter(Boolean)
@@ -60,7 +68,12 @@ function hasCompleteTreatmentConfig(specialist: any) {
     ? specialist.treatments.every(
         (treatment: any) =>
           getTreatmentRawPrice(treatment).trim().length > 0 &&
-          getTreatmentRawDuration(treatment).trim().length > 0
+          getTreatmentRawDuration(treatment).trim().length > 0 &&
+          getTreatmentPriceOptions(treatment).every(
+            (option: any) =>
+              String(option?.label || "").trim().length > 0 &&
+              String(option?.price || "").trim().length > 0
+          )
       )
     : false;
 }
@@ -98,7 +111,20 @@ function getSpecialistIssues(specialist: any, clinics: any[], treatments: any[])
   }
 
   if (specialistTreatmentNames.length > 0 && !hasCompleteTreatmentConfig(specialist)) {
-    issues.push("Cada tratamiento necesita precio y duracion propios del especialista.");
+    const treatmentWithIncompleteOption = specialist.treatments?.find(
+      (treatment: any) =>
+        getTreatmentPriceOptions(treatment).some(
+          (option: any) =>
+            !String(option?.label || "").trim() ||
+            !String(option?.price || "").trim()
+        )
+    );
+
+    issues.push(
+      treatmentWithIncompleteOption
+        ? `Falta completar una opcion de precio en ${getTreatmentName(treatmentWithIncompleteOption)}.`
+        : "Cada tratamiento necesita precio y duracion propios del especialista."
+    );
   }
 
   if (
@@ -278,7 +304,17 @@ function emptyForm() {
     rating: "5",
     reviews_count: "0",
     treatments: [] as Array<
-      string | { name: string; price?: string; duration_minutes?: string }
+      | string
+      | {
+          name: string;
+          price?: string;
+          duration_minutes?: string;
+          price_options?: Array<{
+            label: string;
+            price: string;
+            duration_minutes?: string;
+          }>;
+        }
     >,
   };
 }
@@ -482,6 +518,64 @@ export default function AdminSpecialistsManager({
               ...(typeof item === "object" ? item : { name: treatmentName }),
               name: treatmentName,
               duration_minutes: duration,
+            }
+          : item
+      ),
+    }));
+  }
+
+  function addTreatmentPriceOption(treatmentName: string) {
+    setForm((prev) => ({
+      ...prev,
+      treatments: prev.treatments.map((item) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              price_options: [
+                ...getTreatmentPriceOptions(item),
+                { label: "", price: "", duration_minutes: "" },
+              ],
+            }
+          : item
+      ),
+    }));
+  }
+
+  function updateTreatmentPriceOption(
+    treatmentName: string,
+    index: number,
+    field: "label" | "price" | "duration_minutes",
+    value: string
+  ) {
+    setForm((prev) => ({
+      ...prev,
+      treatments: prev.treatments.map((item) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              price_options: getTreatmentPriceOptions(item).map(
+                (option: any, optionIndex: number) =>
+                  optionIndex === index ? { ...option, [field]: value } : option
+              ),
+            }
+          : item
+      ),
+    }));
+  }
+
+  function removeTreatmentPriceOption(treatmentName: string, index: number) {
+    setForm((prev) => ({
+      ...prev,
+      treatments: prev.treatments.map((item) =>
+        normalize(getTreatmentName(item)) === normalize(treatmentName)
+          ? {
+              ...(typeof item === "object" ? item : { name: treatmentName }),
+              name: treatmentName,
+              price_options: getTreatmentPriceOptions(item).filter(
+                (_option: any, optionIndex: number) => optionIndex !== index
+              ),
             }
           : item
       ),
@@ -793,52 +887,139 @@ export default function AdminSpecialistsManager({
                     <div className="mt-8 grid gap-4">
                       {form.treatments.map((treatment) => {
                         const treatmentName = getTreatmentName(treatment);
+                        const priceOptions = getTreatmentPriceOptions(treatment);
 
                         return (
                           <div
                             key={treatmentName}
-                            className="grid gap-3 rounded-[24px] bg-[#F8F5F1] p-4 md:grid-cols-[1fr_160px_160px]"
+                            className="rounded-[24px] bg-[#F8F5F1] p-4"
                           >
-                            <div>
-                              <div className="font-medium">{treatmentName}</div>
-                              <div className="mt-1 text-xs text-neutral-500">
-                                Precio y duracion propios de este especialista.
+                            <div className="grid gap-3 md:grid-cols-[1fr_160px_160px]">
+                              <div>
+                                <div className="font-medium">{treatmentName}</div>
+                                <div className="mt-1 text-xs text-neutral-500">
+                                  Precio desde, duracion y opciones por vial.
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                  Precio desde
+                                </label>
+                                <input
+                                  value={getTreatmentPriceValue(treatment)}
+                                  onChange={(e) =>
+                                    updateTreatmentPrice(
+                                      treatmentName,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Ej: 500 EUR"
+                                  className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                                  Duracion
+                                </label>
+                                <input
+                                  value={getTreatmentDurationValue(treatment)}
+                                  onChange={(e) =>
+                                    updateTreatmentDuration(
+                                      treatmentName,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Ej: 45"
+                                  inputMode="numeric"
+                                  className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
+                                />
                               </div>
                             </div>
 
-                            <div>
-                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                                Precio
-                              </label>
-                              <input
-                                value={getTreatmentPriceValue(treatment)}
-                                onChange={(e) =>
-                                  updateTreatmentPrice(
-                                    treatmentName,
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Ej: 290 EUR"
-                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
-                              />
-                            </div>
+                            <div className="mt-4 rounded-[20px] border border-black/5 bg-white p-4">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                  <div className="text-sm font-medium">
+                                    Opciones de precio
+                                  </div>
+                                  <div className="mt-1 text-xs text-neutral-500">
+                                    Ej: 1 vial - 500 EUR, 2 viales - 899 EUR.
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => addTreatmentPriceOption(treatmentName)}
+                                  className="rounded-full border border-black/10 px-4 py-2 text-xs font-medium transition hover:border-black"
+                                >
+                                  Anadir opcion
+                                </button>
+                              </div>
 
-                            <div>
-                              <label className="mb-1 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
-                                Duracion
-                              </label>
-                              <input
-                                value={getTreatmentDurationValue(treatment)}
-                                onChange={(e) =>
-                                  updateTreatmentDuration(
-                                    treatmentName,
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Ej: 45"
-                                inputMode="numeric"
-                                className="h-12 w-full rounded-2xl border border-black/5 bg-white px-4 outline-none"
-                              />
+                              {priceOptions.length > 0 && (
+                                <div className="mt-4 grid gap-3">
+                                  {priceOptions.map((option: any, index: number) => (
+                                    <div
+                                      key={`${treatmentName}-${index}`}
+                                      className="grid gap-3 md:grid-cols-[1fr_140px_140px_auto]"
+                                    >
+                                      <input
+                                        value={option.label || ""}
+                                        onChange={(e) =>
+                                          updateTreatmentPriceOption(
+                                            treatmentName,
+                                            index,
+                                            "label",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Ej: 1 vial"
+                                        className="h-11 rounded-2xl border border-black/5 bg-[#F8F5F1] px-4 text-sm outline-none"
+                                      />
+                                      <input
+                                        value={option.price || ""}
+                                        onChange={(e) =>
+                                          updateTreatmentPriceOption(
+                                            treatmentName,
+                                            index,
+                                            "price",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Ej: 500 EUR"
+                                        className="h-11 rounded-2xl border border-black/5 bg-[#F8F5F1] px-4 text-sm outline-none"
+                                      />
+                                      <input
+                                        value={option.duration_minutes || ""}
+                                        onChange={(e) =>
+                                          updateTreatmentPriceOption(
+                                            treatmentName,
+                                            index,
+                                            "duration_minutes",
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Min opcional"
+                                        inputMode="numeric"
+                                        className="h-11 rounded-2xl border border-black/5 bg-[#F8F5F1] px-4 text-sm outline-none"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeTreatmentPriceOption(
+                                            treatmentName,
+                                            index
+                                          )
+                                        }
+                                        className="h-11 rounded-2xl bg-black px-4 text-xs font-medium text-white"
+                                      >
+                                        Quitar
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         );

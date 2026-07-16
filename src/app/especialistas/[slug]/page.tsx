@@ -12,6 +12,7 @@ import {
 import {
   getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
+  getTreatmentPriceOptions,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
 
@@ -24,6 +25,11 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      price_options?: Array<{
+        label?: string | null;
+        price?: string | number | null;
+        duration_minutes?: string | number | null;
+      }> | null;
       duration_minutes?: string | number | null;
       durationMinutes?: string | number | null;
       description?: string | null;
@@ -660,6 +666,7 @@ export default async function SpecialistDetailPage({
                   const name = getTreatmentName(treatment);
                   const price = formatPrice(getTreatmentPrice(treatment));
                   const duration = getTreatmentDuration(treatment);
+                  const priceOptions = getTreatmentPriceOptions(treatment);
 
                   return (
                     <article
@@ -699,6 +706,27 @@ export default async function SpecialistDetailPage({
                           Tiempo <span className="font-semibold text-black">{formatDuration(duration)}</span>
                         </div>
                       </div>
+
+                      {priceOptions.length > 0 && (
+                        <div className="mt-3 grid gap-2">
+                          {priceOptions.map((option) => (
+                            <div
+                              key={`${name}-${option.label}`}
+                              className="flex items-center justify-between gap-3 rounded-md border border-black/10 bg-white px-3 py-2 text-xs"
+                            >
+                              <span className="font-medium text-black">
+                                {option.label}
+                              </span>
+                              <span className="text-neutral-600">
+                                {formatPrice(option.price)}
+                                {option.duration_minutes
+                                  ? ` - ${formatDuration(option.duration_minutes)}`
+                                  : ""}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="mt-4 flex flex-wrap gap-3">
                         <Link

@@ -3,10 +3,19 @@ export type TreatmentEntry =
   | {
       name?: string | null;
       price?: string | number | null;
+      price_options?: TreatmentPriceOption[] | null;
+      priceOptions?: TreatmentPriceOption[] | null;
       category?: string | null;
       duration_minutes?: string | number | null;
       durationMinutes?: string | number | null;
     };
+
+export type TreatmentPriceOption = {
+  label?: string | null;
+  price?: string | number | null;
+  duration_minutes?: string | number | null;
+  durationMinutes?: string | number | null;
+};
 
 export function parseTreatmentEntry(treatment?: TreatmentEntry | null) {
   if (!treatment) {
@@ -38,13 +47,7 @@ export function parseTreatmentEntry(treatment?: TreatmentEntry | null) {
   return treatment;
 }
 
-export function getTreatmentName(treatment?: TreatmentEntry | null) {
-  return parseTreatmentEntry(treatment)?.name || "";
-}
-
-export function getTreatmentPriceValue(treatment?: TreatmentEntry | null) {
-  const value = parseTreatmentEntry(treatment)?.price;
-
+function parseNumericPrice(value: unknown) {
   if (value === null || value === undefined || value === "") {
     return null;
   }
@@ -57,16 +60,7 @@ export function getTreatmentPriceValue(treatment?: TreatmentEntry | null) {
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
-export function getTreatmentRawPrice(treatment?: TreatmentEntry | null) {
-  const value = parseTreatmentEntry(treatment)?.price;
-
-  return value === null || value === undefined ? "" : String(value);
-}
-
-export function getTreatmentDurationValue(treatment?: TreatmentEntry | null) {
-  const parsed = parseTreatmentEntry(treatment);
-  const value = parsed?.duration_minutes ?? parsed?.durationMinutes;
-
+function parseNumericDuration(value: unknown) {
   if (value === null || value === undefined || value === "") {
     return null;
   }
@@ -81,6 +75,47 @@ export function getTreatmentDurationValue(treatment?: TreatmentEntry | null) {
     : null;
 }
 
+export function getTreatmentName(treatment?: TreatmentEntry | null) {
+  return parseTreatmentEntry(treatment)?.name || "";
+}
+
+export function getTreatmentPriceValue(treatment?: TreatmentEntry | null) {
+  const options = getTreatmentPriceOptions(treatment);
+
+  if (options.length > 0) {
+    return Math.min(...options.map((option) => option.price));
+  }
+
+  const value = parseTreatmentEntry(treatment)?.price;
+
+  return parseNumericPrice(value);
+}
+
+export function getTreatmentRawPrice(treatment?: TreatmentEntry | null) {
+  const value = parseTreatmentEntry(treatment)?.price;
+
+  return value === null || value === undefined ? "" : String(value);
+}
+
+export function getTreatmentDurationValue(treatment?: TreatmentEntry | null) {
+  const parsed = parseTreatmentEntry(treatment);
+  const options = getTreatmentPriceOptions(treatment);
+
+  if (options.length > 0) {
+    const optionDurations = options
+      .map((option) => option.duration_minutes)
+      .filter((duration): duration is number => Boolean(duration));
+
+    if (optionDurations.length > 0) {
+      return Math.max(...optionDurations);
+    }
+  }
+
+  const value = parsed?.duration_minutes ?? parsed?.durationMinutes;
+
+  return parseNumericDuration(value);
+}
+
 export function getTreatmentRawDuration(treatment?: TreatmentEntry | null) {
   const parsed = parseTreatmentEntry(treatment);
   const value = parsed?.duration_minutes ?? parsed?.durationMinutes;
@@ -90,4 +125,39 @@ export function getTreatmentRawDuration(treatment?: TreatmentEntry | null) {
 
 export function getTreatmentCategory(treatment?: TreatmentEntry | null) {
   return parseTreatmentEntry(treatment)?.category || null;
+}
+
+export function getTreatmentPriceOptions(treatment?: TreatmentEntry | null) {
+  const parsed = parseTreatmentEntry(treatment);
+  const options = parsed?.price_options ?? parsed?.priceOptions;
+
+  if (!Array.isArray(options)) {
+    return [];
+  }
+
+  return options
+    .map((option) => {
+      const label = String(option?.label || "").trim();
+      const price = parseNumericPrice(option?.price);
+      const duration = parseNumericDuration(
+        option?.duration_minutes ?? option?.durationMinutes
+      );
+
+      if (!label || !price) {
+        return null;
+      }
+
+      return {
+        label,
+        price,
+        duration_minutes: duration,
+        rawPrice: String(option.price || "").trim(),
+      };
+    })
+    .filter(Boolean) as Array<{
+      label: string;
+      price: number;
+      duration_minutes: number | null;
+      rawPrice: string;
+    }>;
 }

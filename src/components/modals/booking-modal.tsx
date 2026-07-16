@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   getTreatmentDurationValue,
   getTreatmentName,
+  getTreatmentPriceOptions,
   getTreatmentPriceValue,
 } from "@/lib/treatment-utils";
 
@@ -27,6 +28,11 @@ type TreatmentOption =
   | {
       name?: string | null;
       price?: string | number | null;
+      price_options?: Array<{
+        label?: string | null;
+        price?: string | number | null;
+        duration_minutes?: string | number | null;
+      }> | null;
       duration_minutes?: string | number | null;
       durationMinutes?: string | number | null;
     };
@@ -102,6 +108,7 @@ export function BookingModal({
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedTreatment, setSelectedTreatment] = useState("");
+  const [selectedPriceOptionIndex, setSelectedPriceOptionIndex] = useState(0);
   const [treatmentDuration, setTreatmentDuration] = useState(60);
   const [confirmationChannel, setConfirmationChannel] = useState<"email" | "whatsapp">("email");
 
@@ -176,8 +183,16 @@ export function BookingModal({
     ) || fallbackTreatment;
   }, [selectedSpecialist, selectedTreatment, specialists, treatments]);
 
-  const selectedPrice = getTreatmentPriceValue(selectedTreatmentEntry);
-  const selectedDuration = getTreatmentDurationValue(selectedTreatmentEntry);
+  const selectedPriceOptions = getTreatmentPriceOptions(selectedTreatmentEntry);
+  const selectedPriceOption =
+    selectedPriceOptions[selectedPriceOptionIndex] ||
+    selectedPriceOptions[0] ||
+    null;
+  const selectedPrice =
+    selectedPriceOption?.price ?? getTreatmentPriceValue(selectedTreatmentEntry);
+  const selectedDuration =
+    selectedPriceOption?.duration_minutes ||
+    getTreatmentDurationValue(selectedTreatmentEntry);
 
   const weekDays = useMemo(() => {
     const base = addDays(new Date(), weekOffset * 7);
@@ -252,6 +267,10 @@ export function BookingModal({
       setSelectedTime("");
     }
   }, [availableTreatments, selectedTreatment]);
+
+  useEffect(() => {
+    setSelectedPriceOptionIndex(0);
+  }, [selectedTreatment]);
 
   useEffect(() => {
     if (!selectedTreatment) return;
@@ -463,6 +482,10 @@ export function BookingModal({
           typeof window !== "undefined" ? window.location.href : undefined,
         booking_context: {
           price_from: selectedPrice,
+          treatment_option: selectedPriceOption?.label || null,
+          treatment_option_price: selectedPriceOption?.price || null,
+          treatment_option_duration_minutes:
+            selectedPriceOption?.duration_minutes || null,
           duration_minutes: treatmentDuration,
           availability_checked: Boolean(selectedDate && selectedTime),
           confirmation_channel: confirmationChannel,
@@ -493,6 +516,7 @@ export function BookingModal({
       setBlockedMessage("");
       setSelectedSpecialist(specialistName || "");
       setSelectedTreatment(initialTreatment || availableTreatments[0] || "");
+      setSelectedPriceOptionIndex(0);
       setSelectedDate(initialDate || "");
       setSelectedTime(initialTime || "");
       onClose();
@@ -566,7 +590,8 @@ export function BookingModal({
                 </div>
 
                 <div className="mt-3 break-words text-base font-medium leading-snug sm:mt-4 sm:text-xl">
-                  {selectedTreatment || "Sin seleccionar"} - {treatmentDuration} min
+                  {selectedTreatment || "Sin seleccionar"}
+                  {selectedPriceOption ? ` (${selectedPriceOption.label})` : ""} - {treatmentDuration} min
                 </div>
                 <div className="mt-2 text-sm text-white/50">
                   Desde {formatPrice(selectedPrice)}
@@ -759,6 +784,7 @@ export function BookingModal({
                   value={selectedTreatment}
                   onChange={(e) => {
                     setSelectedTreatment(e.target.value);
+                    setSelectedPriceOptionIndex(0);
                     setSelectedTime("");
                   }}
                   required
@@ -770,6 +796,45 @@ export function BookingModal({
                     </option>
                   ))}
                 </select>
+
+                {selectedPriceOptions.length > 0 && (
+                  <div className="rounded-[28px] border border-black/10 bg-white p-4">
+                    <div className="text-sm font-medium">
+                      Elige cantidad / opcion
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {selectedPriceOptions.map((option, index) => (
+                        <button
+                          key={`${option.label}-${index}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPriceOptionIndex(index);
+                            setSelectedTime("");
+                          }}
+                          className={`rounded-2xl border p-4 text-left transition ${
+                            selectedPriceOptionIndex === index
+                              ? "border-black bg-black text-white"
+                              : "border-black/10 bg-[#F8F6F2] text-black hover:border-black"
+                          }`}
+                        >
+                          <div className="font-medium">{option.label}</div>
+                          <div
+                            className={`mt-1 text-sm ${
+                              selectedPriceOptionIndex === index
+                                ? "text-white/70"
+                                : "text-neutral-500"
+                            }`}
+                          >
+                            {formatPrice(option.price)}
+                            {option.duration_minutes
+                              ? ` - ${option.duration_minutes} min`
+                              : ""}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-2">
                   <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
