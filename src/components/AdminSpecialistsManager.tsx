@@ -1090,21 +1090,21 @@ export default function AdminSpecialistsManager({
                   </p>
                 )}
 
-                <div className="mt-5 grid grid-cols-3 gap-3">
-                  <div className="rounded-2xl bg-[#F8F5F1] p-4">
+                <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-3">
+                  <div className="min-w-0 rounded-2xl bg-[#F8F5F1] p-4">
                     <div className="text-2xl font-semibold">
                       {treatmentNames.length}
                     </div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.16em] text-neutral-500">
+                    <div className="mt-1 break-words text-[10px] uppercase tracking-[0.12em] text-neutral-500 sm:text-xs">
                       Tratamientos
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-[#F8F5F1] p-4">
+                  <div className="min-w-0 rounded-2xl bg-[#F8F5F1] p-4">
                     <div className="text-2xl font-semibold">
                       {scheduleStats.activeDays}
                     </div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.16em] text-neutral-500">
+                    <div className="mt-1 break-words text-[10px] uppercase tracking-[0.12em] text-neutral-500 sm:text-xs">
                       Dias activos
                     </div>
                   </div>
@@ -1113,10 +1113,10 @@ export default function AdminSpecialistsManager({
                     href={`/admin/calendar?specialist=${encodeURIComponent(
                       specialist.name || ""
                     )}`}
-                    className="rounded-2xl bg-black p-4 text-white transition hover:opacity-90"
+                    className="col-span-2 min-w-0 rounded-2xl bg-black p-4 text-white transition hover:opacity-90 xl:col-span-1"
                   >
-                    <div className="text-sm font-semibold">Disponibilidad</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.16em] text-white/50">
+                    <div className="text-sm font-semibold">Agenda</div>
+                    <div className="mt-1 break-words text-[10px] uppercase tracking-[0.12em] text-white/50 sm:text-xs">
                       Configurar
                     </div>
                   </a>
