@@ -55,6 +55,64 @@ function hasCompleteTreatmentConfig(treatments: any[]) {
     : false;
 }
 
+function getValidationIssues(form: {
+  name: string;
+  specialty: string;
+  clinic_name: string;
+  consultation_address: string;
+  image: string;
+  bio: string;
+  treatments: any[];
+}) {
+  const issues: Array<{ step: string; message: string }> = [];
+
+  if (!hasText(form.name)) {
+    issues.push({ step: "profile", message: "Falta el nombre del especialista." });
+  }
+
+  if (!hasText(form.specialty)) {
+    issues.push({ step: "profile", message: "Falta la especialidad." });
+  }
+
+  if (!hasText(form.image)) {
+    issues.push({ step: "profile", message: "Falta subir la imagen del especialista." });
+  }
+
+  if (!hasText(form.bio)) {
+    issues.push({ step: "profile", message: "Falta completar la biografia." });
+  }
+
+  if (!hasText(form.clinic_name) && !hasText(form.consultation_address)) {
+    issues.push({
+      step: "clinic",
+      message:
+        "Si es consulta independiente, falta indicar al menos una direccion de atencion.",
+    });
+  }
+
+  if (form.treatments.length === 0) {
+    issues.push({
+      step: "treatments",
+      message: "Falta seleccionar al menos un tratamiento.",
+    });
+  }
+
+  const incompleteTreatment = form.treatments.find(
+    (treatment) =>
+      !getTreatmentRawPrice(treatment).trim() ||
+      !getTreatmentRawDuration(treatment).trim()
+  );
+
+  if (incompleteTreatment) {
+    issues.push({
+      step: "treatments",
+      message: `Falta precio o duracion en ${getTreatmentName(incompleteTreatment) || "un tratamiento"}.`,
+    });
+  }
+
+  return issues;
+}
+
 export default function EditSpecialistButton({
   specialist,
   clinics,
@@ -142,19 +200,17 @@ export default function EditSpecialistButton({
   async function saveSpecialist() {
     setActionError("");
 
-    if (
-      !hasText(form.name) ||
-      !hasText(form.specialty) ||
-      (!hasText(form.clinic_name) && !hasText(form.consultation_address)) ||
-      !hasText(form.image) ||
-      !hasText(form.bio) ||
-      form.treatments.length === 0 ||
-      !hasCompleteTreatmentConfig(form.treatments)
-    ) {
+    const issues = getValidationIssues(form);
+
+    if (issues.length > 0) {
+      const firstIssue = issues[0];
       const message =
-        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion para cada tratamiento";
+        issues.length === 1
+          ? firstIssue.message
+          : `${firstIssue.message} Hay ${issues.length - 1} punto(s) mas por revisar.`;
 
       setActionError(message);
+      setActiveStep(firstIssue.step);
       showAdminToast(
         message,
         "error"

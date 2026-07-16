@@ -295,6 +295,27 @@ function isSpecialistReady(form: ReturnType<typeof emptyForm>) {
   );
 }
 
+function getFirstIssueStep(issue: string) {
+  if (
+    issue.includes("nombre") ||
+    issue.includes("especialidad") ||
+    issue.includes("foto") ||
+    issue.includes("bio")
+  ) {
+    return "profile";
+  }
+
+  if (issue.includes("clinica") || issue.includes("direccion")) {
+    return "clinic";
+  }
+
+  if (issue.includes("tratamiento") || issue.includes("precio") || issue.includes("duracion")) {
+    return "treatments";
+  }
+
+  return "review";
+}
+
 export default function AdminSpecialistsManager({
   initialSpecialists,
   clinics,
@@ -470,11 +491,18 @@ export default function AdminSpecialistsManager({
   async function createSpecialist(options?: { configureAvailability?: boolean }) {
     setActionError("");
 
-    if (!isSpecialistReady(form)) {
+    const issues = getSpecialistIssues(form, clinics, treatments);
+
+    if (!isSpecialistReady(form) || issues.length > 0) {
       const message =
-        "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento";
+        issues.length > 0
+          ? `${issues[0]}${
+              issues.length > 1 ? ` Hay ${issues.length - 1} punto(s) mas por revisar.` : ""
+            }`
+          : "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento";
 
       setActionError(message);
+      setActiveStep(issues[0] ? getFirstIssueStep(issues[0]) : "profile");
       showAdminToast(
         message,
         "error"
