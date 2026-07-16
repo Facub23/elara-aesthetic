@@ -14,6 +14,24 @@ const treatmentEditorSteps = [
   { id: "media", label: "Imagen" },
 ];
 
+function getTreatmentValidationIssues(form: {
+  name: string;
+  description: string;
+  image: string;
+  duration_minutes: string;
+}) {
+  const issues: Array<{ step: string; message: string }> = [];
+
+  if (!form.name.trim()) issues.push({ step: "identity", message: "Falta el nombre del tratamiento." });
+  if (Number(form.duration_minutes) < 5) {
+    issues.push({ step: "identity", message: "La duracion debe ser de al menos 5 minutos." });
+  }
+  if (!form.description.trim()) issues.push({ step: "content", message: "Falta la descripcion del tratamiento." });
+  if (!form.image.trim()) issues.push({ step: "media", message: "Falta subir la imagen principal." });
+
+  return issues;
+}
+
 export default function EditTreatmentButton({
   treatment,
 }: {
@@ -23,6 +41,7 @@ export default function EditTreatmentButton({
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [activeStep, setActiveStep] = useState("identity");
   const [form, setForm] = useState({
     name: treatment.name || "",
@@ -38,28 +57,61 @@ export default function EditTreatmentButton({
   function closeEditor() {
     setOpen(false);
     setActiveStep("identity");
+    setActionError("");
   }
 
   async function saveTreatment() {
+    setActionError("");
+    const issues = getTreatmentValidationIssues(form);
+
+    if (issues.length > 0) {
+      const message =
+        issues.length === 1
+          ? issues[0].message
+          : `${issues[0].message} Hay ${issues.length - 1} punto(s) mas por revisar.`;
+
+      setActionError(message);
+      setActiveStep(issues[0].step);
+      showAdminToast(message, "error");
+      return;
+    }
+
     setLoading(true);
 
-    const res = await fetch("/api/update-treatment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: treatment.id,
-        previous_name: treatment.name,
-        ...form,
-      }),
-    });
+    let res: Response;
+
+    try {
+      res = await fetch("/api/update-treatment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: treatment.id,
+          previous_name: treatment.name,
+          ...form,
+        }),
+      });
+    } catch {
+      const message = "No se pudo conectar con el servidor para guardar.";
+
+      setLoading(false);
+      setActionError(message);
+      showAdminToast(message, "error");
+      return;
+    }
 
     setLoading(false);
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      showAdminToast(data.error || "Error guardando tratamiento", "error");
+      const message =
+        typeof data.error === "string"
+          ? data.error
+          : "Error guardando tratamiento";
+
+      setActionError(message);
+      showAdminToast(message, "error");
       return;
     }
 
@@ -84,6 +136,14 @@ export default function EditTreatmentButton({
             onClick: saveTreatment,
           }}
         >
+          {actionError && (
+            <div className="mx-auto mt-6 max-w-7xl px-6">
+              <div className="rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+                {actionError}
+              </div>
+            </div>
+          )}
+
           <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
               {activeStep === "identity" && (

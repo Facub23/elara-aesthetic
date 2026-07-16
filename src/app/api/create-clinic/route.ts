@@ -62,12 +62,10 @@ export async function POST(
         .single();
 
     if (error) {
-      
-
       return NextResponse.json(
         {
           success: false,
-          error,
+          error: error.message || "Error creando clinica",
         },
         {
           status: 500,
@@ -88,11 +86,10 @@ export async function POST(
       clinic,
     });
   } catch (err) {
-    
-
     return NextResponse.json(
       {
         success: false,
+        error: err instanceof Error ? err.message : "Error interno",
       },
       {
         status: 500,

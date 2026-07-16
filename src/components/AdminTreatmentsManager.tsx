@@ -27,6 +27,19 @@ function emptyForm() {
   };
 }
 
+function getTreatmentValidationIssues(form: ReturnType<typeof emptyForm>) {
+  const issues: Array<{ step: string; message: string }> = [];
+
+  if (!form.name.trim()) issues.push({ step: "identity", message: "Falta el nombre del tratamiento." });
+  if (Number(form.duration_minutes) < 5) {
+    issues.push({ step: "identity", message: "La duracion debe ser de al menos 5 minutos." });
+  }
+  if (!form.description.trim()) issues.push({ step: "content", message: "Falta la descripcion del tratamiento." });
+  if (!form.image.trim()) issues.push({ step: "media", message: "Falta subir la imagen principal." });
+
+  return issues;
+}
+
 function getDurationForTreatment(
   treatmentName: string,
   durations: Array<{ treatment_name?: string | null; duration_minutes?: number | null }>
@@ -56,6 +69,7 @@ export default function AdminTreatmentsManager({
   const [treatments, setTreatments] = useState(initialTreatments);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [activeStep, setActiveStep] = useState("identity");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -63,6 +77,7 @@ export default function AdminTreatmentsManager({
   function resetEditor() {
     setOpen(false);
     setActiveStep("identity");
+    setActionError("");
     setForm(emptyForm());
   }
 
@@ -134,13 +149,18 @@ export default function AdminTreatmentsManager({
   }
 
   async function createTreatment() {
-    if (
-      !form.name.trim() ||
-      !form.description.trim() ||
-      !form.image.trim() ||
-      Number(form.duration_minutes) < 5
-    ) {
-      showAdminToast("Completa nombre, descripcion, imagen y duracion", "error");
+    setActionError("");
+    const issues = getTreatmentValidationIssues(form);
+
+    if (issues.length > 0) {
+      const message =
+        issues.length === 1
+          ? issues[0].message
+          : `${issues[0].message} Hay ${issues.length - 1} punto(s) mas por revisar.`;
+
+      setActionError(message);
+      setActiveStep(issues[0].step);
+      showAdminToast(message, "error");
       return;
     }
 
@@ -150,26 +170,45 @@ export default function AdminTreatmentsManager({
           treatment.name?.toLowerCase().trim() === form.name.toLowerCase().trim()
       )
     ) {
-      showAdminToast("Ya existe un tratamiento con ese nombre", "error");
+      const message = "Ya existe un tratamiento con ese nombre";
+
+      setActionError(message);
+      setActiveStep("identity");
+      showAdminToast(message, "error");
       return;
     }
 
     setLoading(true);
 
-    const res = await fetch("/api/create-treatment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(form),
-    });
+    let res: Response;
+
+    try {
+      res = await fetch("/api/create-treatment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+    } catch {
+      const message = "No se pudo conectar con el servidor para crear.";
+
+      setLoading(false);
+      setActionError(message);
+      showAdminToast(message, "error");
+      return;
+    }
 
     const data = await res.json();
 
     setLoading(false);
 
     if (!res.ok) {
-      showAdminToast(data.error || "Error creando tratamiento", "error");
+      const message =
+        typeof data.error === "string" ? data.error : "Error creando tratamiento";
+
+      setActionError(message);
+      showAdminToast(message, "error");
       return;
     }
 
@@ -229,6 +268,14 @@ export default function AdminTreatmentsManager({
             onClick: createTreatment,
           }}
         >
+          {actionError && (
+            <div className="mx-auto mt-6 max-w-7xl px-6">
+              <div className="rounded-[24px] border border-red-200 bg-red-50 px-5 py-4 text-sm font-medium text-red-700">
+                {actionError}
+              </div>
+            </div>
+          )}
+
           <div className="mx-auto grid max-w-7xl gap-10 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl">
               {activeStep === "identity" && (
