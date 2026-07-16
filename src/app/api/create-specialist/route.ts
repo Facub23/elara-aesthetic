@@ -60,20 +60,70 @@ function normalizeSelectedTreatments(treatments: unknown) {
     }>;
 }
 
-function hasIncompleteTreatmentConfig(
+function getTreatmentConfigIssue(
   treatments: Array<{
     name: string;
     price?: string;
     duration_minutes?: number | null;
   }>
 ) {
-  return treatments.some(
-    (treatment) =>
-      !String(treatment.price || "").trim() ||
-      !treatment.duration_minutes ||
-      treatment.duration_minutes < 5 ||
-      treatment.duration_minutes > 240
+  const treatment = treatments.find(
+    (item) =>
+      !String(item.price || "").trim() ||
+      !item.duration_minutes ||
+      item.duration_minutes < 5 ||
+      item.duration_minutes > 240
   );
+
+  if (!treatment) {
+    return "";
+  }
+
+  if (!String(treatment.price || "").trim()) {
+    return `Falta precio en ${treatment.name}.`;
+  }
+
+  return `La duracion de ${treatment.name} debe estar entre 5 y 240 minutos.`;
+}
+
+function getSpecialistValidationIssue({
+  name,
+  specialty,
+  image,
+  bio,
+  selectedTreatments,
+}: {
+  name?: string;
+  specialty?: string;
+  image?: string;
+  bio?: string;
+  selectedTreatments: Array<{
+    name: string;
+    price?: string;
+    duration_minutes?: number | null;
+  }>;
+}) {
+  if (!String(name || "").trim()) {
+    return "Falta el nombre del especialista.";
+  }
+
+  if (!String(specialty || "").trim()) {
+    return "Falta la especialidad del especialista.";
+  }
+
+  if (!String(image || "").trim()) {
+    return "Falta subir la imagen del especialista.";
+  }
+
+  if (!String(bio || "").trim()) {
+    return "Falta completar la bio del especialista.";
+  }
+
+  if (selectedTreatments.length === 0) {
+    return "Falta seleccionar al menos un tratamiento.";
+  }
+
+  return getTreatmentConfigIssue(selectedTreatments);
 }
 
 export async function POST(req: Request) {
@@ -104,19 +154,19 @@ export async function POST(req: Request) {
 
     const selectedTreatments = normalizeSelectedTreatments(treatments);
 
-    if (
-      !name ||
-      !specialty ||
-      !image ||
-      !bio ||
-      selectedTreatments.length === 0 ||
-      hasIncompleteTreatmentConfig(selectedTreatments)
-    ) {
+    const validationIssue = getSpecialistValidationIssue({
+      name,
+      specialty,
+      image,
+      bio,
+      selectedTreatments,
+    });
+
+    if (validationIssue) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Completa nombre, imagen, bio, precio y duracion valida para cada tratamiento",
+          error: validationIssue,
         },
         { status: 400 }
       );

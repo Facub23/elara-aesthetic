@@ -499,7 +499,7 @@ export default function AdminSpecialistsManager({
           ? `${issues[0]}${
               issues.length > 1 ? ` Hay ${issues.length - 1} punto(s) mas por revisar.` : ""
             }`
-          : "Completa perfil, lugar de atencion, imagen, bio, precio y duracion por tratamiento";
+          : "Revisa el perfil y la configuracion de cada tratamiento.";
 
       setActionError(message);
       setActiveStep(issues[0] ? getFirstIssueStep(issues[0]) : "profile");
