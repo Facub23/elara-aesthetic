@@ -101,11 +101,14 @@ type MarketplaceTreatment = {
 
 const categoryLabels = [
   "Todos",
+  "Neuromoduladores",
+  "Bioestimuladores",
+  "Armonizacion facial",
   "Facial",
   "Labios",
   "Piel",
   "Corporal",
-  "Regenerativo",
+  "Capilar",
 ];
 
 function getTreatmentName(treatment: TreatmentOption) {
@@ -147,12 +150,75 @@ function inferCategory(name: string, explicit?: string | null) {
 
   const text = normalize(name);
 
-  if (text.includes("labial") || text.includes("labio")) return "Labios";
-  if (text.includes("piel") || text.includes("laser") || text.includes("peeling")) {
+  if (
+    text.includes("botox") ||
+    text.includes("neuromodul") ||
+    text.includes("toxina") ||
+    text.includes("bruxismo") ||
+    text.includes("hiperhidrosis")
+  ) {
+    return "Neuromoduladores";
+  }
+
+  if (
+    text.includes("bioestimul") ||
+    text.includes("sculptra") ||
+    text.includes("radiesse") ||
+    text.includes("lanluma") ||
+    text.includes("ellanse") ||
+    text.includes("polilactico") ||
+    text.includes("hidroxiapatita") ||
+    text.includes("plasma") ||
+    text.includes("prp")
+  ) {
+    return "Bioestimuladores";
+  }
+
+  if (
+    text.includes("labial") ||
+    text.includes("labio") ||
+    text.includes("russian lips")
+  ) {
+    return "Labios";
+  }
+
+  if (
+    text.includes("armonizacion") ||
+    text.includes("full face") ||
+    text.includes("menton") ||
+    text.includes("mandibul") ||
+    text.includes("pomulo") ||
+    text.includes("rinomodelacion") ||
+    text.includes("ojera")
+  ) {
+    return "Armonizacion facial";
+  }
+
+  if (
+    text.includes("piel") ||
+    text.includes("laser") ||
+    text.includes("peeling") ||
+    text.includes("mancha") ||
+    text.includes("melasma") ||
+    text.includes("hidratacion") ||
+    text.includes("skinbooster") ||
+    text.includes("limpieza")
+  ) {
     return "Piel";
   }
-  if (text.includes("corporal") || text.includes("celulitis")) return "Corporal";
-  if (text.includes("bioestimul") || text.includes("plasma")) return "Regenerativo";
+
+  if (
+    text.includes("corporal") ||
+    text.includes("celulitis") ||
+    text.includes("gluteo") ||
+    text.includes("abdomen") ||
+    text.includes("pierna") ||
+    text.includes("brazo")
+  ) {
+    return "Corporal";
+  }
+
+  if (text.includes("capilar") || text.includes("alopecia")) return "Capilar";
 
   return "Facial";
 }
