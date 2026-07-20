@@ -7,7 +7,6 @@ import { recordBookingEvent } from "@/lib/booking-events";
 import { notifyBookingUpdated } from "@/lib/booking-notifications";
 import { getCanonicalAdminBookingStatus } from "@/lib/booking-status";
 import { syncBookingToGoogleCalendar } from "@/lib/google-calendar";
-import { sendReviewRequest } from "@/lib/review-notifications";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -162,14 +161,6 @@ export async function POST(req: Request) {
 
     await notifyBookingUpdated(data);
     await syncBookingToGoogleCalendar(data);
-
-    if (status === "Completada" && !data.review_sent) {
-      try {
-        await sendReviewRequest(data);
-      } catch (reviewError) {
-        console.error(reviewError);
-      }
-    }
 
     return NextResponse.json({
       success: true,

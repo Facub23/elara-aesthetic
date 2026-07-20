@@ -37,7 +37,7 @@ export default function PrivacyPage() {
               ],
               [
                 "Finalidad",
-                "Gestionar reservas, confirmaciones, recordatorios, cancelaciones, reprogramaciones, reviews verificadas y comunicacion operativa entre paciente y clinica.",
+                "Gestionar reservas, confirmaciones, recordatorios, cancelaciones, reprogramaciones y comunicacion operativa entre paciente y clinica.",
               ],
               [
                 "Base de legitimacion",

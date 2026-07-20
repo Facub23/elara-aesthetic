@@ -50,27 +50,6 @@ function normalizeTime(value?: string | null) {
   return "";
 }
 
-function getStatusClass(status?: string) {
-  if (status === "Confirmada") return "bg-emerald-100 text-emerald-700";
-
-  if (status === "Completada") return "bg-black text-white";
-
-  if (status === "Reprogramada") return "bg-blue-100 text-blue-700";
-
-  if (
-    status === "Cancelada" ||
-    status === "No asistio"
-  ) {
-    return "bg-red-100 text-red-700";
-  }
-
-  if (status === "Pendiente confirmacion") {
-    return "bg-amber-100 text-amber-700";
-  }
-
-  return "bg-white text-neutral-600";
-}
-
 function getBookingDisplayTime(booking: any) {
   return normalizeTime(booking.booking_time) || normalizeTime(booking.booking_date);
 }
@@ -96,20 +75,6 @@ function cleanBrandText(value?: string | null) {
   return (value || "")
     .replace(/ELARA/gi, "EncuentraTuClinica")
     .replace(/Especialista independiente/gi, "Consulta independiente");
-}
-
-function getReviewStatusLabel(status?: string | null) {
-  if (status === "Aprobada") return "Opinion publicada";
-  if (status === "Rechazada") return "Opinion no publicada";
-
-  return "Opinion en revision";
-}
-
-function getReviewStatusClass(status?: string | null) {
-  if (status === "Aprobada") return "bg-emerald-100 text-emerald-700";
-  if (status === "Rechazada") return "bg-red-100 text-red-700";
-
-  return "bg-amber-100 text-amber-700";
 }
 
 export default async function PatientDashboardPage() {
@@ -215,18 +180,6 @@ export default async function PatientDashboardPage() {
             getBookingStatusKey(booking.status) === "pending" ||
             getBookingStatusKey(booking.status) === "rescheduled"))
     ) || [];
-  const bookingIds = bookings.map((booking) => String(booking.id));
-  const { data: patientReviews } =
-    bookingIds.length > 0
-      ? await supabaseAuth
-          .from("reviews")
-          .select("booking_id,status,rating")
-          .in("booking_id", bookingIds)
-      : { data: [] };
-  const reviewsByBookingId = new Map(
-    (patientReviews || []).map((review) => [String(review.booking_id), review])
-  );
-
   const treatments = Array.from(
     new Set(
       bookings
@@ -518,37 +471,9 @@ export default async function PatientDashboardPage() {
                             </span>
                           </div>
 
-                          {reviewsByBookingId.get(String(booking.id)) ? (
-                            <div
-                              className={`mt-4 inline-flex rounded-full px-4 py-2 text-sm ${getReviewStatusClass(
-                                reviewsByBookingId.get(String(booking.id))?.status
-                              )}`}
-                            >
-                              {getReviewStatusLabel(
-                                reviewsByBookingId.get(String(booking.id))?.status
-                              )}
-                              {reviewsByBookingId.get(String(booking.id))?.rating
-                                ? ` - ${reviewsByBookingId.get(String(booking.id))?.rating}/5`
-                                : ""}
-                            </div>
-                          ) : null}
-
                         </div>
 
                         <div className="flex flex-wrap gap-3">
-                          {!reviewsByBookingId.has(String(booking.id)) &&
-                            getBookingStatusKey(booking.status) === "completed" &&
-                            booking.review_token && (
-                              <Link
-                                href={`/review/${booking.id}?token=${encodeURIComponent(
-                                  booking.review_token
-                                )}`}
-                                className="rounded-full bg-black px-6 py-3 text-sm text-white"
-                              >
-                                Valorar experiencia
-                              </Link>
-                            )}
-
                           <Link
                             href={`/tratamientos?search=${encodeURIComponent(
                               booking.treatment ||

@@ -237,20 +237,10 @@ export default async function SpecialistDetailPage({
       ? await clinicQuery.eq("name", specialist.clinic_name).maybeSingle()
       : { data: null };
 
-  const [{ data: reviews }, { data: availabilityRows }] = await Promise.all([
-    supabase
-      .from("reviews")
-      .select("*")
-      .eq("specialist_name", specialist.name)
-      .eq("status", "Aprobada")
-      .order("featured", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(6),
-    supabase
-      .from("specialist_availability")
-      .select("*")
-      .eq("specialist_name", specialist.name),
-  ]);
+  const { data: availabilityRows } = await supabase
+    .from("specialist_availability")
+    .select("*")
+    .eq("specialist_name", specialist.name);
 
   const isIndependent = !clinic?.name && !specialist.clinic_name;
   const clinicName = clinic?.name || specialist.clinic_name || "Consulta independiente";
@@ -268,18 +258,6 @@ export default async function SpecialistDetailPage({
   const activeDays = new Set(availability.map(getAvailabilityWeekday)).size;
   const prices = treatments.map(getTreatmentPrice).filter(Boolean) as number[];
   const priceFrom = prices.length > 0 ? Math.min(...prices) : undefined;
-  const publicReviews = filterPublicRecords(reviews || []);
-  const reviewCount = publicReviews.length;
-  const approvedReviewRating =
-    reviewCount > 0
-      ? (
-          publicReviews.reduce(
-            (sum, review) => sum + Number(review.rating || 0),
-            0
-          ) / reviewCount
-        ).toFixed(1)
-      : null;
-  const displayedRating = approvedReviewRating || specialist.rating || "5.0";
   const selectedTreatmentName = initialTreatment || getTreatmentName(treatments[0]);
   const selectedTreatment = treatments.find(
     (treatment) => normalize(getTreatmentName(treatment)) === normalize(selectedTreatmentName)
@@ -358,15 +336,6 @@ export default async function SpecialistDetailPage({
                     name: clinicName,
                   },
                 }),
-            ...(reviewCount > 0
-              ? {
-                  aggregateRating: {
-                    "@type": "AggregateRating",
-                    ratingValue: displayedRating,
-                    reviewCount,
-                  },
-                }
-              : {}),
           }),
         }}
       />
@@ -423,10 +392,10 @@ export default async function SpecialistDetailPage({
 
               <div className="mt-8 grid gap-3 sm:grid-cols-4">
                 {[
-                  ["Rating", displayedRating],
-                  ["Reviews", reviewCount],
                   ["Tratamientos", treatments.length],
                   ["Horario", activeDays > 0 ? `${activeDays} dias` : "Por definir"],
+                  ["Desde", formattedPrice || "A confirmar"],
+                  ["Lugar", isIndependent ? "Consulta propia" : "Clinica"],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-md border border-black/10 bg-white p-4">
                     <div className="text-2xl font-semibold">{value}</div>
@@ -754,62 +723,6 @@ export default async function SpecialistDetailPage({
         </div>
       </section>
 
-      <section className="px-6 pb-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                Opiniones verificadas
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Opiniones de pacientes
-              </h2>
-              {reviewCount > 0 && (
-                <p className="mt-3 text-neutral-500">
-                  {displayedRating}/5 basado en {reviewCount} reservas
-                  verificadas.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {publicReviews.length === 0 ? (
-            <div className="rounded-lg border border-black/10 bg-white p-8 text-neutral-500 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
-              Este especialista todavia no tiene reviews verificadas.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {publicReviews.map((review) => (
-                <article key={review.id} className="rounded-lg border border-black/10 bg-white p-6 shadow-[0_12px_45px_rgba(0,0,0,0.04)]">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="rounded-full bg-black px-3 py-1 text-sm text-white">
-                      Verificada
-                    </div>
-                    {review.featured && (
-                      <div className="rounded-full bg-[#F8F6F2] px-3 py-1 text-sm">
-                        Destacada
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-5 text-xl font-semibold">
-                    {review.rating || 5}/5
-                  </div>
-
-                  <p className="mt-4 text-sm leading-6 text-neutral-700">
-                    &ldquo;{review.review}&rdquo;
-                  </p>
-
-                  <div className="mt-5 border-t border-black/10 pt-5">
-                    <div className="font-semibold">{review.patient_name}</div>
-                    <div className="mt-1 text-sm text-neutral-500">{review.treatment}</div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
     </main>
   );
 }

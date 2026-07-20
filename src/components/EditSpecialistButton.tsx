@@ -647,24 +647,13 @@ export default function EditSpecialistButton({
                     Metricas
                   </p>
                   <h3 className="mt-3 text-3xl font-semibold">
-                    Rating y reviews
+                    Perfil listo para publicar
                   </h3>
-                  <div className="mt-10 grid gap-5">
-                    <input
-                      value={form.rating}
-                      onChange={(e) => setForm({ ...form, rating: e.target.value })}
-                      placeholder="Rating"
-                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
-                    />
-                    <input
-                      value={form.reviews_count}
-                      onChange={(e) =>
-                        setForm({ ...form, reviews_count: e.target.value })
-                      }
-                      placeholder="Reviews"
-                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
-                    />
-                  </div>
+                  <p className="mt-5 leading-7 text-neutral-600">
+                    Revisa nombre, imagen, bio, clinica y tratamientos antes de
+                    guardar. Las reseñas se activaran mas adelante desde citas
+                    reales.
+                  </p>
                 </>
               )}
             </div>

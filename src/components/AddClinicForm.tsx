@@ -355,22 +355,6 @@ export default function AddClinicForm() {
                   <div className="mt-10 grid gap-5">
                     <div>
                       <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
-                        Rating
-                      </label>
-                      <input
-                        value={form.rating}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            rating: e.target.value,
-                          })
-                        }
-                        className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
                         Pacientes
                       </label>
                       <input
@@ -463,7 +447,6 @@ export default function AddClinicForm() {
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
-                    ["Rating", form.rating || "5.0"],
                     ["Pacientes", form.patients || "500+"],
                     ["Experiencia", form.experience || "10 anos"],
                     ["WhatsApp", form.whatsapp || "Pendiente"],

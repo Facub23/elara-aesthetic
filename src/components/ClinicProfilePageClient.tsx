@@ -98,11 +98,9 @@ function getLowestDurationLabel(treatments: TreatmentEntry[]) {
 export default function ClinicProfilePageClient({
   clinic,
   specialists,
-  reviews,
 }: {
   clinic: any;
   specialists: any[];
-  reviews: any[];
 }) {
   const [bookingOpen, setBookingOpen] = useState(false);
 
@@ -142,16 +140,6 @@ export default function ClinicProfilePageClient({
     [specialists]
   );
 
-  const approvedReviewRating =
-    reviews.length > 0
-      ? (
-          reviews.reduce(
-            (sum, review) => sum + Number(review.rating || 0),
-            0
-          ) / reviews.length
-        ).toFixed(1)
-      : null;
-  const displayedRating = approvedReviewRating || clinic.rating || "5.0";
   const clinicLocation = getLocationSummary({
     location: clinic.location,
     city: clinic.city,
@@ -163,7 +151,6 @@ export default function ClinicProfilePageClient({
   const clinicStats = [
     ["Tratamientos", clinicTreatments.length],
     ["Especialistas", specialists.length],
-    ["Reviews", reviews.length],
     ["Desde", lowestTreatmentPrice || "Consultar"],
   ];
   const decisionSteps = [
@@ -176,8 +163,8 @@ export default function ClinicProfilePageClient({
       text: "Puedes elegir profesional, tratamiento y horario sin salir del flujo.",
     },
     {
-      title: "Confianza verificable",
-      text: "Reviews, rating y datos de clinica quedan juntos antes de reservar.",
+      title: "Contexto claro",
+      text: "Tratamientos, equipo y datos de clinica quedan juntos antes de reservar.",
     },
   ];
   const marketplaceRows = [
@@ -190,7 +177,7 @@ export default function ClinicProfilePageClient({
   const trustChecklist = [
     "Tratamientos vinculados a especialistas reales de la clinica.",
     "Perfil de cada profesional antes de abrir la reserva.",
-    "Reviews verificadas cuando existen reservas completadas.",
+    "Precio y duracion orientativa cuando el especialista lo informa.",
   ];
 
   return (
@@ -206,10 +193,6 @@ export default function ClinicProfilePageClient({
             <div className="flex flex-wrap gap-3">
               <div className="max-w-full rounded-full border border-black/5 bg-white/70 px-5 py-2 text-sm backdrop-blur-xl">
                 Clinica verificada
-              </div>
-
-              <div className="max-w-full rounded-full bg-black px-5 py-2 text-sm text-white">
-                Rating {displayedRating}
               </div>
 
               <div className="max-w-full rounded-full border border-black/5 bg-white/70 px-5 py-2 text-sm backdrop-blur-xl">
@@ -647,83 +630,6 @@ export default function ClinicProfilePageClient({
           </div>
         </section>
       )}
-
-      <section className="relative mt-32 px-6 pb-32">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-3xl">
-            <p className="text-sm uppercase tracking-[0.3em] text-neutral-500">
-              Opiniones verificadas
-            </p>
-
-            <h2 className="mt-5 text-4xl font-semibold tracking-tight sm:text-5xl md:text-7xl">
-              Pacientes reales. Experiencias reales.
-            </h2>
-
-            <p className="mt-8 text-xl leading-relaxed text-neutral-600">
-              Opiniones verificadas de pacientes que reservaron citas en esta
-              clinica.
-            </p>
-
-            {reviews.length > 0 && (
-              <p className="mt-5 text-lg text-neutral-600">
-                {displayedRating}/5 basado en {reviews.length} opiniones con
-                reserva completada.
-              </p>
-            )}
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {reviews.length === 0 ? (
-              <div className="rounded-[40px] bg-white/70 p-10 text-neutral-500 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
-                Esta clinica todavia no tiene reviews verificadas.
-              </div>
-            ) : (
-              reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="rounded-[40px] border border-white/40 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)] backdrop-blur-2xl"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="rounded-full bg-black px-4 py-2 text-sm text-white">
-                      Verificada
-                    </div>
-
-                    {review.featured && (
-                      <div className="rounded-full bg-[#F2EEE8] px-4 py-2 text-sm">
-                        Destacada
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-8 text-3xl font-semibold">
-                    {review.rating || 5}/5
-                  </div>
-
-                  <p className="mt-6 text-lg leading-relaxed text-neutral-700">
-                    &ldquo;{review.review}&rdquo;
-                  </p>
-
-                  <div className="mt-8 border-t border-black/5 pt-6">
-                    <div className="text-xl font-semibold">
-                      {review.patient_name}
-                    </div>
-
-                    <div className="mt-2 text-sm text-neutral-500">
-                      {review.treatment}
-                    </div>
-
-                    {review.specialist_name && (
-                      <div className="mt-4 inline-flex rounded-full bg-[#F7F5F2] px-4 py-2 text-sm">
-                        {review.specialist_name}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </section>
 
       {bookingOpen && (
         <BookingModal

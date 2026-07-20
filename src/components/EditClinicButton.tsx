@@ -269,7 +269,6 @@ export default function EditClinicButton({ clinic }: { clinic: any }) {
                   </h3>
                   <div className="mt-10 grid gap-5">
                     {[
-                      ["rating", "Rating"],
                       ["patients", "Pacientes"],
                       ["experience", "Experiencia"],
                       ["whatsapp", "WhatsApp"],
@@ -315,7 +314,6 @@ export default function EditClinicButton({ clinic }: { clinic: any }) {
                 </p>
                 <div className="mt-6 grid grid-cols-2 gap-3">
                   {[
-                    ["Rating", form.rating || "5.0"],
                     ["Pacientes", form.patients || "500+"],
                     ["Experiencia", form.experience || "10 anos"],
                     ["WhatsApp", form.whatsapp || "Pendiente"],

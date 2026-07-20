@@ -6,7 +6,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { getAddressCities, getLocationSummary } from "@/lib/location-utils";
 import { filterPublicRecords, isPublicPlaceholderRecord } from "@/lib/public-records";
 import { supabase } from "@/lib/supabase";
-import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
   getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
@@ -178,7 +177,7 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
       {
         question: `Como elegir especialista para ${treatmentName}?`,
         answer:
-          "Compara experiencia, lugar de atencion, precio orientativo, opiniones verificadas y disponibilidad antes de reservar.",
+          "Compara experiencia, lugar de atencion, precio orientativo y disponibilidad antes de reservar.",
       },
       {
         question: `Cuanto dura una cita de ${treatmentName}?`,
@@ -222,7 +221,7 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         {
           question: "Como elegir especialista para botox?",
           answer:
-            "Revisa experiencia en medicina estetica facial, opiniones verificadas, precio orientativo y disponibilidad real antes de reservar.",
+            "Revisa experiencia en medicina estetica facial, precio orientativo y disponibilidad real antes de reservar.",
         },
         {
           question: "Cuanto dura una cita de botox?",
@@ -266,7 +265,7 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         {
           question: "Como comparar especialistas para rellenos?",
           answer:
-            "Fijate en experiencia, criterio estetico, lugar de atencion, precio orientativo y opiniones verificadas.",
+            "Fijate en experiencia, criterio estetico, lugar de atencion y precio orientativo.",
         },
         {
           question: "El precio cambia segun la zona?",
@@ -306,7 +305,7 @@ function getTreatmentLandingContent(slug: string, treatmentName: string) {
         {
           question: "Como elegir especialista para rinomodelacion?",
           answer:
-            "Compara experiencia especifica, criterio estetico, lugar de atencion, opiniones y disponibilidad.",
+            "Compara experiencia especifica, criterio estetico, lugar de atencion y disponibilidad.",
         },
         {
           question: "Que debo revisar antes de reservar?",
@@ -394,7 +393,6 @@ export default async function TreatmentPage({
     { data: clinics },
     { data: treatmentRecords },
     { data: durationRows },
-    { data: approvedReviews },
   ] = await Promise.all([
     supabase.from("specialists").select("*"),
     supabase.from("clinics").select("*"),
@@ -402,12 +400,6 @@ export default async function TreatmentPage({
     supabase
       .from("treatment_durations")
       .select("treatment_name,duration_minutes"),
-    supabase
-      .from("reviews")
-      .select("*")
-      .eq("status", "Aprobada")
-      .order("featured", { ascending: false })
-      .order("created_at", { ascending: false }),
   ]);
 
   const allSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]).filter(
@@ -496,28 +488,6 @@ export default async function TreatmentPage({
     return aPrice - bPrice;
   });
   const featuredClinics = clinicsForTreatment.slice(0, 3);
-  const publicApprovedReviews = filterPublicRecords(approvedReviews || []);
-  const treatmentReviews = publicApprovedReviews.filter(
-    (review) => slugify(review.treatment || "") === slug
-  );
-  const treatmentRating =
-    treatmentReviews.length > 0
-      ? (
-          treatmentReviews.reduce(
-            (sum, review) => sum + Number(review.rating || 0),
-            0
-          ) / treatmentReviews.length
-        ).toFixed(1)
-      : null;
-  const specialistReviewSummaries = buildReviewSummaryMap(
-    publicApprovedReviews,
-    "specialist_name"
-  );
-  const clinicReviewSummaries = buildReviewSummaryMap(
-    publicApprovedReviews,
-    "clinic_name"
-  );
-
   const independentSpecialistCount = allSpecialists.filter((specialist) => {
     const clinic =
       (specialist.clinic_id && clinicsById.get(String(specialist.clinic_id))) ||
@@ -541,7 +511,7 @@ export default async function TreatmentPage({
   ];
   const marketplaceChecks = [
     "Compara clinicas verificadas antes de elegir.",
-    "Elige especialista por perfil, reviews y disponibilidad.",
+    "Elige especialista por perfil, precio y disponibilidad.",
     "Reserva el tratamiento sin perder el contexto de precio y ciudad.",
   ];
 
@@ -1036,50 +1006,6 @@ export default async function TreatmentPage({
         </div>
       </section>
 
-      {treatmentReviews.length > 0 && (
-        <section className="px-6 pb-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">
-                  Opiniones verificadas
-                </p>
-                <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                  Experiencias con {treatmentName}
-                </h2>
-              </div>
-              <div className="rounded-full bg-black px-5 py-3 text-sm text-white">
-                {treatmentRating}/5 - {treatmentReviews.length} reservas verificadas
-              </div>
-            </div>
-
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {treatmentReviews.slice(0, 6).map((review) => (
-                <article key={review.id} className="rounded-lg border border-black/10 bg-white p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <span className="rounded-full bg-black px-3 py-1 text-sm text-white">
-                      Reserva verificada
-                    </span>
-                    <span className="font-semibold">{review.rating || 5}/5</span>
-                  </div>
-                  <p className="mt-5 text-sm leading-6 text-neutral-700">
-                    {review.review}
-                  </p>
-                  <div className="mt-5 border-t border-black/5 pt-4 text-sm">
-                    <div className="font-medium">
-                      {review.patient_name || "Paciente verificado"}
-                    </div>
-                    <div className="mt-1 text-neutral-500">
-                      {review.clinic_name}
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       <section className="px-6 pb-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 max-w-3xl">
@@ -1158,9 +1084,6 @@ export default async function TreatmentPage({
               const placeLocation = clinic
                 ? getClinicLocation(clinic)
                 : specialist.consultation_address || "Direccion a confirmar";
-              const reviewSummary = specialistReviewSummaries.get(
-                normalizeReviewKey(specialist.name)
-              );
               const reserveHref = buildSpecialistHref({
                 slug: specialist.slug,
                 treatment: treatmentName,
@@ -1201,21 +1124,13 @@ export default async function TreatmentPage({
                     </div>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-3">
+                  <div className="mt-5 grid grid-cols-2 gap-3">
                     <div className="rounded-md bg-[#F8F6F2] p-3">
                       <div className="text-lg font-semibold">
-                        {reviewSummary?.rating || "-"}
+                        {price || "Consultar"}
                       </div>
                       <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
-                        Rating
-                      </div>
-                    </div>
-                    <div className="rounded-md bg-[#F8F6F2] p-3">
-                      <div className="text-lg font-semibold">
-                        {reviewSummary?.count || 0}
-                      </div>
-                      <div className="text-xs uppercase tracking-[0.16em] text-neutral-500">
-                        Reviews
+                        Precio desde
                       </div>
                     </div>
                     <div className="rounded-md bg-[#F8F6F2] p-3">
@@ -1341,9 +1256,6 @@ export default async function TreatmentPage({
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {clinicsForTreatment.map((clinic) => {
-              const reviewSummary = clinicReviewSummaries.get(
-                normalizeReviewKey(clinic.name)
-              );
               const clinicSpecialists = allSpecialists.filter((specialist) => {
                 const sameId =
                   clinic.id &&
@@ -1382,11 +1294,6 @@ export default async function TreatmentPage({
                         </p>
                       </div>
 
-                      <div className="rounded-full bg-black px-3 py-1 text-sm text-white">
-                        {reviewSummary
-                          ? `${reviewSummary.rating} - ${reviewSummary.count}`
-                          : "Sin opiniones"}
-                      </div>
                     </div>
 
                     <p className="mt-4 line-clamp-2 text-sm leading-6 text-neutral-600">

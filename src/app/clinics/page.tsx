@@ -12,7 +12,6 @@ import {
   getAddressSearchText,
   getLocationSummary,
 } from "@/lib/location-utils";
-import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
   getTreatmentDurationValue,
   getTreatmentName,
@@ -186,9 +185,6 @@ function ClinicsPageContent() {
   const [clinics, setClinics] = useState<ClinicRow[]>([]);
   const [specialists, setSpecialists] = useState<SpecialistRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [approvedReviews, setApprovedReviews] = useState<
-    { clinic_name?: string | null; rating?: string | number | null }[]
-  >([]);
   const [nextSlots, setNextSlots] = useState<Record<string, NextSlot | null>>({});
 
   useEffect(() => {
@@ -205,7 +201,6 @@ function ClinicsPageContent() {
 
         setClinics((data.clinics || []) as ClinicRow[]);
         setSpecialists((data.specialists || []) as SpecialistRow[]);
-        setApprovedReviews(data.reviews || []);
       } finally {
         setLoading(false);
       }
@@ -214,15 +209,9 @@ function ClinicsPageContent() {
     loadMarketplaceData();
   }, []);
 
-  const clinicReviewSummaries = useMemo(
-    () => buildReviewSummaryMap(approvedReviews, "clinic_name"),
-    [approvedReviews]
-  );
-
   const clinicContexts = useMemo(
     () =>
       clinics.map((clinic) => {
-        const reviewSummary = clinicReviewSummaries.get(normalizeReviewKey(clinic.name));
         const clinicSpecialists = specialists.filter(
           (specialist) =>
             specialistBelongsToClinic(specialist, clinic) &&
@@ -254,7 +243,7 @@ function ClinicsPageContent() {
             location: getClinicLocation(clinic),
             addressSearchText: getAddressSearchText(clinic.location),
             addressCities: getAddressCities(clinic.location),
-            rating: reviewSummary?.rating || null,
+            rating: null,
             patients: clinic.patients || "500+",
             experience: clinic.experience || "10 anos",
           },
@@ -263,10 +252,9 @@ function ClinicsPageContent() {
           primarySpecialist: clinicSpecialists[0],
           priceFrom: prices.length > 0 ? Math.min(...prices) : null,
           durationFrom: getClinicDurationFrom(clinicSpecialists, selectedTreatment),
-          reviewSummary,
         };
       }),
-    [clinicReviewSummaries, clinics, specialists, selectedTreatment]
+    [clinics, specialists, selectedTreatment]
   );
 
   const cities = useMemo(() => {
@@ -386,10 +374,6 @@ function ClinicsPageContent() {
           : "9999";
 
         return aSlot.localeCompare(bSlot);
-      }
-
-      if (sortBy === "Mejor rating") {
-        return Number(b.reviewSummary?.rating || 0) - Number(a.reviewSummary?.rating || 0);
       }
 
       return b.specialists.length - a.specialists.length;
@@ -554,7 +538,6 @@ function ClinicsPageContent() {
               <option value="Recomendadas">Recomendadas</option>
               <option value="Proximo hueco">Proximo hueco</option>
               <option value="Precio menor">Precio menor</option>
-              <option value="Mejor rating">Mejor rating</option>
             </select>
 
             <Link
@@ -645,7 +628,6 @@ function ClinicsPageContent() {
                   primarySpecialist,
                   priceFrom,
                   durationFrom,
-                  reviewSummary,
                 }) => {
                   const clinicKey = String(clinic.id || clinic.slug || clinic.name);
                   const nextSlot = nextSlots[clinicKey];
@@ -671,11 +653,6 @@ function ClinicsPageContent() {
                         />
 
                         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                          <div className="rounded-full bg-white px-3 py-1 text-sm font-medium">
-                            {reviewSummary
-                              ? `${reviewSummary.rating} - ${reviewSummary.count} opiniones`
-                              : "Sin opiniones verificadas"}
-                          </div>
                           <div className="rounded-full bg-black px-3 py-1 text-sm text-white">
                             {clinic.location}
                           </div>

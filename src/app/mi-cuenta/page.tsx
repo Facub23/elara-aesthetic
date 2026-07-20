@@ -90,8 +90,8 @@ function PatientAccountContent() {
             Tus citas y favoritos, en un solo lugar.
           </h1>
           <p className="mt-6 max-w-sm text-lg leading-8 text-white/65">
-            Guarda clinicas, consulta tus reservas y comparte opiniones verificadas
-            despues de tu tratamiento.
+            Guarda clinicas, consulta tus reservas y vuelve a reservar tus
+            tratamientos favoritos.
           </p>
         </section>
 

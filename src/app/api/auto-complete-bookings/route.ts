@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { sendReviewRequest } from "@/lib/review-notifications";
 import { recordBookingEvent } from "@/lib/booking-events";
 import { isScheduledTaskAuthorized } from "@/lib/scheduled-task-auth";
 import { supabaseAdmin as supabase } from "@/lib/supabase/admin";
@@ -18,13 +17,10 @@ type AutoCompleteBooking = {
   booking_time?: string | null;
   duration_minutes?: number | string | null;
   status?: string | null;
-  review_sent?: boolean | null;
-  review_request_count?: number | null;
   full_name?: string | null;
   email?: string | null;
   clinic_name?: string | null;
   treatment?: string | null;
-  review_token?: string | null;
 };
 
 function getZonedDateTimeKey(date: Date, timeZone: string) {
@@ -94,8 +90,6 @@ async function handleAutoComplete(req: Request) {
     }
 
     let updated = 0;
-    let reviewRequests = 0;
-
     for (const booking of bookings || []) {
       const bookingEndKey = getBookingEndKey(booking);
 
@@ -123,24 +117,12 @@ async function handleAutoComplete(req: Request) {
         description: "La cita fue marcada como completada automaticamente.",
       });
 
-      if (!booking.review_sent) {
-        try {
-          const result = await sendReviewRequest(booking);
-          if (result.status === "sent") {
-            reviewRequests++;
-          }
-        } catch (emailError) {
-          console.error(emailError);
-        }
-      }
-
       updated++;
     }
 
     return NextResponse.json({
       success: true,
       updated,
-      reviewRequests,
       timezone: bookingTimezone,
       completionGraceMinutes: defaultCompletionGraceMinutes,
     });

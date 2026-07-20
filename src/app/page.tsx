@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
 import HomeClient from "./home-client";
-import VerifiedReviews from "@/components/VerifiedReviews";
 
 export const revalidate = 300;
 
@@ -83,7 +82,6 @@ export default function HomePage() {
       />
 
       <HomeClient />
-      <VerifiedReviews />
     </>
   );
 }

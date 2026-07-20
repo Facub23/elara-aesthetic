@@ -1078,38 +1078,6 @@ export default function AdminSpecialistsManager({
                 </div>
               </div>
 
-              <div className="rounded-[40px] border border-black/5 bg-white/70 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.04)]">
-                <p className="text-sm uppercase tracking-[0.25em] text-neutral-500">
-                  Datos extra
-                </p>
-
-                <div className="mt-8 grid gap-5">
-                  <div>
-                    <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
-                      Rating
-                    </label>
-                    <input
-                      value={form.rating}
-                      onChange={(e) => setForm({ ...form, rating: e.target.value })}
-                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-3 block text-sm uppercase tracking-[0.2em] text-neutral-500">
-                      Reviews
-                    </label>
-                    <input
-                      value={form.reviews_count}
-                      onChange={(e) =>
-                        setForm({ ...form, reviews_count: e.target.value })
-                      }
-                      className="h-14 w-full rounded-[22px] border border-black/5 bg-[#F8F5F1] px-6 outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <AdminPublicationChecklist
                 items={getSpecialistChecklist(form, clinics, treatments)}
               />

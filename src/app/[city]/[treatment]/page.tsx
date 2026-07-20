@@ -6,7 +6,6 @@ import { Navbar } from "@/components/layout/navbar";
 import { getAddressCities, getLocationSummary } from "@/lib/location-utils";
 import { findNextAvailableSlot } from "@/lib/next-available-slot";
 import { filterPublicRecords } from "@/lib/public-records";
-import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import { supabase } from "@/lib/supabase";
 import {
   getTreatmentName as readTreatmentName,
@@ -257,10 +256,9 @@ export default async function CityTreatmentPage({
 }) {
   const { city, treatment } = await params;
 
-  const [{ data: specialists }, { data: clinics }, { data: approvedReviews }] = await Promise.all([
+  const [{ data: specialists }, { data: clinics }] = await Promise.all([
     supabase.from("specialists").select("*"),
     supabase.from("clinics").select("*"),
-    supabase.from("reviews").select("clinic_name,specialist_name,rating").eq("status", "Aprobada"),
   ]);
 
   const allClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
@@ -277,15 +275,6 @@ export default async function CityTreatmentPage({
   );
   const cityName = cityRecord ? getClinicCity(cityRecord) : formatText(city);
   const cityNormalized = normalize(cityName);
-  const clinicReviewSummaries = buildReviewSummaryMap(
-    approvedReviews || [],
-    "clinic_name"
-  );
-  const specialistReviewSummaries = buildReviewSummaryMap(
-    approvedReviews || [],
-    "specialist_name"
-  );
-
   const specialistContexts = filterPublicRecords((specialists || []) as SpecialistRow[])
     .map((specialist) => {
       const clinic =
@@ -362,7 +351,7 @@ export default async function CityTreatmentPage({
     : null;
   const marketplaceChecks = [
     "Compara clinicas verificadas de la ciudad antes de elegir.",
-    "Revisa especialistas, reviews, precio y primer hueco disponible.",
+    "Revisa especialistas, precio y primer hueco disponible.",
     "Reserva manteniendo el contexto de tratamiento, ciudad y profesional.",
   ];
 
@@ -482,9 +471,6 @@ export default async function CityTreatmentPage({
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {clinicContexts.map(({ clinic, specialists: clinicSpecialists }) => {
-              const reviewSummary = clinicReviewSummaries.get(
-                normalizeReviewKey(clinic.name)
-              );
               const primarySpecialistContext = clinicSpecialists[0];
               const primarySpecialist = primarySpecialistContext?.specialist;
               const primarySlot = primarySpecialist
@@ -524,11 +510,6 @@ export default async function CityTreatmentPage({
                         </p>
                       </div>
 
-                      <div className="rounded-full bg-black px-3 py-1 text-sm text-white">
-                        {reviewSummary
-                          ? `${reviewSummary.rating} - ${reviewSummary.count}`
-                          : "Sin opiniones"}
-                      </div>
                     </div>
 
                     <p className="mt-4 line-clamp-2 text-sm leading-6 text-neutral-600">
@@ -589,9 +570,6 @@ export default async function CityTreatmentPage({
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {specialistContexts.map(({ specialist, clinic }) => {
               const specialistTreatment = findSpecialistTreatment(specialist, treatment);
-              const reviewSummary = specialistReviewSummaries.get(
-                normalizeReviewKey(specialist.name)
-              );
               const slot = slotsBySpecialist.get(
                 String(specialist.id || specialist.slug || specialist.name)
               );
@@ -677,12 +655,6 @@ export default async function CityTreatmentPage({
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 rounded-md bg-[#F8F6F2] p-3 text-sm text-neutral-600">
-                    {reviewSummary
-                      ? `${reviewSummary.rating}/5 - ${reviewSummary.count} opiniones verificadas`
-                      : "Sin opiniones verificadas"}
-                  </div>
-
                   <div className="mt-auto flex flex-wrap gap-3 pt-7">
                     {reserveHref ? (
                       <Link

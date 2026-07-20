@@ -12,7 +12,6 @@ import {
   getAddressSearchText,
   getLocationSummary,
 } from "@/lib/location-utils";
-import { buildReviewSummaryMap, normalizeReviewKey } from "@/lib/review-summary";
 import {
   getTreatmentDurationValue,
   getTreatmentName as readTreatmentName,
@@ -297,21 +296,15 @@ export default async function SpecialistsPage({
     { data: specialists },
     { data: clinics },
     { data: availabilityRows },
-    { data: approvedReviews },
   ] = await Promise.all([
     supabase.from("specialists").select("*").order("rating", { ascending: false }),
     supabase.from("clinics").select("*"),
     supabase.from("specialist_availability").select("*"),
-    supabase.from("reviews").select("specialist_name,rating").eq("status", "Aprobada"),
   ]);
 
   const allSpecialists = filterPublicRecords((specialists || []) as SpecialistRow[]);
   const allClinics = filterPublicRecords((clinics || []) as ClinicRow[]);
   const allAvailability = (availabilityRows || []) as AvailabilityRow[];
-  const reviewSummaries = buildReviewSummaryMap(
-    approvedReviews || [],
-    "specialist_name"
-  );
 
   const clinicsById = new Map(
     allClinics.filter((clinic) => clinic.id).map((clinic) => [String(clinic.id), clinic])
@@ -363,7 +356,6 @@ export default async function SpecialistsPage({
         availability,
         availabilityLabel: getAvailabilityLabel(availability),
         selectedTreatmentData,
-        reviewSummary: reviewSummaries.get(normalizeReviewKey(specialist.name)),
       };
     })
     .filter(({ specialist, clinic, placeCities, placeSearchText, availability }) => {
@@ -494,10 +486,6 @@ export default async function SpecialistsPage({
         const bSlot = b.nextSlot ? `${b.nextSlot.date} ${b.nextSlot.time}` : "9999";
 
         return aSlot.localeCompare(bSlot);
-      }
-
-      if (selectedSort === "Mejor rating") {
-        return Number(b.reviewSummary?.rating || 0) - Number(a.reviewSummary?.rating || 0);
       }
 
       return Number(Boolean(b.nextSlot)) - Number(Boolean(a.nextSlot));
@@ -675,7 +663,6 @@ export default async function SpecialistsPage({
               <option value="Recomendados">Recomendados</option>
               <option value="Proximo hueco">Proximo hueco</option>
               <option value="Precio menor">Precio menor</option>
-              <option value="Mejor rating">Mejor rating</option>
             </select>
 
             <button
@@ -764,7 +751,6 @@ export default async function SpecialistsPage({
                   availabilityLabel,
                   selectedTreatmentData,
                   nextSlot,
-                  reviewSummary,
                 }) => {
                   const price = formatPrice(
                     getSpecialistPriceFrom(specialist, selectedTreatment)
@@ -803,11 +789,6 @@ export default async function SpecialistsPage({
                           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                           className="object-contain bg-[#F8F5F1]"
                         />
-                        <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-sm font-medium">
-                          {reviewSummary
-                            ? `${reviewSummary.rating} - ${reviewSummary.count} opiniones verificadas`
-                            : "Sin opiniones verificadas"}
-                        </div>
                       </div>
 
                       <div className="flex flex-1 flex-col p-5">

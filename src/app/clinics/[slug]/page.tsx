@@ -45,17 +45,10 @@ async function getClinicPageData(slug: string) {
     return null;
   }
 
-  const [{ data: specialists }, { data: reviews }] = await Promise.all([
-    supabase.from("specialists").select("*").order("name", { ascending: true }),
-    supabase
-      .from("reviews")
-      .select("*")
-      .eq("clinic_name", clinic.name)
-      .eq("status", "Aprobada")
-      .order("featured", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(6),
-  ]);
+  const { data: specialists } = await supabase
+    .from("specialists")
+    .select("*")
+    .order("name", { ascending: true });
 
   return {
     clinic,
@@ -72,7 +65,6 @@ async function getClinicPageData(slug: string) {
 
       return sameId || sameName;
     }),
-    reviews: filterPublicRecords(reviews || []),
   };
 }
 
@@ -133,16 +125,6 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
   }
 
   const location = getClinicLocation(data.clinic);
-  const rating =
-    data.reviews.length > 0
-      ? (
-          data.reviews.reduce(
-            (sum: number, review: any) => sum + Number(review.rating || 0),
-            0
-          ) / data.reviews.length
-        ).toFixed(1)
-      : data.clinic.rating;
-
   return (
     <>
       <script
@@ -157,15 +139,6 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
             url: `/clinics/${data.clinic.slug}`,
             address: location,
             medicalSpecialty: "AestheticMedicine",
-            ...(rating
-              ? {
-                  aggregateRating: {
-                    "@type": "AggregateRating",
-                    ratingValue: rating,
-                    reviewCount: data.reviews.length || Number(data.clinic.reviews_count || 1),
-                  },
-                }
-              : {}),
           }),
         }}
       />
@@ -173,7 +146,6 @@ export default async function ClinicPage({ params }: ClinicPageProps) {
       <ClinicProfilePageClient
         clinic={data.clinic}
         specialists={data.specialists}
-        reviews={data.reviews}
       />
     </>
   );
