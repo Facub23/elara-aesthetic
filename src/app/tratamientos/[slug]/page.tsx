@@ -730,7 +730,7 @@ export default async function TreatmentPage({
             <p className="mt-5 text-sm leading-6 text-white/65 md:text-base">
               Para {treatmentName}, EncuentraTuClinica mezcla especialistas de
               clinicas verificadas y profesionales independientes para que elijas
-              por precio, duracion, ubicacion, rating y agenda.
+              por precio, duracion, ubicacion y agenda.
             </p>
           </div>
 
